@@ -15,8 +15,8 @@ class Server implements IServer {
         this.app = app;
         this.config = config;
     }
-    serveHTTP(options: IServerConfig): void {
-        const { HTTP_PORT } = options;
+    serveHTTP(options?: IServerConfig): void {
+        const { HTTP_PORT } = options || { };
         this.httpServer = http.createServer(this.app.callback());
         let port = HTTP_PORT ? HTTP_PORT : this.config.HTTP_PORT;
         this.httpServer.listen(port, () => {
@@ -24,8 +24,8 @@ class Server implements IServer {
         });
     }
 
-    serveHTTPS(options: IServerConfig): void {
-        const { HTTPS_PORT } = options;
+    serveHTTPS(options?: IServerConfig): void {
+        const { HTTPS_PORT } = options || { };
         const { KEY = '', CERT = '' } = this.config.HTTPS_CONFIG;
         this.httpsServer = https.createServer({
             key: KEY,
@@ -38,9 +38,9 @@ class Server implements IServer {
     }
 
     serve(options?: IServerConfig): void {
-        const { HTTPS = false } = options!;
-        this.serveHTTP(options!);
-        HTTPS && this.serveHTTPS(options!);
+        const { HTTPS = false } = options || { };
+        this.serveHTTP(options);
+        HTTPS && this.serveHTTPS(options);
     }
 }
 

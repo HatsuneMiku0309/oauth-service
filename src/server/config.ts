@@ -1,4 +1,4 @@
-require('dotenv').Config();
+require('dotenv').config();
 import { install } from 'source-map-support';
 install();
 

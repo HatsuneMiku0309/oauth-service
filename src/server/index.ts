@@ -10,9 +10,8 @@ import { Service } from './services/index';
 
 (async () => {
     let config = new Config();
-    let server = new Server(app, config.getServerConfig());
-
     // @ts-ignore
     let services = new Service(app);
+    let server = new Server(app, config.getServerConfig());
     server.serve();
 })();

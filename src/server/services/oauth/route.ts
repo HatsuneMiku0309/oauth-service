@@ -17,13 +17,9 @@ class OAuthRouter extends BaseRouter implements IRouter {
         this.options = options;
     }
 
-    private _getRootApi(api: string) {
-        return `${this.api}${api}`;
-    }
-
     registerAPIs(): void {
         let oauth = OAuth.getInstance(this.options);
-        this.router.get(this._getRootApi('grant-token'), async (ctx, next) => {
+        this.router.get(super._getRootApi('grant-token'), async (ctx, next) => {
             try {
                 let result = oauth.grantToken();
 
