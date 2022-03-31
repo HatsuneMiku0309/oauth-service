@@ -1,4 +1,5 @@
 import * as http from 'http';
+import { Algorithm, Secret } from 'jsonwebtoken';
 import * as Koa from 'koa';
 
 export type TAnyObj = { [key: string]: any };
@@ -6,6 +7,16 @@ export type TAnyObj = { [key: string]: any };
 export interface IMainConfig {
     optionConfig: TAnyObj;
     serverConfig: IServerConfig;
+    jwtConfig: IJWTConfig;
+}
+
+export type TExpiresType = 'd' | ' day' | 'h' | ' hrs' | 's' | 'y';
+export interface IJWTConfig {
+    KEY: Secret;
+    EXPIRES_IN: number;
+    EXPIRES_TYPE: TExpiresType;
+    ALGORITHM: Algorithm;
+    UNLESS: RegExp
 }
 
 export interface IServerConfig {
@@ -22,6 +33,7 @@ export interface IConfig {
     config: IMainConfig;
     getServerConfig(): IServerConfig;
     getOptionConfig<T extends TAnyObj>(): TAnyObj;    
+    getJWTConfig(): IJWTConfig;
 }
 
 export interface IServer {
@@ -35,5 +47,6 @@ export interface IServer {
 
 export interface IMiddleware {
     app: Koa;
+    config: IConfig;
     registerMiddleware(): void;
 }

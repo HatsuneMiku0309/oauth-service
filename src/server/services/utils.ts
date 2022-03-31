@@ -13,8 +13,8 @@ abstract class BaseRouter implements IBaseRouter {
     abstract options: TAnyObj;
     constructor() { }
 
-    protected _getRootApi(api: string): string {
-        return `${this.api}${api}`;
+    protected _getRootApi(api: string): string[] {
+        return [this.api, api];
     }
 
     protected get apiObj(): IApiObj {

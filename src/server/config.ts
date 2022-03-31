@@ -5,7 +5,8 @@ install();
 import * as fs from 'fs';
 import * as process from 'process';
 import * as path from 'path';
-import { IConfig, IMainConfig, IServerConfig, TAnyObj } from './utils.interface';
+import { IConfig, IJWTConfig, IMainConfig, IServerConfig, TAnyObj, TExpiresType } from './utils.interface';
+import { Algorithm } from 'jsonwebtoken';
 
 
 const {
@@ -13,7 +14,11 @@ const {
     HTTPS_PORT = '3001',
     HTTPS = 'FALSE',
     KEY = fs.readFileSync(path.resolve(process.cwd(), 'config', 'key.pem')).toString(),
-    CERT  = fs.readFileSync(path.resolve(process.cwd(), 'config', 'cert.pem')).toString()
+    CERT  = fs.readFileSync(path.resolve(process.cwd(), 'config', 'cert.pem')).toString(),
+    EXPIRES_IN = 1,
+    EXPIRES_TYPE = 'd',
+    ALGORITHM = 'RS512',
+    JWT_KEY = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwt.key')).toString()
 } = process.env;
 
 
@@ -22,6 +27,13 @@ class Config implements IConfig {
     constructor() {
         this.config = {
             optionConfig: { },
+            jwtConfig: {
+                KEY: JWT_KEY,
+                EXPIRES_IN: Number(EXPIRES_IN),
+                EXPIRES_TYPE: <TExpiresType> EXPIRES_TYPE,
+                ALGORITHM: <Algorithm> ALGORITHM,
+                UNLESS: /^\/api\/login/
+            },
             serverConfig: {
                 HTTPS: HTTPS.toUpperCase() === 'TRUE' ? true : false,
                 HTTP_PORT: Number(HTTP_PORT),
@@ -32,6 +44,9 @@ class Config implements IConfig {
                 }
             }
         };
+    }
+    getJWTConfig(): IJWTConfig {
+        return this.config.jwtConfig;
     }
 
     getOptionConfig<T extends TAnyObj>(): TAnyObj {

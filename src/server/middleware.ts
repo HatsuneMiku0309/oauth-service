@@ -2,17 +2,19 @@ import { install } from 'source-map-support';
 install();
 
 import * as Koa from 'koa';
-import { IMiddleware } from './utils.interface';
-
+import { IConfig, IMiddleware } from './utils.interface';
 import * as bodyParser from 'koa-bodyparser';
+import { Passport } from './services/login/passport';
 
 class Middleware implements IMiddleware {
     app: Koa<Koa.DefaultState, Koa.DefaultContext>;
-    constructor(app: Koa) {
+    config: IConfig;
+    constructor(app: Koa, config: IConfig) {
         this.app = app;
+        this.config = config;
     }
 
-    registerMiddleware(): void {
+    async registerMiddleware(): Promise<void> {
         const middles: any[] = [
             bodyParser({
                 onerror: (err, ctx) => {
@@ -22,7 +24,8 @@ class Middleware implements IMiddleware {
                 textLimit: '10mb',
                 formLimit: '10mb',
                 strict: true
-            })
+            }),
+            await Passport.passport(this.config.getJWTConfig())
         ];
         middles.forEach((middle) => {
             this.app.use(middle);

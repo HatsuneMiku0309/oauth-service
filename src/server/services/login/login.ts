@@ -3,6 +3,7 @@ import { TAnyObj } from '../../utils.interface';
 install();
 
 import { ILogin } from './login.interface';
+import { Passport } from './passport';
 
 class Login implements ILogin {
     private static instance: ILogin;

@@ -23,6 +23,7 @@ class Service implements IService {
             new LoginRouter(this._options)
         ];
         routers.forEach((router) => {
+            this._router.get('/api', (ctx) => { ctx.body = { a: 123 }; });
             this._router.use('/api', router.router.routes(), router.router.allowedMethods());
         });
 
