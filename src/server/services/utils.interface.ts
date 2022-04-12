@@ -1,10 +1,18 @@
-import { DefaultContext, DefaultState, Next, ParameterizedContext } from 'koa';
-import Router = require('koa-router');
-import { TAnyObj } from '../utils.interface';
+import { JwtPayload } from 'jsonwebtoken';
+import { Next, ParameterizedContext } from 'koa';
+import * as Router from 'koa-router';
+import { IMysqlDatabase, TAnyObj } from '../utils.interface';
+import { ISignupBody } from './jwt/passport.interface';
 
-// ParameterizedContext
-// Koa.ParameterizedContext<Koa.DefaultState, Koa.DefaultContext, any>
-export type TContext = ParameterizedContext<DefaultState, DefaultContext, any>;
+export interface IJWTData extends JwtPayload, ISignupBody {
+}
+
+export interface IJWTCotext {
+    user: IJWTData;
+    jwt: string;
+}
+
+export type TContext = ParameterizedContext<IJWTCotext, Router.IRouterParamContext<any, {}>, any>;
 export type TRouterMiddle = (ctx: TContext, next?: Next) => any | Promise<any>;
 
 export interface IService {
@@ -19,12 +27,13 @@ export interface IApiObj {
 }
 
 export interface IBaseRouter {
-    api: string;
-    name: string;
-    router: Router;
-    options: TAnyObj;
+    readonly api: string;
+    readonly name: string;
+    readonly router: Router;
+    readonly options: TAnyObj;
 }
 
 export interface IRouter extends IBaseRouter {
+    readonly database: IMysqlDatabase;
     registerAPIs(): void;
 }

@@ -8,14 +8,16 @@ import { Server } from './server';
 import { Config } from './config';
 import { Service } from './services/index';
 import { Middleware } from './middleware';
+import { MysqlDatabase } from './mysql-db';
 
 (async () => {
     // let _app = app;
     let config = new Config();
-    let middleware = new Middleware(app, config);
+    let database = new MysqlDatabase(config.getDatabaseConfig());
+    let middleware = new Middleware(app, database, config);
     await middleware.registerMiddleware();
     // @ts-ignore
-    let services = new Service(app);
+    let services = new Service(app, database);
     let server = new Server(app, config.getServerConfig());
     server.serve();
 })();

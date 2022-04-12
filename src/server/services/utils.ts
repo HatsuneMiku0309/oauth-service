@@ -4,6 +4,7 @@ install();
 import { TAnyObj } from '../utils.interface';
 import { IApiObj, IBaseRouter } from './utils.interface';
 import * as Router from 'koa-router';
+import * as _ from 'lodash';
 
 
 abstract class BaseRouter implements IBaseRouter {
@@ -13,8 +14,16 @@ abstract class BaseRouter implements IBaseRouter {
     abstract options: TAnyObj;
     constructor() { }
 
-    protected _getRootApi(api: string): string[] {
-        return [this.api, api];
+    protected _getRootApi(api?: string | string[]): string[] {
+        let result = [this.api];
+        if (!!api && _.isString(api)) {
+            result.push(api);
+        } else if (!!api) {
+            result.push(...api);
+        }
+
+
+        return result;
     }
 
     protected get apiObj(): IApiObj {

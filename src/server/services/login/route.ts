@@ -1,10 +1,10 @@
 import { install } from 'source-map-support';
 install();
 
-import { Next, ParameterizedContext } from 'koa';
+import { Next } from 'koa';
 import * as Router from 'koa-router';
-import { IRouter } from '../utils.interface';
-import { TAnyObj } from '../../utils.interface';
+import { IRouter, TContext } from '../utils.interface';
+import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Login } from './login';
 import { BaseRouter } from '../utils';
 
@@ -13,17 +13,32 @@ class LoginRouter extends BaseRouter implements IRouter {
     readonly name: string = 'Login';
     readonly router: Router = new Router();
     readonly options: TAnyObj;
-    constructor(options: TAnyObj = { }) {
+    readonly database: IMysqlDatabase;
+    constructor(database: IMysqlDatabase, options: TAnyObj = { }) {
         super();
+        this.database = database;
         this.options = options;
         this.registerAPIs();
     }
 
     registerAPIs(): void {
         let login = Login.getInstance(this.options);
-        this.router.get('/login', async (ctx: ParameterizedContext, next: Next) => {
+        let api = super._getRootApi().join('/');
+        this.router.post(api, async (ctx: TContext, next: Next) => {
             try {
-                let result = await login.login();
+                let result = await login.login(ctx, this.database);
+
+                ctx.body = result;
+            } catch (err: any) {
+                ctx.throw(500, err.message);
+            }
+        });
+
+        api = super._getRootApi('register').join('/');
+        this.router.post(api, async (ctx: TContext, next: Next) => {
+            const { body } = ctx;
+            try {
+                let result = await login.regist(this.database, body, this.options);
 
                 ctx.body = result;
             } catch (err: any) {

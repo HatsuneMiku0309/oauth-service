@@ -5,7 +5,7 @@ install();
 import * as fs from 'fs';
 import * as process from 'process';
 import * as path from 'path';
-import { IConfig, IJWTConfig, IMainConfig, IServerConfig, TAnyObj, TExpiresType } from './utils.interface';
+import { IConfig, IDatabaseConfig, IJWTConfig, IMainConfig, IServerConfig, TAnyObj, TExpiresType } from './utils.interface';
 import { Algorithm } from 'jsonwebtoken';
 
 
@@ -18,7 +18,8 @@ const {
     EXPIRES_IN = 1,
     EXPIRES_TYPE = 'd',
     ALGORITHM = 'RS512',
-    JWT_KEY = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwt.key')).toString()
+    JWT_PRIVATE = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwtRS512.key')),
+    JWT_PUBLIC = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwtRS512.key.pub'))
 } = process.env;
 
 
@@ -28,11 +29,25 @@ class Config implements IConfig {
         this.config = {
             optionConfig: { },
             jwtConfig: {
-                KEY: JWT_KEY,
+                PRIVATE_KEY: JWT_PRIVATE,
+                PUBLIC_KEY: JWT_PUBLIC,
                 EXPIRES_IN: Number(EXPIRES_IN),
                 EXPIRES_TYPE: <TExpiresType> EXPIRES_TYPE,
                 ALGORITHM: <Algorithm> ALGORITHM,
-                UNLESS: /^\/api\/login/
+                UNLESS: /^\/api\/login|^\/api\/oauth\/access-token|^\/api\/oauth\/refresh-token|^\/api\/oauth\/verify-token/
+            },
+            databaseConfig: {
+                host: 'localhost',
+                port: 23306,
+                database: 'test',
+                user: 'root',
+                password: 'hatsunemiku01',
+                connectTimeout: 10000,
+                waitForConnections: true,
+                connectionLimit: 10,
+                queueLimit: 0,
+                debug: false,
+                trace: true
             },
             serverConfig: {
                 HTTPS: HTTPS.toUpperCase() === 'TRUE' ? true : false,
@@ -44,6 +59,9 @@ class Config implements IConfig {
                 }
             }
         };
+    }
+    getDatabaseConfig(): IDatabaseConfig {
+        return this.config.databaseConfig;
     }
     getJWTConfig(): IJWTConfig {
         return this.config.jwtConfig;
