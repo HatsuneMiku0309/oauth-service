@@ -36,6 +36,8 @@ class Service implements IService {
         });
 
         this._app.use(this._router.routes()).use(this._router.allowedMethods());
+        // let apis = this._router.stack.map((d: any) => { return { methods: d.methods, path: d.path }; });
+        // console.log('test');
     }
 }
 

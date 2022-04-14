@@ -8,9 +8,12 @@ import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody } from './scope.interface';
 import { IBasicPassportRes } from '../jwt/passport.interface';
+import { Oauth } from '../oauth/oauth';
+import * as _ from 'lodash';
 
 class Scope implements IScope {
     static instance: IScope;
+    private readonly _METHODS = ['GET', 'POST', 'PUT', 'DELETE'];
     options: TAnyObj;
     private constructor(options: TAnyObj = { }) {
         this.options = options;
@@ -41,10 +44,25 @@ class Scope implements IScope {
         }
     }
 
+    private _checkListQuery(query: IListQuery) {
+        const { name, system } = query;
+        try {
+            if (!!name && !_.isString(name)) {
+                throw new Error('name type error');
+            }
+            if (!!system && !_.isString(system)) {
+                throw new Error('system type error');
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
         const { user: { user_id } } = options;
         const { name, system } = query;
         try {
+            this._checkListQuery(query);
             let sql = `
                 SELECT * FROM api_scope WHERE
             `;
@@ -84,20 +102,46 @@ class Scope implements IScope {
         }
     }
 
+    private _checkCreateBody(body: ICreateBody): void {
+        try {
+            const { description, is_required, system, apis } = body;
+
+            if (!system) {
+                throw new Error('system is required');
+            }
+            if (!apis) {
+                throw new Error('apis is required');
+            }
+            if (!!description && !_.isString(description)) {
+                throw new Error('description type error');
+            }
+            if (is_required !== undefined) {
+                if (!_.isBoolean(is_required)) {
+                    throw new Error('is_required type error');
+                }
+            }
+            if (!_.isArray(apis)) {
+                throw new Error('apis type error');
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbCreate(db: Connection, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }> {
         const { user: { user_id } } = options;
-        const { name, description = '', system, apis } = body;
+        const { name, description = '', is_required, system, apis } = body;
         try {
+            this._checkCreateBody(body);
             let id = uuid();
-            let sql = `
-                INSERT INTO api_scope SET ?
-            `;
+            let sql = 'INSERT INTO api_scope SET ?';
             let params = <IApiScopeDao[]> [{
                 ID: id,
                 NAME: name,
                 DESCRIPTION: description,
                 SYSTEM: system,
                 APIS: apis,
+                IS_REQUIRED: is_required || false,
                 CREATE_BY: user_id
             }];
 
@@ -132,28 +176,55 @@ class Scope implements IScope {
         }
     }
 
+    private _checkCreatesBody(body: ICreateBody[]): void {
+        try {
+            body.forEach((data) => {
+                const { description, is_required, system, apis } = data;
+                if (!system) {
+                    throw new Error('system is required');
+                }
+                if (!apis) {
+                    throw new Error('apis is required');
+                }
+                if (!!description && !_.isString(description)) {
+                    throw new Error('description type error');
+                }
+                if (is_required !== undefined) {
+                    if (!_.isBoolean(is_required)) {
+                        throw new Error('is_required type error');
+                    }
+                }
+                if (!_.isArray(apis)) {
+                    throw new Error('apis type error');
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbCreates(db: Connection, body: ICreateBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]> {
         const { user: { user_id } } = options;
+        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
         try {
-            let sql = `
-                INSERT INTO api_scope SET ?
-            `;
-
+            this._checkCreatesBody(body);
+            let sql = `INSERT INTO api_scope (${COLUMNS.join(', ')})`;
             let ids: { ID: string }[] = [];
-            let params = <IApiScopeDao[]> [];
-            body.forEach((data) => {
-                const { name, description = '', system, apis } = data;
+            let params = body.map((data) => {
+                const { name, description = '', is_required, system, apis } = data;
                 let id = uuid();
                 ids.push({ ID: id });
-                params.push(<IApiScopeDao> {
-                    ID: id,
-                    NAME: name,
-                    DESCRIPTION: description,
-                    SYSTEM: system,
-                    APIS: apis,
-                    CREATE_BY: user_id
-                });
+
+                return [
+                    id, name, description,
+                    system, apis,
+                    is_required || false,
+                    user_id
+                ];
             });
+            sql += `
+                VALUES (${params.map(() => '?').join('), (')})
+            `;
 
             await db.query(sql, params);
 
@@ -184,10 +255,37 @@ class Scope implements IScope {
         }
     }
 
+    private _checkUpdateBody(body: IUpdateBody): void {
+        try {
+            const { description, is_required, system, apis } = body;
+
+            if (!system) {
+                throw new Error('system is required');
+            }
+            if (!apis) {
+                throw new Error('apis is required');
+            }
+            if (!!description && !_.isString(description)) {
+                throw new Error('description type error');
+            }
+            if (is_required !== undefined) {
+                if (!_.isBoolean(is_required)) {
+                    throw new Error('is_required type error');
+                }
+            }
+            if (!_.isArray(apis)) {
+                throw new Error('apis type error');
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }> {
         const { user: { user_id } } = options;
-        const { description = '', system, apis } = body;
+        const { description = '', is_required, system, apis } = body;
         try {
+            this._checkUpdateBody(body);
             let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE ID = ?', [id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] not find`);
@@ -199,6 +297,7 @@ class Scope implements IScope {
                 DESCRIPTION: description,
                 SYSTEM: system,
                 APIS: apis,
+                IS_REQUIRED: is_required || false,
                 UPDATE_BY: user_id
             },  id]);
 
@@ -231,12 +330,43 @@ class Scope implements IScope {
         }
     }
 
+    private _checkUpdatesBody(body: IUpdatesBody[]): void {
+        try {
+            body.forEach((data) => {
+                const { id, description, is_required, system, apis } = data;
+                if (!id) {
+                    throw new Error('id is required');
+                }
+                if (!system) {
+                    throw new Error('system is required');
+                }
+                if (!apis) {
+                    throw new Error('apis is required');
+                }
+                if (!!description && !_.isString(description)) {
+                    throw new Error('description type error');
+                }
+                if (is_required !== undefined) {
+                    if (!_.isBoolean(is_required)) {
+                        throw new Error('is_required type error');
+                    }
+                }
+                if (!_.isArray(apis)) {
+                    throw new Error('apis type error');
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbUpdates(db: Connection, body: IUpdatesBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]> {
         const { user: { user_id } } = options;
         try {
+            this._checkUpdatesBody(body);
             let sql = 'UPDATE api_scope SET ? WHERE ID = ?';
             let ids: { ID: string }[] = await Q.all(body.map(async (data) => {
-                const { id, description = '', system, apis } = data;
+                const { id, description = '', is_required, system, apis } = data;
                 let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE ID = ?', [id]);
                 if (rows.length === 0) {
                     throw new Error(`[${id}] not find`);
@@ -247,6 +377,7 @@ class Scope implements IScope {
                     DESCRIPTION: description,
                     SYSTEM: system,
                     APIS: apis,
+                    IS_REQUIRED: is_required || false,
                     UPDATE_BY: user_id
                 });
                 params.push(id);
@@ -322,30 +453,97 @@ class Scope implements IScope {
         }
     }
 
+    private _checkRegistBody(body: IRegistBody[]) {
+        try {
+            let dupTemp: string[] = [];
+            if (!body) {
+                throw new Error('body is required');
+            }
+            if (!!body && !_.isArray(body)) {
+                throw new Error('body type error');
+            }
+            if (!!body && body.length === 0) {
+                throw new Error('body is required');
+            }
+
+            body.forEach((data) => {
+                const { name, description, is_required, apis } = data;
+                if (!name) {
+                    throw new Error('name is required');
+                } else if (!apis) {
+                    throw new Error('apis is required');
+                }
+
+                if (!!name && !_.isString(name)) {
+                    throw new Error('name type error');
+                }
+                if (!!description && !_.isString(description)) {
+                    throw new Error('description type error');
+                }
+                if (is_required !== undefined) {
+                    if (!_.isBoolean(is_required)) {
+                        throw new Error('is_required type error');
+                    }
+                }
+                if (!!apis && !_.isArray(apis)) {
+                    throw new Error('apis type error');
+                }
+                if (!!apis && apis.length === 0) {
+                    throw new Error('apis is required');
+                }
+
+                apis.forEach((api) => {
+                    const { api: _api, method } = api;
+                    if (!_api) {
+                        throw new Error(`[${name}] api is required`);
+                    }
+                    if (!!_api && !_.isString(_api)) {
+                        throw new Error('api type error');
+                    }
+                    if (!this._METHODS.includes(method)) {
+                        throw new Error(`[${method}] Error method`);
+                    }
+                });
+
+                if (dupTemp.includes(name)) {
+                    throw new Error(`[${name}] name is duplicate register`);
+                }
+                dupTemp.push(name);
+            });
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]> {
         const { user: { client_id } } = options;
+        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
         try {
-            let sql = `
-                INSERT INTO api_scope SET ?
+            this._checkRegistBody(body);
+            let oauth = Oauth.getInstance(this.options);
+            let oauthApplicaion = await oauth.checkOauthApplication(db, client_id, options);
+            let sql = `INSERT INTO api_scope (${COLUMNS.join(', ')})`;
+            let params = body.map((data) => {
+                const { name, description = '', is_required, apis } = data;
+                let id = uuid();
+
+                return [
+                    id, system, name, description,
+                    JSON.stringify(apis),
+                    is_required || false,
+                    oauthApplicaion.USER_ID
+                ];
+            });
+
+            sql += `
+                VALUES (${params.map(() => '?').join('), (')})
                 ON DUPLICATE KEY UPDATE
                 NAME = VALUES(NAME), DESCRIPTION = VALUES(DESCRIPTION),
                 APIS = VALUES(APIS), UPDATE_BY = VALUES(CREATE_BY)
             `;
-            let params = body.map((data) => {
-                const { name, description = '', apis } = data;
-                let id = uuid();
-                return {
-                    ID: id,
-                    SYSTEM: system,
-                    NAME: name,
-                    DESCRIPTION: description,
-                    APIS: apis,
-                    CREATE_BY: client_id
-                };
-            });
 
             await db.query(sql, params);
-            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE SYSTEM = ?', [system]);
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE `SYSTEM` = ?', [system]);
 
             return rows;
         } catch (err) {

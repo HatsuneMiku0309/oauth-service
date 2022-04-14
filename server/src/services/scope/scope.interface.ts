@@ -6,9 +6,9 @@ import { IJWTCotext } from "../utils.interface";
 export type TMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface IAPIs {
-    API: string;
-    METHOD: TMethod;
-    PARAMS?: any;
+    api: string;
+    method: TMethod;
+    params?: any;
 }
 
 export interface IListQuery {
@@ -21,12 +21,14 @@ export interface ICreateBody {
     description?: string;
     system: string;
     apis: IAPIs[];
+    is_required?: boolean;
 }
 
 export interface IUpdateBody {
     description?: string;
     system: string;
     apis: IAPIs[];
+    is_required?: boolean;
 }
 
 export interface IUpdatesBody extends IUpdateBody {
@@ -35,9 +37,9 @@ export interface IUpdatesBody extends IUpdateBody {
 
 export interface IRegistBody {
     name: string;
-    description: string;
+    description?: string;
     apis: IAPIs[];
-    method: TMethod;
+    is_required?: boolean;
 }
 
 export interface IScope {
@@ -66,6 +68,7 @@ export interface IApiScopeDao {
     DESCRIPTION?: string;
     SYSTEM: string;
     APIS: IAPIs[];
+    IS_REQUIRED?: number | boolean; // default: 0
     CREATE_TIME?: Date;
     CREATE_BY: string;
     UPDATE_TIME?: Date;

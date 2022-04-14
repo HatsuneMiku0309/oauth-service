@@ -1,5 +1,7 @@
+import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IBasicPassportRes } from "../jwt/passport.interface";
+import { IOauthApplicationDao } from "../oauth-app/oauth-app.interface";
 import { IJWTCotext } from "../utils.interface";
 
 /**
@@ -70,6 +72,7 @@ export interface IVerifyTokenBody {
 
 export interface IOauth {
     options: TAnyObj;
+    checkOauthApplication(db: Connection, client_id: string, options: TAnyObj): Promise<IOauthApplicationDao>;
     grantCodeToken(database: IMysqlDatabase, body: IGrantTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantTokenRes | IAccessTokenRes>;
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;

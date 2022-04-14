@@ -142,7 +142,7 @@ class Passport {
             let _err: IError = new Error();
             try {
                 const { UNLESS, PUBLIC_KEY } = config ? config : Passport.config;
-                if (!UNLESS.test(ctx.url)) {
+                if (!new RegExp(UNLESS.join('|')).test(ctx.url)) {
                     let token = await Passport.resolveHeaderToken('bearer', ctx);
                     if (token === undefined || token === null || token === '') {
                         _err.state = 401;

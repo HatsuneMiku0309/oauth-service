@@ -20,8 +20,8 @@ export interface ICreateBody {
     redirect_uri: string;
     expires_date?: string; // YYYY-MM-DD
     not_before?: string; // YYYY-MM-DD
-    is_disabled?: boolean | string;
-    is_expires?: boolean | string;
+    is_disabled?: boolean;
+    is_expires?: boolean;
 }
 
 export interface IUpdateBody extends ICreateBody {
@@ -65,9 +65,9 @@ export interface IOauthApplicationDao {
     REDIRECT_URI: string; // varchar(255)
     EXPIRES_DATE?: Date;
     NOT_BEFORE?: Date;
-    IS_DISABLED?: boolean; // default: 0
-    IS_EXPIRES?: boolean; // default: 0
-    IS_CHECKED?: boolean; // default: 1
+    IS_DISABLED?: boolean | number; // default: 0
+    IS_EXPIRES?: boolean | number; // default: 0
+    IS_CHECKED?: boolean | number; // default: 1
     AUDIT_STATE?: string; // varchar(100)
     CREATE_TIME?: Date;
     CREATE_BY: string; // varchar(100)

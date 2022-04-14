@@ -193,6 +193,14 @@ class Oauth implements IOauth {
         }
     }
 
+    async checkOauthApplication(db: Connection, client_id: string, options: TAnyObj = { }): Promise<IOauthApplicationDao> {
+        try {
+            return await this._checkOauthApplication(db, client_id, options);
+        } catch (err) {
+            throw err;
+        }
+    }
+
     private async _checkOauthApplication(db: Connection, client_id: string, options: TAnyObj = { }): Promise<IOauthApplicationDao> {
         try {
             let [oauthApplicaions] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`

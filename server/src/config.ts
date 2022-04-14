@@ -34,7 +34,13 @@ class Config implements IConfig {
                 EXPIRES_IN: Number(EXPIRES_IN),
                 EXPIRES_TYPE: <TExpiresType> EXPIRES_TYPE,
                 ALGORITHM: <Algorithm> ALGORITHM,
-                UNLESS: /^\/api\/login|^\/api\/oauth\/access-token|^\/api\/oauth\/refresh-token|^\/api\/oauth\/verify-token/
+                UNLESS: [
+                    '^\/api\/login',
+                    '^\/api\/oauth\/access-token',
+                    '^\/api\/oauth\/refresh-token',
+                    '^\/api\/oauth\/verify-token',
+                    '^\/api\/api-scope\/register'
+                ]
             },
             databaseConfig: {
                 host: 'localhost',

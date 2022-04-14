@@ -2,14 +2,18 @@ import { install } from 'source-map-support';
 install();
 
 import { Connection } from 'mysql2/promise';
-import { FieldPacket } from 'mysql2';
+import { FieldPacket, ResultSetHeader } from 'mysql2';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { ICreateBody, IListQuery, IListRes, IOauthApplication, IOauthApplicationDao, IUpdateBody, ICommonRes, IRemoveUserRes } from './oauth-app.interface';
+import {
+    ICreateBody, IListQuery, IListRes,
+    IOauthApplication, IOauthApplicationDao,
+    IUpdateBody, ICommonRes, IRemoveUserRes
+} from './oauth-app.interface';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { checkDate, checkHttpProtocol, checkRedirectUri } from '../../utils';
-
+import { IOauthApplicationUserDao } from '../oauth/oauth.interface';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
@@ -159,34 +163,16 @@ class OauthApplication implements IOauthApplication {
                 }
             }
 
-            if (!!is_disabled) {
-                if (!_.isString(is_disabled)) {
+            if (is_disabled !== undefined) {
+                if (!_.isBoolean(is_disabled)) {
                     throw new Error('is_disabled format error');
                 }
-                let _is_disabled = is_disabled.toLowerCase() === 'true'
-                    ? true
-                    : is_disabled.toLowerCase() === 'false'
-                    ? false
-                    : null;
-                if (_is_disabled === null) {
-                    throw new Error('is_disabled value error');
-                }
-                body.is_disabled = _is_disabled;
             }
 
-            if (!!is_expires) {
-                if (!_.isString(is_expires)) {
+            if (is_expires !== undefined) {
+                if (!_.isBoolean(is_expires)) {
                     throw new Error('is_expires format error');
                 }
-                let _is_expires = is_expires.toLowerCase() === 'true'
-                    ? true
-                    : is_expires.toLowerCase() === 'false'
-                    ? false
-                    : null;
-                if (_is_expires === null) {
-                    throw new Error('is_expires value error');
-                }
-                body.is_expires = _is_expires;
             }
 
             return body;
@@ -219,13 +205,13 @@ class OauthApplication implements IOauthApplication {
                 CLIENT_ID: clientId,
                 CLIENT_SECRET: clientSecret,
                 REDIRECT_URI: redirect_uri,
+                IS_DISABLED: is_disabled || false,
+                IS_EXPIRES: is_expires || false,
                 CREATE_BY: user_id
             };
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);
             !!expires_date && (params.EXPIRES_DATE = new Date(expires_date));
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
-            !!is_disabled && (params.IS_DISABLED = <boolean> is_disabled);
-            !!is_expires && (params.IS_EXPIRES = <boolean> is_expires);
 
             await db.query(sql, [params]);
 
@@ -280,13 +266,13 @@ class OauthApplication implements IOauthApplication {
                 NAME: name,
                 HOMEPAGE_URL: homepage_url,
                 REDIRECT_URI: redirect_uri,
+                IS_DISABLED: is_disabled || false,
+                IS_EXPIRES: is_expires || false,
                 UPDATE_BY: user_id
             };
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);
             !!expires_date && (params.EXPIRES_DATE = new Date(expires_date));
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
-            !!is_disabled && (params.IS_DISABLED = <boolean> is_disabled);
-            !!is_expires && (params.IS_EXPIRES = <boolean> is_expires);
 
             await db.query(sql, [params, id]);
 
@@ -320,12 +306,16 @@ class OauthApplication implements IOauthApplication {
 
     async dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
         try {
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM oauth_application WHERE ID = ?', [id]);
+            if (rows.length === 0) {
+                throw new Error(`[${id}] id not find`);
+            }
+
             let sql = `
                 DELETE FROM oauth_application WHERE ID = ?
             `;
             let params = [id];
-
-            await db.query(sql, params);
+            await db.query<ResultSetHeader>(sql, params);
 
             return {
                 ID: id
@@ -357,10 +347,17 @@ class OauthApplication implements IOauthApplication {
 
     async dbRemoveUser(db: Connection, id: string, oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
         try {
+            let [rows] = <[IOauthApplicationUserDao[], FieldPacket[]]> await db.query(`
+                SELECT * FROM oauth_application_user WHERE ID = ?
+            `, [oau_id]);
+            if (rows.length === 0) {
+                throw new Error(`[${oau_id}] oau_id not find`);
+            }
+
             let sql = `
-                DELETE FROM oauth_application_user WHERE ID = ? OAUTH_APPLICATION_ID = ?
+                DELETE FROM oauth_application_user WHERE ID = ?
             `;
-            let params = [ oau_id, id ];
+            let params = [ oau_id ];
 
             await db.query(sql, params);
 

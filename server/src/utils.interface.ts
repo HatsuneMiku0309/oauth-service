@@ -6,6 +6,26 @@ import * as mysql2 from 'mysql2/promise';
 
 export type TAnyObj = { [key: string]: any };
 
+export interface IBasicConfig {
+    web: {
+        client_id: string;
+        project_id: string;
+
+        // 為何區分者兩個，啥意思
+        auth_uri: string;
+        token_uri: string;
+
+        auth_provider_x509_cert_url: string;
+
+        client_secret: string;
+        redirect_uris: string[];
+        javascript_origins: string[];
+    }
+}
+
+// { "web" | "installed" : { "client_id": "449095306728-hlj32gotq6n5cjpslll0hvohjlnf2iv3.apps.googleusercontent.com", "project_id": "quickstart-1594032425347", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_secret": "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", "redirect_uris": ["https://localhost/callback"], "javascript_origins": ["https://localhost"] } }
+
+
 export interface IError extends Error {
     state?: number | string;
     datas?: any[];
@@ -26,7 +46,7 @@ export interface IJWTConfig {
     EXPIRES_IN: number;
     EXPIRES_TYPE: TExpiresType;
     ALGORITHM: Algorithm;
-    UNLESS: RegExp
+    UNLESS: string[]
 }
 
 export interface IDatabaseConfig extends mysql2.ConnectionOptions, mysql2.PoolOptions  {

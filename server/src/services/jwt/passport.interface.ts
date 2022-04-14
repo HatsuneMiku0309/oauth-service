@@ -6,7 +6,7 @@ export interface ISignupBody extends JwtPayload {
 }
 
 export interface IBasicPassportRes {
-    user_id: string;
+    user_id: string; // 並非 Basic token 解出的信息，而是依據 client_id 去查找的
     client_id: string;
     client_secret: string;
 }
