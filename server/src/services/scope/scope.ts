@@ -64,7 +64,7 @@ class Scope implements IScope {
         try {
             this._checkListQuery(query);
             let sql = `
-                SELECT * FROM api_scope WHERE
+                SELECT * FROM API_SCOPE WHERE
             `;
 
             let whereSql = ['CREATE_BY = ?'];
@@ -134,13 +134,13 @@ class Scope implements IScope {
         try {
             this._checkCreateBody(body);
             let id = uuid();
-            let sql = 'INSERT INTO api_scope SET ?';
+            let sql = 'INSERT INTO API_SCOPE SET ?';
             let params = <IApiScopeDao[]> [{
                 ID: id,
                 NAME: name,
                 DESCRIPTION: description,
                 SYSTEM: system,
-                APIS: apis,
+                APIS: JSON.stringify(apis),
                 IS_REQUIRED: is_required || false,
                 CREATE_BY: user_id
             }];
@@ -208,7 +208,7 @@ class Scope implements IScope {
         const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
         try {
             this._checkCreatesBody(body);
-            let sql = `INSERT INTO api_scope (${COLUMNS.join(', ')})`;
+            let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let ids: { ID: string }[] = [];
             let params = body.map((data) => {
                 const { name, description = '', is_required, system, apis } = data;
@@ -286,13 +286,13 @@ class Scope implements IScope {
         const { description = '', is_required, system, apis } = body;
         try {
             this._checkUpdateBody(body);
-            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE ID = ?', [id]);
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE ID = ?', [id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] not find`);
             }
 
             await db.query(`
-                UPDATE api_scope SET ? WHERE ID = ?
+                UPDATE API_SCOPE SET ? WHERE ID = ?
             `, [{
                 DESCRIPTION: description,
                 SYSTEM: system,
@@ -364,10 +364,10 @@ class Scope implements IScope {
         const { user: { user_id } } = options;
         try {
             this._checkUpdatesBody(body);
-            let sql = 'UPDATE api_scope SET ? WHERE ID = ?';
+            let sql = 'UPDATE API_SCOPE SET ? WHERE ID = ?';
             let ids: { ID: string }[] = await Q.all(body.map(async (data) => {
                 const { id, description = '', is_required, system, apis } = data;
-                let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE ID = ?', [id]);
+                let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE ID = ?', [id]);
                 if (rows.length === 0) {
                     throw new Error(`[${id}] not find`);
                 }
@@ -417,12 +417,12 @@ class Scope implements IScope {
 
     async dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string }> {
         try {
-            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE ID = ?', [id]);
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE ID = ?', [id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] not find`);
             }
 
-            await db.query('DELETE FROM api_scope WHERE ID = ?', [id]);
+            await db.query('DELETE FROM API_SCOPE WHERE ID = ?', [id]);
 
             return {
                 ID: id
@@ -522,7 +522,7 @@ class Scope implements IScope {
             this._checkRegistBody(body);
             let oauth = Oauth.getInstance(this.options);
             let oauthApplicaion = await oauth.checkOauthApplication(db, client_id, options);
-            let sql = `INSERT INTO api_scope (${COLUMNS.join(', ')})`;
+            let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let params = body.map((data) => {
                 const { name, description = '', is_required, apis } = data;
                 let id = uuid();
@@ -543,7 +543,7 @@ class Scope implements IScope {
             `;
 
             await db.query(sql, params);
-            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM api_scope WHERE `SYSTEM` = ?', [system]);
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE `SYSTEM` = ?', [system]);
 
             return rows;
         } catch (err) {

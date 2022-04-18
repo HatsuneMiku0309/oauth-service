@@ -52,7 +52,7 @@ class OauthApplication implements IOauthApplication {
         const { user: { user_id } } = options;
         try {
             let sql = `
-                SELECT * FROM oauth_application WHERE USER_ID = ?
+                SELECT * FROM OAUTH_APPLICATION WHERE USER_ID = ?
             `;
             let params = [user_id];
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, params);
@@ -91,7 +91,7 @@ class OauthApplication implements IOauthApplication {
     async dbDetail(db: Connection, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
         try {
             let sql = `
-                SELECT * FROM oauth_application WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION WHERE ID = ?
             `;
             let params = [id];
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, params);
@@ -190,7 +190,7 @@ class OauthApplication implements IOauthApplication {
                 is_disabled, is_expires
             } = this._checkCreateUpdateBody(body);
             let sql = `
-                INSERT INTO oauth_application SET ?
+                INSERT INTO OAUTH_APPLICATION SET ?
             `;
 
             let id = uuid();
@@ -250,13 +250,13 @@ class OauthApplication implements IOauthApplication {
                 redirect_uri, expires_date, not_before,
                 is_disabled, is_expires
             } = this._checkCreateUpdateBody(body);
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM oauth_application WHERE ID = ?', [id]);
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ?', [id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
 
             let sql = `
-                UPDATE oauth_application SET
+                UPDATE OAUTH_APPLICATION SET
                     ?
                 WHERE
                     ID = ?
@@ -306,13 +306,13 @@ class OauthApplication implements IOauthApplication {
 
     async dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
         try {
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM oauth_application WHERE ID = ?', [id]);
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ?', [id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
 
             let sql = `
-                DELETE FROM oauth_application WHERE ID = ?
+                DELETE FROM OAUTH_APPLICATION WHERE ID = ?
             `;
             let params = [id];
             await db.query<ResultSetHeader>(sql, params);
@@ -348,14 +348,14 @@ class OauthApplication implements IOauthApplication {
     async dbRemoveUser(db: Connection, id: string, oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
         try {
             let [rows] = <[IOauthApplicationUserDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application_user WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION_USER WHERE ID = ?
             `, [oau_id]);
             if (rows.length === 0) {
                 throw new Error(`[${oau_id}] oau_id not find`);
             }
 
             let sql = `
-                DELETE FROM oauth_application_user WHERE ID = ?
+                DELETE FROM OAUTH_APPLICATION_USER WHERE ID = ?
             `;
             let params = [ oau_id ];
 

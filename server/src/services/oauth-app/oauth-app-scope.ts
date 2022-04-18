@@ -5,24 +5,33 @@ import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { IOauthApplicationScope, IOauthApplicationScopeDao, IRegistBody } from './oauth-app-scope.interface';
+import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeDaO, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
 import { v4 as uuid } from 'uuid';
 import { IApiScopeDao } from '../scope/scope.interface';
 import * as _ from 'lodash';
 
 class OauthApplicationScope implements IOauthApplicationScope {
+    static instance: IOauthApplicationScope;
     options: TAnyObj;
-    constructor(options: TAnyObj = { }) {
+    private constructor(options: TAnyObj = { }) {
         this.options = options;
     }
 
-    async registScope(database: IMysqlDatabase, id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeDao[]> {
+    static getInstance(options: TAnyObj = { }): IOauthApplicationScope {
+        if (!OauthApplicationScope.instance) {
+            OauthApplicationScope.instance = new OauthApplicationScope(options);
+        }
+
+        return OauthApplicationScope.instance;
+    }
+
+    async list(database: IMysqlDatabase, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
         try {
             let db = await database.getConnection();
             try {
                 await db.beginTransaction();
-                let result = await this.dbRegistScope(db, id, body, options);
+                let result = await this.dbList(db, oa_id, options);
                 await db.commit();
 
                 return result;
@@ -37,82 +46,74 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    private async _getRegistApiScopeSystem(db: Connection, id: string): Promise<{ SYSTEM: string, IS_REQUIRED: number }[]> {
+    async dbList(db: Connection, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
         try {
-            let [scopeSystems] = <[{ SYSTEM: string, IS_REQUIRED: number }[], FieldPacket[]]> await db.query(`
-            SELECT
-                DISTINCT as2.SYSTEM,
-                as2.IS_REQUIRED
-            FROM
-                oauth_scope os,
-                api_scope as2
-            WHERE
-                os.OAUTH_APPLICATION_ID = ?
-                AND os.SCOPE_ID = as2.ID
-        `, [id]);
-
-            return scopeSystems;
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    private async _registRequiredApiScope(db: Connection, sql: string, id: string, oauthApplicaion: IOauthApplicationDao): Promise<void> {
-        try {
-            let scopeSystems = await this._getRegistApiScopeSystem(db, id);
-            let groupScopeSystems = _.groupBy(scopeSystems, 'SYSTEM');
-            let system = _.reduce(groupScopeSystems, (_system, groupScopeSystem, SYSTEM) => {
-                if (groupScopeSystem.length === 1 && !groupScopeSystem[0].IS_REQUIRED) {
-                    _system.push(SYSTEM);
-                }
-
-                return _system;
-            }, <string[]> []);
-
-            // auto regist required api-scopes, the system name of the api-scope registered according to the former
-            let [scopes] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
+            let sql = `
                 SELECT
-                    *
+                    os.ID ,
+                    os.OAUTH_APPLICATION_ID ,
+                    os.SCOPE_ID ,
+                    as2.NAME ,
+                    as2.\`SYSTEM\` ,
+                    as2.APIS,
+                    as2.IS_REQUIRED ,
+                    os.IS_DISABLED ,
+                    os.IS_CHECKED ,
+                    os.CREATE_TIME ,
+                    os.CREATE_BY ,
+                    os.UPDATE_TIME ,
+                    os.UPDATE_BY
                 FROM
-                    api_scope
+                    OAUTH_SCOPE os,
+                    API_SCOPE as2
                 WHERE
-                    \`SYSTEM\` IN (?)
-                    AND IS_REQUIRED = true
-            `, [system]);
-            
-            let params = scopes.map((scope) => {
-                const { ID } = scope;
-                let is_checked = true;
-                let is_disabled = false;
+                    OAUTH_APPLICATION_ID = ?
+                    AND os.SCOPE_ID = as2.ID
+            `;
+            let params = [oa_id];
+            let [rows] = <[IOauthApplicationScopeAndApiScopeDaO[], FieldPacket[]]> await db.query(sql, params);
 
-                return {
-                    id: ID,
-                    is_disabled,
-                    is_checked
-                };
-            });
-            await this._registApiScope(db, sql, params, id, oauthApplicaion);
-
-            await db.query(sql, params);
+            return rows;
         } catch (err) {
             throw err;
         }
     }
+
+    async registScope(database: IMysqlDatabase, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
+        try {
+            let db = await database.getConnection();
+            try {
+                await db.beginTransaction();
+                let result = await this.dbRegistScope(db, oa_id, body, options);
+                await db.commit();
+
+                return result;
+            } catch (err) {
+                await db.rollback();
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
 
     private async _registApiScope(
-        db: Connection,  sql: string, body: IRegistBody[], id: string,
-        oauthApplicaion: IOauthApplicationDao,
+        db: Connection,  sql: string, body: IRegistBody[], oa_id: string,
+        oauthApplicaion: IOauthApplicationDao
     ): Promise<void> {
         try {
-            await db.query('DELETE FROM oauth_scope WHERE OAUTH_APPLICATION_ID = ?', [id]);
+            await db.query('DELETE FROM OAUTH_SCOPE WHERE OAUTH_APPLICATION_ID = ?', [oa_id]);
             let params = body.map((data) => {
                 const { id: scope_id, is_disabled = false, is_checked = true } = data;
                 let uid = uuid();
 
-                return [uid, id, scope_id, is_disabled, is_checked, oauthApplicaion.CLIENT_ID];
+                return [uid, oa_id, scope_id, is_disabled, is_checked, oauthApplicaion.CLIENT_ID];
             });
             sql += `
-                VALUSE (${params.map(() => '?').join('), (')})
+                VALUES (${params.map(() => '?').join('), (')})
             `;
 
             await db.query(sql, params);
@@ -121,17 +122,17 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    private async _checkOauthApplication(db: Connection, id: string): Promise<IOauthApplicationDao> {
+    private async _checkOauthApplication(db: Connection, oa_id: string): Promise<IOauthApplicationDao> {
         try {
             let [oauthApplications] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application WHERE ID = ?
-            `, [id]);
+                SELECT * FROM OAUTH_APPLICATION WHERE ID = ?
+            `, [oa_id]);
             if (oauthApplications.length === 0) {
-                throw new Error(`[${id}] not find`);
+                throw new Error(`[${oa_id}] not find`);
             }
             let oauthApplicaion = oauthApplications[0];
             if (!!oauthApplicaion.IS_DISABLED) {
-                throw new Error(`[${id}] id disabled`);
+                throw new Error(`[${oa_id}] id disabled`);
             }
 
             return oauthApplicaion;
@@ -140,18 +141,52 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    async dbRegistScope(db: Connection, id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeDao[]> {
+    private async _getRequiredApiScope(db: Connection, body: IRegistBody[]) {
+        try {
+            let ids = body.map((data) => data.id);
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
+                SELECT
+                    ID
+                FROM
+                    API_SCOPE as2
+                WHERE
+                    \`SYSTEM\` IN (
+                        SELECT
+                            DISTINCT \`SYSTEM\`
+                        FROM
+                            API_SCOPE
+                        WHERE
+                            ID IN (?)
+                    )
+                    AND IS_REQUIRED = TRUE
+                    AND ID NOT IN (?)
+            `, [ids, ids]);
+
+            rows.forEach((row) => {
+                body.push({
+                    id: row.ID,
+                    is_disabled: false,
+                    is_checked: true
+                });
+            });
+
+            return body;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
         const COLUMNS = ['ID', 'OAUTH_APPLICATION_ID', 'SCOPE_ID', 'IS_DISABLED', 'IS_CHECKED', 'CREATE_BY'];
         try {
-            let oauthApplicaion = await this._checkOauthApplication(db, id);
+            let oauthApplicaion = await this._checkOauthApplication(db, oa_id);
+            let _body = await this._getRequiredApiScope(db, body);
 
-            let sql = `INSERT INTO oauth_scope (${COLUMNS.join(', ')})`;
-            await this._registApiScope(db, sql, body, id, oauthApplicaion);
-            await this._registRequiredApiScope(db, sql, id, oauthApplicaion);
+            let sql = `INSERT INTO OAUTH_SCOPE (${COLUMNS.join(', ')})`;
+            await this._registApiScope(db, sql, _body, oa_id, oauthApplicaion);
+            // await this._registRequiredApiScope(db, sql, oa_id, oauthApplicaion);
 
-            let [rows] = <[IOauthApplicationScopeDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_scope WHERE OAUTH_APPLICATION_ID = ?
-            `, [id]);
+            let rows = await this.dbList(db, oa_id, options);
 
             return rows;
         } catch (err) {

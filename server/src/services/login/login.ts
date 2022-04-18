@@ -30,7 +30,7 @@ class Login implements ILogin {
         try {
             let db = await database.getConnection();
             try {
-                let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM user WHERE ACCOUNT = ? AND PASSWORD = ?', [body.account, body.password]);
+                let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ACCOUNT = ? AND PASSWORD = ?', [body.account, body.password]);
                 if (rows.length === 0) {
                     throw new Error('Can\'t find user');
                 }
@@ -87,7 +87,7 @@ class Login implements ILogin {
     private async _checkDuplicationRegist(db: Connection, body: IRegistBody): Promise<void> {
         const { account } = body;
         try {
-            let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM user WHERE ACCOUNT = ?', [ account ]);
+            let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ACCOUNT = ?', [ account ]);
             if (rows.length !== 0) {
                 throw new Error(`[${account}] account is duplication regist`);
             }
@@ -105,7 +105,7 @@ class Login implements ILogin {
                 await db.beginTransaction();
                 await this._checkDuplicationRegist(db, body);
                 let sql = `
-                    INSERT INTO user SET ?
+                    INSERT INTO USER SET ?
                 `;
                 let id = uuid();
                 let params = <IUserDAO> {

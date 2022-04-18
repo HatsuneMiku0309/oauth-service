@@ -1,5 +1,6 @@
 import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IAPIs } from "../scope/scope.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export interface IRegistBody {
@@ -10,8 +11,10 @@ export interface IRegistBody {
 
 export interface IOauthApplicationScope {
     options: TAnyObj;
-    registScope(database: IMysqlDatabase, id: string, body: IRegistBody[],  options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeDao[]>;
-    dbRegistScope(db: Connection, id: string, body: IRegistBody[],  options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeDao[]>;
+    list(database: IMysqlDatabase, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]>;
+    dbList(db: Connection, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]>;
+    registScope(database: IMysqlDatabase, oa_id: string, body: IRegistBody[],  options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]>;
+    dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[],  options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]>;
 }
 
 // ---------- DAO -----------
@@ -26,4 +29,20 @@ export interface IOauthApplicationScopeDao {
     CREATE_BY: string;
     UPDATE_TIME?: Date;
     UPDATE_BY?: string;
+}
+
+export interface IOauthApplicationScopeAndApiScopeDaO {
+    ID: string;
+    OAUTH_APPLICATION_ID: string;
+    SCOPE_ID: string;
+    NAME: string;
+    SYSTEM: string;
+    APIS: IAPIs[],
+    IS_REQUIRED: number | boolean;
+    IS_DISABLED: number | boolean;
+    IS_CHECKED: number | boolean;
+    CREATE_TIME: Date;
+    CREATE_BY: string;
+    UPDATE_TIME: Date;
+    UPDATE_BY: string;
 }

@@ -90,7 +90,7 @@ class Passport {
             const db = await database.getConnection();
             try {
                 let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
-                    SELECT * FROM oauth_application WHERE CLIENT_ID = ? AND CLIENT_SECRET = ?
+                    SELECT * FROM OAUTH_APPLICATION WHERE CLIENT_ID = ? AND CLIENT_SECRET = ?
                 `, [
                     result.client_id, result.client_secret
                 ]);
@@ -166,7 +166,7 @@ class Passport {
                         }
                         const db = await database.getConnection();
                         try {
-                            let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM user WHERE ID = ?', [payload.user_id]);
+                            let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ID = ?', [payload.user_id]);
                             if (rows.length === 0) {
                                 _err.state = 401;
                                 _err.message = 'Authentication Error';

@@ -67,7 +67,7 @@ export interface IApiScopeDao {
     NAME: string;
     DESCRIPTION?: string;
     SYSTEM: string;
-    APIS: IAPIs[];
+    APIS: IAPIs[] | string; // setting string type because JSON.stringify(apis)
     IS_REQUIRED?: number | boolean; // default: 0
     CREATE_TIME?: Date;
     CREATE_BY: string;

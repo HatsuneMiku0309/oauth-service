@@ -89,8 +89,8 @@ class Oauth implements IOauth {
                 oa.IS_CHECKED,
                 oa.AUDIT_STATE
             FROM
-                oauth_application oa,
-                oauth_application_user oas
+                OAUTH_application oa,
+                OAUTH_APPLICATION_USER oas
             WHERE
                 oas.OAUTH_APPLICATION_ID = oa.ID
                 AND oa.CLIENT_ID = ? AND oas.USER_ID = ?
@@ -100,7 +100,7 @@ class Oauth implements IOauth {
 
             if (oauthApplicationAndUsers.length === 0) {
                 await db.query(`
-                    INSERT INTO oauth_application_user SET ?
+                    INSERT INTO OAUTH_APPLICATION_USER SET ?
                 `, [{
                     ID: uuid(),
                     USER_ID: user_id,
@@ -133,7 +133,7 @@ class Oauth implements IOauth {
         const { NOW_DATE } = options;
         try {
             await db.query(`
-                UPDATE oauth_token SET
+                UPDATE OAUTH_TOKEN SET
                     IS_EXPIRES = ?,
                     IS_DISABLED = ?,
                     EXPIRES_DATE = ?,
@@ -182,11 +182,11 @@ class Oauth implements IOauth {
             ];
 
             await db.query(`
-                INSERT INTO oauth_token_his (??)
-                SELECT ?? FROM oauth_token WHERE OAUTH_APPLICATION_USER_ID = ? AND (IS_EXPIRES = ? OR IS_DISABLED = ?)
+                INSERT INTO OAUTH_TOKEN_HIS (??)
+                SELECT ?? FROM OAUTH_TOKEN WHERE OAUTH_APPLICATION_USER_ID = ? AND (IS_EXPIRES = ? OR IS_DISABLED = ?)
             `, [ HIS_COLUMNS, COLUMNS, oauth_application_user_id, true, true ]);
             await db.query(`
-                DELETE FROM oauth_token WHERE OAUTH_APPLICATION_USER_ID = ? AND (IS_EXPIRES = ? OR IS_DISABLED = ?)
+                DELETE FROM OAUTH_TOKEN WHERE OAUTH_APPLICATION_USER_ID = ? AND (IS_EXPIRES = ? OR IS_DISABLED = ?)
             `, [ oauth_application_user_id, true, true ]);
         } catch (err) {
             throw err;
@@ -204,7 +204,7 @@ class Oauth implements IOauth {
     private async _checkOauthApplication(db: Connection, client_id: string, options: TAnyObj = { }): Promise<IOauthApplicationDao> {
         try {
             let [oauthApplicaions] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application WHERE CLIENT_ID = ?
+                SELECT * FROM OAUTH_APPLICATION WHERE CLIENT_ID = ?
             `, [ client_id ]);
 
             if (oauthApplicaions.length === 0) {
@@ -261,7 +261,7 @@ class Oauth implements IOauth {
                         !!redirect_uri && (result.redirect_uri = redirect_uri);
                         !!state && (result.state = state);
                         await db.query(`
-                            INSERT INTO oauth_token SET ?
+                            INSERT INTO OAUTH_TOKEN SET ?
                         `, [{
                             ID: id,
                             OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
@@ -287,7 +287,7 @@ class Oauth implements IOauth {
                         !!redirect_uri && (result.redirect_uri = redirect_uri);
                         !!state && (result.state = state);
                         await db.query(`
-                            INSERT INTO oauth_token SET ?
+                            INSERT INTO OAUTH_TOKEN SET ?
                         `, [{
                             ID: id,
                             OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
@@ -307,7 +307,7 @@ class Oauth implements IOauth {
                 }
                 await db.query(`
                     UPDATE
-                        oauth_application_user
+                        OAUTH_APPLICATION_USER
                     SET
                         OAUTH_TOKEN_ID = ?
                     WHERE
@@ -364,7 +364,7 @@ class Oauth implements IOauth {
                 SELECT
                     *
                 FROM
-                    oauth_token
+                    OAUTH_TOKEN
                 WHERE
                     GRANT_TYPE = ? AND CODE = ?
             `, [ 'code', code ]);
@@ -391,7 +391,7 @@ class Oauth implements IOauth {
             }
 
             let [oauthApplicationAndUsers] = <[IOauthApplicationAndUserDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application_user WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION_USER WHERE ID = ?
             `, [ row.OAUTH_APPLICATION_USER_ID ]);
             if (oauthApplicationAndUsers.length === 0) {
                 _err.data = row;
@@ -404,7 +404,7 @@ class Oauth implements IOauth {
             let _err: IError = err;
             if ('data' in _err) {
                 await db.query(`
-                    UPDATE oauth_token SET
+                    UPDATE OAUTH_TOKEN SET
                         IS_DISABLED = ?, IS_EXPIRES = ?
                     WHERE
                         ID = ?
@@ -463,7 +463,7 @@ class Oauth implements IOauth {
                 };
                 !!state && (result.state = state);
                 await db.query(`
-                    UPDATE oauth_token SET
+                    UPDATE OAUTH_TOKEN SET
                         ACCESS_TOKEN = ?, REFRESH_TOKEN = ?,
                         EXPIRES_DATE = ?,
                         UPDATE_BY = ?
@@ -515,7 +515,7 @@ class Oauth implements IOauth {
                 SELECT
                     *
                 FROM
-                    oauth_token
+                    OAUTH_TOKEN
                 WHERE
                     GRANT_TYPE = ? AND REFRESH_TOKEN = ?
                 FOR UPDATE
@@ -539,7 +539,7 @@ class Oauth implements IOauth {
             }
 
             let [oauthApplicationAndUsers] = <[IOauthApplicationAndUserDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application_user WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION_USER WHERE ID = ?
             `, [ row.OAUTH_APPLICATION_USER_ID ]);
             if (oauthApplicationAndUsers.length === 0) {
                 _err.data = row;
@@ -552,7 +552,7 @@ class Oauth implements IOauth {
             let _err: IError = err;
             if ('data' in _err) {
                 await db.query(`
-                    UPDATE oauth_token SET
+                    UPDATE OAUTH_TOKEN SET
                         IS_DISABLED = ?, IS_EXPIRES = ?
                     WHERE
                         ID = ?
@@ -591,7 +591,7 @@ class Oauth implements IOauth {
                 !!state && (result.state = state);
 
                 await db.query(`
-                    UPDATE oauth_token SET
+                    UPDATE OAUTH_TOKEN SET
                         ACCESS_TOKEN = ?, REFRESH_TOKEN = ?,
                         EXPIRES_DATE = ?,
                         REFRESH_COUNT = REFRESH_COUNT + 1,
@@ -641,7 +641,7 @@ class Oauth implements IOauth {
                 SELECT
                     *
                 FROM
-                    oauth_token
+                    OAUTH_TOKEN
                 WHERE
                     ACCESS_TOKEN = ?
                 FOR UPDATE
@@ -673,7 +673,7 @@ class Oauth implements IOauth {
             }
 
             let [oauthApplicationAndUsers] = <[IOauthApplicationAndUserDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM oauth_application_user WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION_USER WHERE ID = ?
             `, [ row.OAUTH_APPLICATION_USER_ID ]);
             if (oauthApplicationAndUsers.length === 0) {
                 _err.data = row;
@@ -686,7 +686,7 @@ class Oauth implements IOauth {
             let _err: IError = err;
             if ('data' in _err) {
                 await db.query(`
-                    UPDATE oauth_token SET
+                    UPDATE OAUTH_TOKEN SET
                         IS_DISABLED = ?, IS_EXPIRES = ?
                     WHERE
                         ID = ?

@@ -5,6 +5,7 @@ import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
 import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { OauthApplication } from './oauth-app';
+import { OauthApplicationScope } from './oauth-app-scope';
 import { BaseRouter } from '../utils';
 
 class OauthApplicationRouter extends BaseRouter implements IRouter {
@@ -22,6 +23,7 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
 
     registerAPIs(): void {
         let oauthApplication = OauthApplication.getInstance(this.options);
+        let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
         let api = super._getRootApi().join('/');
         this.router.get(api, async (ctx: TContext) => {
             const { query } = ctx.request;
@@ -102,6 +104,34 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
                     data: result
                 };
             } catch (err) {
+                throw err;
+            }
+        });
+
+        api = super._getRootApi([':oa_id', 'oauth_app_scope']).join('/');
+        this.router.get(api, async (ctx: TContext) => {
+            const { params: { oa_id } } = ctx;
+            try {
+                let result = await oauthApplicationScope.list(this.database, oa_id, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err: any) {
+                throw err;
+            }
+        });
+
+        api = super._getRootApi([':oa_id', 'oauth_app_scope']).join('/');
+        this.router.post(api, async (ctx: TContext) => {
+            const { params: { oa_id }, request: { body } } = ctx;
+            try {
+                let result = await oauthApplicationScope.registScope(this.database, oa_id, body, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err: any) {
                 throw err;
             }
         });

@@ -19,7 +19,18 @@ const {
     EXPIRES_TYPE = 'd',
     ALGORITHM = 'RS512',
     JWT_PRIVATE = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwtRS512.key')),
-    JWT_PUBLIC = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwtRS512.key.pub'))
+    JWT_PUBLIC = fs.readFileSync(path.resolve(process.cwd(), 'config', 'jwtRS512.key.pub')),
+    MYSQL_HOST,
+    MYSQL_PORT,
+    MYSQL_DATABASE,
+    MYSQL_USER,
+    MYSQL_PASSWORD,
+    MYSQL_CONNECT_TIMEOUT,
+    MYSQL_WAIT_FOR_CONNECTIONS,
+    MYSQL_CONNECTION_LIMIT,
+    MYSQL_QUEUE_LIMIT,
+    MYSQL_DEBUE,
+    MYSQL_TRACE
 } = process.env;
 
 
@@ -43,17 +54,17 @@ class Config implements IConfig {
                 ]
             },
             databaseConfig: {
-                host: 'localhost',
-                port: 23306,
-                database: 'test',
-                user: 'root',
-                password: 'hatsunemiku01',
-                connectTimeout: 10000,
-                waitForConnections: true,
-                connectionLimit: 10,
-                queueLimit: 0,
-                debug: false,
-                trace: true
+                host: MYSQL_HOST,
+                port: Number(MYSQL_PORT),
+                database: MYSQL_DATABASE,
+                user: MYSQL_USER,
+                password: MYSQL_PASSWORD,
+                connectTimeout: Number(MYSQL_CONNECT_TIMEOUT),
+                waitForConnections: MYSQL_WAIT_FOR_CONNECTIONS === 'TRUE' ? true : false,
+                connectionLimit: Number(MYSQL_CONNECTION_LIMIT),
+                queueLimit: Number(MYSQL_QUEUE_LIMIT),
+                debug: MYSQL_DEBUE === 'TRUE' ? true : false,
+                trace: MYSQL_TRACE === 'TRUE' ? true : false
             },
             serverConfig: {
                 HTTPS: HTTPS.toUpperCase() === 'TRUE' ? true : false,
