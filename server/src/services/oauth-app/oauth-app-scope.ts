@@ -184,7 +184,6 @@ class OauthApplicationScope implements IOauthApplicationScope {
 
             let sql = `INSERT INTO OAUTH_SCOPE (${COLUMNS.join(', ')})`;
             await this._registApiScope(db, sql, _body, oa_id, oauthApplicaion);
-            // await this._registRequiredApiScope(db, sql, oa_id, oauthApplicaion);
 
             let rows = await this.dbList(db, oa_id, options);
 

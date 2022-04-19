@@ -30,19 +30,18 @@ class LoginRouter extends BaseRouter implements IRouter {
 
                 ctx.body = result;
             } catch (err: any) {
-                ctx.throw(500, err.message);
+                throw err;
             }
         });
 
-        api = super._getRootApi('register').join('/');
-        this.router.post(api, async (ctx: TContext, next: Next) => {
-            const { body } = ctx;
+        this.router.post('/register', async (ctx: TContext, next: Next) => {
+            const { body } = ctx.request;
             try {
                 let result = await login.regist(this.database, body, this.options);
 
                 ctx.body = result;
             } catch (err: any) {
-                ctx.throw(500, err.message);
+                throw err;
             }
         });
     }

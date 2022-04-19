@@ -196,6 +196,7 @@ class Passport {
             } catch (err: any) {
                 _err = err;
                 _err.state = _err.state ? _err.state : 500;
+
                 ctx.throw(_err.state, _err, { expose: true });
             }
         };
