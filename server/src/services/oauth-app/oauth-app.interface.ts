@@ -3,7 +3,7 @@ import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export interface IListQuery {
-
+    q: string;
 }
 
 export interface IListRes {
@@ -11,6 +11,13 @@ export interface IListRes {
     NAME: string;
     HOMEPAGE_URL: string;
     APPLICATION_DESCRIPTION?: string;
+    IS_DISABLED: string;
+    IS_EXPIRES: string;
+    IS_CHECKED: string;
+    CREATE_TIME: string;
+    CREATE_BY: string;
+    UPDATE_TIME?: string;
+    UPDATE_BY?: string;
 }
 
 export interface ICreateBody {

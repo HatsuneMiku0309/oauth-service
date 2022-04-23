@@ -71,7 +71,10 @@ class Middleware implements IMiddleware {
                 formLimit: '10mb',
                 strict: true
             }),
-            cors(),
+            cors({
+                exposeHeaders: ['Authorization'],
+                allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+            }),
             await Passport.passport(this.database, this.config.getJWTConfig())
         ];
         middles.forEach((middle) => {

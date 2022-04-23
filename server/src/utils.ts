@@ -11,7 +11,7 @@ import * as dayjs from 'dayjs';
 function checkDate (date: string): boolean {
     try {
         const re = /^[0-9]{4}[-\/][0-9]{2}[-\/][0-9]{2}$/;
-        if (re.test(date) && dayjs(date).isValid()) {
+        if (re.test(date) && dayjs(date).isValid() && (new Date(date)).toString() !== 'Invalid Date') {
             return true;
         }
 
@@ -24,7 +24,7 @@ function checkDate (date: string): boolean {
 function checkDateTime (datetime: string): boolean {
     try {
         const re = /^[0-9]{4}[-\/][0-9]{2}[-\/][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/;
-        if (re.test(datetime) && dayjs(datetime).isValid()) {
+        if (re.test(datetime) && dayjs(datetime).isValid() && (new Date(datetime)).toString() !== 'Invalid Date') {
             return true;
         }
 

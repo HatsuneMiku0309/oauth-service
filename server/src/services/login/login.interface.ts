@@ -15,7 +15,7 @@ export interface IRegistBody {
 
 export interface ILogin {
     options: TAnyObj;
-    login(ctx: TContext, database: IMysqlDatabase, options?: TAnyObj): Promise<IUserDAO[]>;
+    login(ctx: TContext, database: IMysqlDatabase, options?: TAnyObj): Promise<IUserDAO>;
     regist(database: IMysqlDatabase, body: IRegistBody, options?: TAnyObj): Promise<{ ACCOUNT: string }>;
 }
 

@@ -2,7 +2,8 @@ import { install } from 'source-map-support';
 install();
 
 import * as mysql2 from 'mysql2/promise';
-import { IDatabaseConfig, IEndReturn, IMysqlDatabase } from './utils.interface';
+import * as _ from 'lodash';
+import { ICustomConnection, IDatabaseConfig, IEndReturn, IMysqlDatabase } from './utils.interface';
 
 class MysqlDatabase implements IMysqlDatabase {
     readonly config: IDatabaseConfig;
@@ -74,9 +75,37 @@ class MysqlDatabase implements IMysqlDatabase {
         }
     }
 
-    async getConnection(): Promise<mysql2.Connection> {
+    private _convertTinyintToBoolean<T>(datas: T, fields: (mysql2.FieldPacket & { columnType?: number })[]): T {
         try {
-            const conn = await mysql2.createConnection(this.config);
+            let result: T;
+            if (_.isArray(datas)) {
+                result = <any> _.map(datas, (data) => {
+                    return _.reduce(<any> data, (_r, val, key) => {
+                        let field = fields.find((f) => f.name === key);
+                        _r[key] = field!.columnType === dbType.TINY ? !!val : val;
+
+                        return _r;
+                    }, <any> { });
+                });
+            } else {
+                result = _.reduce(<any> datas, (_r, val, key) => {
+                    let field = fields.find((f) => f.name === key);
+                    _r[key] = field!.columnType === dbType.TINY ? !!val : val;
+
+                    return _r;
+                }, <any> { });
+            }
+
+            return result;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async getConnection(): Promise<ICustomConnection> {
+        try {
+            const conn = <ICustomConnection> await mysql2.createConnection(this.config);
+            conn.convertTinyintToBoolean = this._convertTinyintToBoolean;
 
             return conn;
         } catch (err) {
@@ -93,8 +122,37 @@ class MysqlDatabase implements IMysqlDatabase {
             throw err;
         }
     }
+}
 
-
+export enum dbType {
+    DECIMAL = 0x00, // aka DECIMAL (http://dev.mysql.com/doc/refman/5.0/en/precision-math-decimal-changes.html)
+    TINY = 0x01, // aka TINYINT, 1 byte
+    SHORT = 0x02, // aka SMALLINT, 2 bytes
+    LONG = 0x03, // aka INT, 4 bytes
+    FLOAT = 0x04, // aka FLOAT, 4-8 bytes
+    DOUBLE = 0x05, // aka DOUBLE, 8 bytes
+    NULL = 0x06, // NULL (used for prepared statements, I think)
+    TIMESTAMP = 0x07, // aka TIMESTAMP
+    LONGLONG = 0x08, // aka BIGINT, 8 bytes
+    INT24 = 0x09, // aka MEDIUMINT, 3 bytes
+    DATE = 0x0a, // aka DATE
+    TIME = 0x0b, // aka TIME
+    DATETIME = 0x0c, // aka DATETIME
+    YEAR = 0x0d, // aka YEAR, 1 byte (don't ask)
+    NEWDATE = 0x0e, // aka ?
+    VARCHAR = 0x0f, // aka VARCHAR (?)
+    BIT = 0x10, // aka BIT, 1-8 byte
+    JSON = 0xf5,
+    NEWDECIMAL = 0xf6, // aka DECIMAL
+    ENUM = 0xf7, // aka ENUM
+    SET = 0xf8, // aka SET
+    TINY_BLOB = 0xf9, // aka TINYBLOB, TINYTEXT
+    MEDIUM_BLOB = 0xfa, // aka MEDIUMBLOB, MEDIUMTEXT
+    LONG_BLOB = 0xfb, // aka LONGBLOG, LONGTEXT
+    BLOB = 0xfc, // aka BLOB, TEXT
+    VAR_STRING = 0xfd, // aka VARCHAR, VARBINARY
+    STRING = 0xfe, // aka CHAR, BINARY
+    GEOMETRY = 0xff // aka GEOMETRY
 }
 
 export {

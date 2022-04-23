@@ -3,7 +3,7 @@ install();
 
 import { Connection } from 'mysql2/promise';
 import { FieldPacket, ResultSetHeader } from 'mysql2';
-import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase, ICustomConnection } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import {
     ICreateBody, IListQuery, IListRes,
@@ -12,8 +12,10 @@ import {
 } from './oauth-app.interface';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { checkDate, checkHttpProtocol, checkRedirectUri } from '../../utils';
+import * as dayjs from 'dayjs';
+import { checkDateTime, checkHttpProtocol, checkRedirectUri } from '../../utils';
 import { IOauthApplicationUserDao } from '../oauth/oauth.interface';
+import { dbType } from '../../mysql-db';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
@@ -50,18 +52,31 @@ class OauthApplication implements IOauthApplication {
 
     async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes[]> {
         const { user: { user_id } } = options;
+        const { q } = query;
         try {
             let sql = `
                 SELECT * FROM OAUTH_APPLICATION WHERE USER_ID = ?
             `;
+            let whereSql = ['NAME LIKE ?', 'HOMEPAGE_URL LIKE ?'];
             let params = [user_id];
+            !!q && params.push(`%${q}%`) && params.push(`%${q}%`);
+            !!q && (sql += ` AND (${whereSql.join(' OR ')})`);
+            sql += ' ORDER BY CREATE_TIME DESC';
+
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, params);
             let result = rows.map((row) => {
                 return <IListRes> {
                     ID: row.ID,
                     NAME: row.NAME,
                     HOMEPAGE_URL: row.HOMEPAGE_URL,
-                    APPLICATION_DESCRIPTION: row.APPLICATION_DESCRIPTION || ''
+                    APPLICATION_DESCRIPTION: row.APPLICATION_DESCRIPTION || '',
+                    IS_CHECKED: row.IS_CHECKED ? 'Y' : 'N',
+                    IS_DISABLED: row.IS_DISABLED ? 'Y' : 'N',
+                    IS_EXPIRES: row.IS_EXPIRES ? 'Y' : 'N',
+                    CREATE_TIME: dayjs(row.CREATE_TIME).format('YYYY-MM-DD HH:mm:ss'),
+                    CREATE_BY: row.CREATE_BY,
+                    UPDATE_TIME: row.UPDATE_TIME ? dayjs(row.UPDATE_TIME).format('YYYY-MM-DD HH:mm:ss') : undefined,
+                    UPDATE_BY: row.UPDATE_BY
                 };
             });
 
@@ -88,19 +103,20 @@ class OauthApplication implements IOauthApplication {
         }
     }
 
-    async dbDetail(db: Connection, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
+    async dbDetail(db: ICustomConnection, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
         try {
             let sql = `
                 SELECT * FROM OAUTH_APPLICATION WHERE ID = ?
             `;
             let params = [id];
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, params);
+            let [rows, fields] = <[IOauthApplicationDao[], (FieldPacket & { columnType: number })[]]> await db.query(sql, params);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
             let row = rows[0];
+            let result = db.convertTinyintToBoolean(row, fields);
 
-            return row;
+            return result;
         } catch (err) {
             throw err;
         }
@@ -139,9 +155,9 @@ class OauthApplication implements IOauthApplication {
                 throw new Error('application_description type error');
             } else if (!redirect_uri) {
                 throw new Error('redirect_uri is required');
-            } else if (!!expires_date && !checkDate(expires_date)) {
+            } else if (!!expires_date && !checkDateTime(expires_date)) {
                 throw new Error('expires_date invalid');
-            } else if (!!not_before && !checkDate(not_before)) {
+            } else if (!!not_before && !checkDateTime(not_before)) {
                 throw new Error('not_before invalid');
             }
 

@@ -89,7 +89,7 @@ class Oauth implements IOauth {
                 oa.IS_CHECKED,
                 oa.AUDIT_STATE
             FROM
-                OAUTH_application oa,
+                OAUTH_APPLICATION oa,
                 OAUTH_APPLICATION_USER oas
             WHERE
                 oas.OAUTH_APPLICATION_ID = oa.ID

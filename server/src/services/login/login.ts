@@ -25,7 +25,7 @@ class Login implements ILogin {
         return Login.instance;
     }
 
-    async login(ctx: TContext, database: IMysqlDatabase, options: TAnyObj = { }): Promise<IUserDAO[]> {
+    async login(ctx: TContext, database: IMysqlDatabase, options: TAnyObj = { }): Promise<IUserDAO> {
         const { body } = <{ body: ILoginBody }> ctx.request;
         try {
             let db = await database.getConnection();
@@ -45,7 +45,12 @@ class Login implements ILogin {
                 }, options);
                 ctx.set('Authorization', `${Passport.TOKEN_TYPE} ${token}`);
 
-                return rows;
+                return <any> {
+                    ID: row.ID,
+                    ACCOUNT: row.ACCOUNT,
+                    EMAIL: row.EMAIL,
+                    PHONE: row.PHONE
+                };
             } catch (err) {
                 throw err;
             } finally {
