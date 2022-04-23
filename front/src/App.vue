@@ -1,6 +1,18 @@
 <template>
-  <router-view/>
+  <router-view />
 </template>
+
+<script lang="ts">
+import { defineComponent, provide } from 'vue'
+import store from './store/header';
+
+export default defineComponent({
+  setup() {
+    provide('mapStore', store);
+  },
+})
+</script>
+
 
 <style>
   html, body, #app {

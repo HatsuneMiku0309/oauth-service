@@ -1,30 +1,36 @@
 <template>
-  <!-- <Heart v-if="isShowLoad" /> -->
+  <Cat v-if="isShowLoad" class="w-full h-full opacity-50"/>
   <div class="flex flex-col items-center h-screen">
-    <div class="flex flex-col p-16 items-center w-full">
-      <img class="w-32" alt="Vue logo" src="@/../public/images/logo.png">
-      <div class="mt-5">
-        ICouple
+    <div class="flex flex-col w-5/12 self-center bg-green-300 mt-28 border-2 border-green-600 rounded-3xl min-w-min">
+      <div class="flex flex-col mt-12 items-center w-full">
+        <router-link class="flex flex-col items-center" to="/login">
+          <img class="w-32" alt="Vue logo" src="@/../images/logo.png">
+          <div class="flex justify-center w-32 mt-3">
+            ICouple
+          </div>
+        </router-link>
       </div>
-    </div>
-    <div class="flex flex-col justify-center items-center my-10 w-full h-32">
-      <div class="flex flex-col my-2 items-center w-11/12">
-        <span class="w-full text-left mb-1">Acoount</span>
-        <input type="text" class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="account" placeholder="EmpNo"/>
-      </div>
-      <div class="flex flex-col my-2 items-center w-11/12">
-        <div class="flex flex-row w-full mb-1">
-          <span class="w-full text-left">Password</span>
-          <span @click="testClickScope" class="w-full text-right text-blue-600 underline">forget password</span>
+      <form class="mx-16 mt-6 p-4" @submit.prevent="checkForm" autocomplete="nope">
+        <div class="flex flex-col items-center px-12 pb-12">
+          <div class="flex flex-col my-2 items-center w-11/12">
+            <span class="w-full text-left mb-1">Acoount</span>
+            <input type="text" class="w-full h-10 border rounded-xl border-gray-900 px-2" @keyup.exact.enter="submit" v-model="account" required placeholder="Account:" />
+          </div>
+          <div class="flex flex-col my-2 items-center w-11/12">
+            <div class="flex flex-row w-full mb-1">
+              <span class="w-full text-left">Password</span>
+              <span @click="testClickScope" class="w-full text-right text-blue-600 underline">forget password</span>
+            </div>
+            <div class="w-full relative">
+              <input type="password" class="w-full h-10 border rounded-xl border-gray-900 px-2" @keyup.exact.enter="submit" v-model="password" required placeholder="Password:" />
+            </div>
+          </div>
         </div>
-        <div class="w-full relative">
-          <input type="password" class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="password" placeholder="Password"/>
+        <div class="flex flex-row my-2 items-center w-full justify-center mt-10">
+          <router-link to="/signup" class="cursor-pointer mx-4 w-32 border rounded-full border-gray-900 p-2 hover:bg-green-400 text-center">Sign up</router-link>
+          <input type="submit" class="mx-4 cursor-pointer w-32 bg-transparent border rounded-full border-gray-900 p-2 hover:bg-green-400" value="Sign in" />
         </div>
-      </div>
-      <div class="flex flex-row my-2 items-center w-full justify-evenly mt-10">
-        <button class="w-20 border rounded-full border-gray-900 p-2" @click="signUp">Sign up</button>
-        <button class="w-20 border rounded-full border-gray-900 p-2" @click="signIn">Sign in</button>
-      </div>
+      </form>
     </div>
   </div>
 </template>
@@ -32,15 +38,19 @@
 <script lang="ts">
 import { defineComponent, reactive, ref, toRefs } from 'vue';
 import { useRouter } from 'vue-router';
-import Heart from '../components/Loaders/Heart.vue';
-// import { post } from '../apis/login';
+import Cat from '../components/Loaders/Cat.vue';
+import { post } from '../apis/utils';
+import { encodeBase64 } from '../utils';
 
 export default defineComponent({
   name: 'Login',
   components: {
-      Heart
+      Cat
   },
   setup() {
+    localStorage.removeItem('user-data');
+    localStorage.removeItem('token');
+
     const router = useRouter();
     const isShowLoad = ref(false);
     const loginData = reactive({
@@ -50,42 +60,30 @@ export default defineComponent({
     const testClickScope = () => {
       console.log('testClickScope');
     };
-    const checkToken = () => {
-    let token = localStorage.getItem('token');
-    if (!token) {
-      isShowLoad.value = true;
-
-      // demo redirect login page when no has token
-      setTimeout(() => {
-      isShowLoad.value = false;
-      router.replace('/login');
-      }, 300);
-    }
-    };
-    checkToken();
-    const signIn = async () => {
+    const checkForm = async (e: Event) => {
       try {
         isShowLoad.value = true;
-        // console.log('account: ' + loginData.account);
-        // console.log('password: ' + loginData.password);
-
         // call api verify loginData
-        // let result = await post<{ token: string }>('/login', {
-        //     account: loginData.account,
-        //     password: loginData.password
-        // });
+        let result = await post('/login', {
+            account: loginData.account,
+            password: loginData.password
+        });
+        console.log(result);
+        let userData = result.data;
+        let token = result.headers.authorization || '';
+        if (token === '') {
+          throw new Error('token is empty');
+        }
 
-        // response and set storage token data
-        let token = btoa(loginData.account + loginData.password);
-        // let data = atob(token);
-        // localStorage.setItem('token', result.token);
+        localStorage.setItem('user-data', encodeBase64(JSON.stringify(userData)));
         localStorage.setItem('token', token);
 
         // redirect to Home page
         router.push('/');
-      } catch (err) {
+      } catch (err: any) {
+        localStorage.removeItem('user-data');
         localStorage.removeItem('token');
-        // api fail do something
+        alert(err.response.data.errMsg);
       } finally {
         isShowLoad.value = false;
       }
@@ -98,7 +96,7 @@ export default defineComponent({
       isShowLoad,
       ...toRefs(loginData),
       testClickScope,
-      signIn,
+      checkForm,
       signUp
     };
   }

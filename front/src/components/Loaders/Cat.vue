@@ -1,6 +1,6 @@
 <template>
-  <div class="w-screen h-screen z-10 absolute">
-    <div class="box h-screen">
+  <div class="z-10 absolute">
+    <div class="box h-full">
       <div class="cat">
         <div class="cat__body"></div>
         <div class="cat__body"></div>
@@ -26,8 +26,9 @@ export default {
   width: 100%;
   max-width: 20em;
   overflow: hidden;
-  background-color: rgba(230, 220, 220, 1);
+  @apply bg-gray-800;
 }
+
 .cat::before {
   content: "";
   display: block;
@@ -51,6 +52,7 @@ export default {
   -webkit-animation: rotating 2.79s cubic-bezier(0.65, 0.54, 0.12, 0.93) infinite;
           animation: rotating 2.79s cubic-bezier(0.65, 0.54, 0.12, 0.93) infinite;
 }
+
 .cat__body::before, .cat__tail::before, .cat__head::before {
   content: "";
   position: absolute;
@@ -66,13 +68,14 @@ export default {
   right: 0;
   background-position: 100% 0%;
   transform-origin: 0% 100%;
-  transform: rotate(90deg);
+  transform: rotate(80deg);
 }
 
 .cat__tail {
   -webkit-animation-delay: 0.2s;
           animation-delay: 0.2s;
 }
+
 .cat__tail::before {
   left: 0;
   bottom: 0;
@@ -85,10 +88,12 @@ export default {
   -webkit-animation-delay: 0.1s;
           animation-delay: 0.1s;
 }
+
 .cat__body:nth-of-type(2) {
   -webkit-animation-delay: 0.2s;
           animation-delay: 0.2s;
 }
+
 .cat__body::before {
   right: 0;
   bottom: 0;
@@ -113,35 +118,14 @@ export default {
     transform: none;
   }
 }
+
 .box {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: flex-start;
   justify-content: center;
   align-items: center;
-  background-color: rgba(230, 220, 220, 1);
-  opacity: 0.5;
-}
-
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  height: 100%;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  margin: 0;
-  line-height: 1.4;
+  @apply bg-gray-800;
 }
 
 .intro {
@@ -155,6 +139,7 @@ body {
   border-bottom: 1px dashed rgba(0, 0, 0, 0.3);
   text-align: center;
 }
+
 .intro small {
   display: block;
   opacity: 0.5;
@@ -171,6 +156,7 @@ body {
   text-align: right;
   opacity: 0.5;
 }
+
 .info a {
   color: inherit;
 }

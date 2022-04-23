@@ -1,45 +1,48 @@
 <template>
   <Cat v-if="isShowLoad" />
   <div class="flex flex-col">
-    <router-link class="flex justify-end pr-4 mt-2 underline" to="/login">Sign in ></router-link>
-    <div class="flex flex-col p-16 items-center w-full">
-      <img class="w-32" alt="Vue logo" src="@/../public/images/logo.png">
-      <div class="mt-5">
-        ICouple
+    <router-link class="absolute text-sm right-0 flex justify-end pr-4 mt-2 underline" to="/login">Sign in ></router-link>
+    <div class="flex flex-col w-5/12 self-center bg-green-300 mt-28 border-2 border-green-600 rounded-3xl min-w-min">
+      <div class="flex flex-col mt-12 items-center w-full">
+        <router-link class="flex flex-col items-center" to="/login">
+          <img class="w-32" alt="Vue logo" src="@/../images/logo.png">
+          <div class="flex justify-center w-32 mt-3">ICouple</div>
+        </router-link>
       </div>
+      <form class="mx-16 mt-6 p-4" @submit.prevent="checkForm" autocomplete="nope">
+        <div class="flex flex-col items-center px-12 pb-12">
+          <div class="flex my-2 items-center w-full">
+            <input type="text" autocomplete="nope" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.account" placeholder="Account:" />
+          </div>
+          <div class="flex my-2 items-center w-full">
+            <input type="password" autocomplete="off" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.password" placeholder="Password:" />
+          </div>
+          <div class="flex my-2 items-center w-full">
+            <input type="email" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.email" placeholder="Email:" />
+          </div>
+          <div class="flex my-2 items-center w-full">
+            <input type="text" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.phone" placeholder="Phone:" />
+          </div>
+        </div>
+        <div class="flex flex-row my-2 items-center w-full justify-center">
+          <input type="submit" class="w-32 cursor-pointer bg-transparent border rounded-full border-gray-900 p-2 hover:bg-green-400" value="Sign up" />
+        </div>
+      </form>
     </div>
-    <form @submit.prevent="checkForm" autocomplete="nope">
-      <div class="flex flex-col items-center m-4">
-        <div class="flex my-2 items-center w-1/2">
-          <input type="text" autocomplete="nope" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.account" placeholder="Account:"/>
-        </div>
-        <div class="flex my-2 items-center w-1/2">
-          <input type="password" autocomplete="off" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.password" placeholder="Password:"/>
-        </div>
-        <div class="flex my-2 items-center w-1/2">
-          <input type="email" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.email" placeholder="Email:"/>
-        </div>
-        <div class="flex my-2 items-center w-1/2">
-          <input type="text" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.phone" placeholder="Phone:"/>
-        </div>
-      </div>
-      <div class="flex flex-row my-2 items-center w-full justify-evenly mt-10">
-        <input type="submit" class="w-32 border rounded-full border-gray-900 p-2" value="Sign up"/>
-      </div>
-    </form>
   </div>
 </template>
 
 <script lang="ts">
 import Cat from '../components/Loaders/Cat.vue';
-import { reactive, ref } from '@vue/reactivity';
-import { post } from '../apis/login';
+import { defineComponent, reactive, ref } from 'vue';
+import { post } from '../apis/utils';
 import router from '@/router';
 
-export default {
+export default defineComponent({
   name: 'Register',
   components: { Cat },
   setup() {
+    localStorage.removeItem('token');
     const isShowLoad = ref(false);
     const accountObj: {
       account?: string;
@@ -71,7 +74,7 @@ export default {
       accountObj
     }
   },
-}
+});
 </script>
 
 <style scoped>

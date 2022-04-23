@@ -1,27 +1,99 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from 'firebase/app';
-import { getAnalytics } from 'firebase/analytics';
+import axios, { AxiosRequestConfig } from 'axios';
+// tslint:disable-next-line: whitespace
+const PROTOCOL = (import.meta as any).env.VITE_PROTOCOL || 'http';
+// tslint:disable-next-line: whitespace
+const URL = (import.meta as any).env.VITE_BASE_URL || 'localhost';
+// tslint:disable-next-line: whitespace
+const PORT = (import.meta as any).env.VITE_PORT || '8080';
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+export async function get<T = any>(
+    api: string, params?: { [key: string]: any }, options: AxiosRequestConfig = { },
+): Promise<T> {
+    const { headers = { } } = options;
+    try {
+        const instance = axios.create({
+            baseURL: `${PROTOCOL}://${URL}:${PORT}/api`,
+            timeout: 1000,
+            ...options,
+            headers: Object.assign({
+                'X-Custom-Header': 'Oauth',
+                'Authorization': localStorage.getItem('token'),
+            }, headers),
+        });
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: 'AIzaSyCi8TfNLzuG1vmpyCB3Ezk0KRGy9_bRyt4',
-  authDomain: 'icouple-fe019.firebaseapp.com',
-  projectId: 'icouple-fe019',
-  storageBucket: 'icouple-fe019.appspot.com',
-  messagingSenderId: '1035717637806',
-  appId: '1:1035717637806:web:b8ba6d89161a6daf4cdf3f',
-  measurementId: 'G-BNP6DPCG9C',
-};
+        const res: T = await instance.get(api, {
+            params,
+        });
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        return res;
+    } catch (err) {
+        throw err;
+    }
+}
 
-export {
-  app,
-  analytics,
-};
+export async function post<T = any>(
+    api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
+): Promise<T> {
+    const { headers = { } } = options;
+    try {
+        const instance = axios.create({
+            baseURL: `${PROTOCOL}://${URL}:${PORT}/api`,
+            timeout: 1000,
+            ...options,
+            headers: Object.assign({
+                'X-Custom-Header': 'Oauth',
+                'Authorization': localStorage.getItem('token'),
+            }, headers),
+        });
+        const res: T = await instance.post(api, data);
+
+        return res;
+    } catch (err) {
+        throw err;
+    }
+}
+
+export async function put<T = any>(
+    api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
+): Promise<T> {
+    const { headers = { } } = options;
+    try {
+        const instance = axios.create({
+            baseURL: `${PROTOCOL}://${URL}:${PORT}/api`,
+            timeout: 1000,
+            ...options,
+            headers: Object.assign({
+                'X-Custom-Header': 'Oauth',
+                'Authorization': localStorage.getItem('token'),
+            }, headers),
+        });
+        const res: T = await instance.put(api, data);
+
+        return res;
+    } catch (err) {
+        throw err;
+    }
+}
+
+
+export async function remove<T = any>(
+    api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
+): Promise<T> {
+    const { headers = { } } = options;
+    try {
+        const instance = axios.create({
+            baseURL: `${PROTOCOL}://${URL}:${PORT}/api`,
+            timeout: 1000,
+            ...options,
+            headers: Object.assign({
+                'X-Custom-Header': 'Oauth',
+                'Authorization': localStorage.getItem('token'),
+            }, headers),
+        });
+        const res: T = await instance.delete(api, data);
+
+        return res;
+    } catch (err) {
+        throw err;
+    }
+}
