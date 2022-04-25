@@ -81,17 +81,6 @@ export interface IOauth {
 
 // ---------- DAO -----------
 
-export interface IOauthApplicationUserDao {
-    ID: string; // varchar(100) uuid
-    USER_ID: string; // varchar(100) uuid
-    OAUTH_APPLICATION_ID: string; // varchar(100) uuid
-    OAUTH_TOKEN_ID: string; //varchar(100) uuid
-    CREATE_TIME?: Date;
-    CREATE_BY: string; // varchar(100)
-    UPDATE_TIME?: Date;
-    UPDATE_BY?: string; // varchar(100)
-}
-
 export interface IOauthApplicationAndUserDao {
     ID: string;
     USER_ID: string;
@@ -100,9 +89,9 @@ export interface IOauthApplicationAndUserDao {
     REDIRECT_URI: string;
     EXPIRES_DATE: Date;
     NOT_BEFORE: Date;
-    IS_DISABLED: number | boolean; // default: 0
-    IS_EXPIRES: number | boolean; // default: 0
-    IS_CHECKED: number | boolean; // default: 1
+    IS_DISABLED: boolean; // default: 0
+    IS_EXPIRES: boolean; // default: 0
+    IS_CHECKED: boolean; // default: 1
     AUDIT_STATE: string;
 }
 
@@ -116,8 +105,8 @@ export interface IOauthTokenDao {
     REFRESH_TOKEN?: string; // varchar(1000)
     EXPIRES_DATE: Date;
     NOT_BEFORE?: Date;
-    IS_DISABLED?: number | boolean; // default: 0
-    IS_EXPIRES?: number | boolean; // default: 0
+    IS_DISABLED?: boolean; // default: 0
+    IS_EXPIRES?: boolean; // default: 0
     USE_LIMIT?: number; // u_int default: 0
     USE_COUNT?: number; // u_int default: 0
     REFRESH_LIMIT?: number; // u_int default: 0

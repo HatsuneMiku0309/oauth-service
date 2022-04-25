@@ -65,7 +65,15 @@ class Config implements IConfig {
                 connectionLimit: Number(MYSQL_CONNECTION_LIMIT),
                 queueLimit: Number(MYSQL_QUEUE_LIMIT),
                 debug: MYSQL_DEBUE === 'TRUE' ? true : false,
-                trace: MYSQL_TRACE === 'TRUE' ? true : false
+                trace: MYSQL_TRACE === 'TRUE' ? true : false,
+                typeCast: (field: any, next: () => void): any => {
+                    // change TINYINT to boolean
+                    if (field.type === 'TINY' && field.length === 1) {
+                        return (field.string() === '1');
+                    }
+
+                    return next();
+                }
             },
             serverConfig: {
                 HTTPS: HTTPS.toUpperCase() === 'TRUE' ? true : false,

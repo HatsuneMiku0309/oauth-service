@@ -23,8 +23,8 @@ export interface IOauthApplicationScopeDao {
     ID: string;
     OAUTH_APPLICATION_ID: string;
     SCOPE_ID: string;
-    IS_DISABLED?: number | boolean; // default: 0
-    IS_CHECKED?: number | boolean; // default: 1
+    IS_DISABLED?: boolean; // default: 0
+    IS_CHECKED?: boolean; // default: 1
     CREATE_TIME?: Date;
     CREATE_BY: string;
     UPDATE_TIME?: Date;
@@ -38,9 +38,9 @@ export interface IOauthApplicationScopeAndApiScopeDaO {
     NAME: string;
     SYSTEM: string;
     APIS: IAPIs[],
-    IS_REQUIRED: number | boolean;
-    IS_DISABLED: number | boolean;
-    IS_CHECKED: number | boolean;
+    IS_REQUIRED: boolean;
+    IS_DISABLED: boolean;
+    IS_CHECKED: boolean;
     CREATE_TIME: Date;
     CREATE_BY: string;
     UPDATE_TIME: Date;

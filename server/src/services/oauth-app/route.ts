@@ -7,6 +7,7 @@ import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { OauthApplication } from './oauth-app';
 import { OauthApplicationScope } from './oauth-app-scope';
 import { BaseRouter } from '../utils';
+import { OauthApplicationUser } from './oauth-app-user';
 
 class OauthApplicationRouter extends BaseRouter implements IRouter {
     readonly api: string = '/oauth-app';
@@ -24,6 +25,8 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
     registerAPIs(): void {
         let oauthApplication = OauthApplication.getInstance(this.options);
         let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
+        let oauthApplicationUser = OauthApplicationUser.getInstance(this.options);
+
         let api = super._getRootApi().join('/');
         this.router.get(api, async (ctx: TContext) => {
             const { query } = ctx.request;
@@ -94,19 +97,7 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
             }
         });
 
-        api = super._getRootApi([':id', 'oauth_application_user', ':oau_id']).join('/');
-        this.router.delete(api, async (ctx: TContext) => {
-            const { id, oau_id } = ctx.params;
-            try {
-                let result = await oauthApplication.removeUser(this.database, id, oau_id, ctx.state);
-
-                ctx.body = {
-                    data: result
-                };
-            } catch (err) {
-                throw err;
-            }
-        });
+        // oauth_application_sceop
 
         api = super._getRootApi([':oa_id', 'oauth_app_scope']).join('/');
         this.router.get(api, async (ctx: TContext) => {
@@ -132,6 +123,36 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
                     data: result
                 };
             } catch (err: any) {
+                throw err;
+            }
+        });
+
+        // oauth_application_user
+
+        api = super._getRootApi([':o_id', 'oauth_application_user']).join('/');
+        this.router.get(api, async (ctx: TContext) => {
+            const { params: { o_id }, request: { query } } = ctx;
+            try {
+                let result = await oauthApplicationUser.list(this.database, o_id, <any> query, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
+
+        api = super._getRootApi([':o_id', 'oauth_application_user', ':id']).join('/');
+        this.router.delete(api, async (ctx: TContext) => {
+            const { o_id, id } = ctx.params;
+            try {
+                let result = await oauthApplicationUser.removeUser(this.database, o_id, id, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
                 throw err;
             }
         });

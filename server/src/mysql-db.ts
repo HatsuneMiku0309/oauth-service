@@ -3,7 +3,7 @@ install();
 
 import * as mysql2 from 'mysql2/promise';
 import * as _ from 'lodash';
-import { ICustomConnection, IDatabaseConfig, IEndReturn, IMysqlDatabase } from './utils.interface';
+import { IDatabaseConfig, IEndReturn, IMysqlDatabase } from './utils.interface';
 
 class MysqlDatabase implements IMysqlDatabase {
     readonly config: IDatabaseConfig;
@@ -75,37 +75,9 @@ class MysqlDatabase implements IMysqlDatabase {
         }
     }
 
-    private _convertTinyintToBoolean<T>(datas: T, fields: (mysql2.FieldPacket & { columnType?: number })[]): T {
+    async getConnection(): Promise<mysql2.Connection> {
         try {
-            let result: T;
-            if (_.isArray(datas)) {
-                result = <any> _.map(datas, (data) => {
-                    return _.reduce(<any> data, (_r, val, key) => {
-                        let field = fields.find((f) => f.name === key);
-                        _r[key] = field!.columnType === dbType.TINY ? !!val : val;
-
-                        return _r;
-                    }, <any> { });
-                });
-            } else {
-                result = _.reduce(<any> datas, (_r, val, key) => {
-                    let field = fields.find((f) => f.name === key);
-                    _r[key] = field!.columnType === dbType.TINY ? !!val : val;
-
-                    return _r;
-                }, <any> { });
-            }
-
-            return result;
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async getConnection(): Promise<ICustomConnection> {
-        try {
-            const conn = <ICustomConnection> await mysql2.createConnection(this.config);
-            conn.convertTinyintToBoolean = this._convertTinyintToBoolean;
+            const conn = await mysql2.createConnection(this.config);
 
             return conn;
         } catch (err) {

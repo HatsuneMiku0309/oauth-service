@@ -4,9 +4,11 @@ import { IJWTCotext } from "../utils.interface";
 
 export interface IListQuery {
     q: string;
+    offset?: number;
+    count?: number;
 }
 
-export interface IListRes {
+export interface IListData {
     ID: string;
     NAME: string;
     HOMEPAGE_URL: string;
@@ -18,6 +20,13 @@ export interface IListRes {
     CREATE_BY: string;
     UPDATE_TIME?: string;
     UPDATE_BY?: string;
+}
+
+export interface IListRes {
+    datas: IListData[],
+    offset: number;
+    count: number;
+    totalPage: number;
 }
 
 export interface ICreateBody {
@@ -45,8 +54,8 @@ export interface IRemoveUserRes extends ICommonRes {
 
 export interface IOauthApplication {
     options: TAnyObj;
-    list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes[]>;
-    dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes[]>;
+    list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
+    dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     detail(database: IMysqlDatabase, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao>;
     dbDetail(db: Connection, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao>;
     create(database: IMysqlDatabase, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<ICommonRes>;
@@ -55,8 +64,6 @@ export interface IOauthApplication {
     dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<ICommonRes>;
     remove(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<ICommonRes>;
     dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<ICommonRes>;
-    removeUser(database: IMysqlDatabase, id: string, oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
-    dbRemoveUser(db: Connection, id: string, oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
 }
 
 // ---------- DAO -----------
@@ -72,9 +79,9 @@ export interface IOauthApplicationDao {
     REDIRECT_URI: string; // varchar(255)
     EXPIRES_DATE?: Date;
     NOT_BEFORE?: Date;
-    IS_DISABLED?: boolean | number; // default: 0
-    IS_EXPIRES?: boolean | number; // default: 0
-    IS_CHECKED?: boolean | number; // default: 1
+    IS_DISABLED?: boolean; // default: 0
+    IS_EXPIRES?: boolean; // default: 0
+    IS_CHECKED?: boolean; // default: 1
     AUDIT_STATE?: string; // varchar(100)
     CREATE_TIME?: Date;
     CREATE_BY: string; // varchar(100)

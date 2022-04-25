@@ -93,14 +93,10 @@ export interface IEndReturn {
     message: string;
 }
 
-export interface ICustomConnection extends mysql2.Connection {
-    convertTinyintToBoolean<T>(datas: T, field: (mysql2.FieldPacket & { columnType?: number })[] ): T
-}
-
 export interface IMysqlDatabase {
     readonly config: IDatabaseConfig;
 
-    getConnection(): Promise<ICustomConnection>;
+    getConnection(): Promise<mysql2.Connection>;
     getPool(): Promise<mysql2.Pool>;
     getPoolConnection(pool: mysql2.Pool): Promise<mysql2.PoolConnection>;
     end(conn: mysql2.Connection, force?: boolean): Promise<IEndReturn>;

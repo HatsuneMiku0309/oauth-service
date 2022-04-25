@@ -3,19 +3,17 @@ install();
 
 import { Connection } from 'mysql2/promise';
 import { FieldPacket, ResultSetHeader } from 'mysql2';
-import { TAnyObj, IMysqlDatabase, ICustomConnection } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import {
     ICreateBody, IListQuery, IListRes,
     IOauthApplication, IOauthApplicationDao,
-    IUpdateBody, ICommonRes, IRemoveUserRes
+    IUpdateBody, ICommonRes, IListData
 } from './oauth-app.interface';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import * as dayjs from 'dayjs';
 import { checkDateTime, checkHttpProtocol, checkRedirectUri } from '../../utils';
-import { IOauthApplicationUserDao } from '../oauth/oauth.interface';
-import { dbType } from '../../mysql-db';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
@@ -33,7 +31,7 @@ class OauthApplication implements IOauthApplication {
     }
 
 
-    async list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes[]> {
+    async list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
         try {
             let db = await database.getConnection();
             try {
@@ -50,22 +48,27 @@ class OauthApplication implements IOauthApplication {
         }
     }
 
-    async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes[]> {
+    async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
         const { user: { user_id } } = options;
-        const { q } = query;
+        const { q, offset = 0, count = 10 } = query;
         try {
+            if (!_.isNumber(Number(offset)) || !_.isNumber(Number(count))) {
+                throw new Error('[offset, count] type error');
+            }
             let sql = `
                 SELECT * FROM OAUTH_APPLICATION WHERE USER_ID = ?
             `;
             let whereSql = ['NAME LIKE ?', 'HOMEPAGE_URL LIKE ?'];
-            let params = [user_id];
+            let params: any[] = [user_id];
+            let pageParams: any[] = [Number(count), Number(offset * count)];
             !!q && params.push(`%${q}%`) && params.push(`%${q}%`);
             !!q && (sql += ` AND (${whereSql.join(' OR ')})`);
             sql += ' ORDER BY CREATE_TIME DESC';
+            sql += ' LIMIT ? OFFSET ?';
 
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, params);
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, [...params, ...pageParams]);
             let result = rows.map((row) => {
-                return <IListRes> {
+                return <IListData> {
                     ID: row.ID,
                     NAME: row.NAME,
                     HOMEPAGE_URL: row.HOMEPAGE_URL,
@@ -80,13 +83,25 @@ class OauthApplication implements IOauthApplication {
                 };
             });
 
-            return result;
+            let totalSql = 'SELECT COUNT(1) TOTAL_PAGE FROM OAUTH_APPLICATION WHERE USER_ID = ?';
+            !!q && (totalSql += ` AND (${whereSql.join(' OR ')})`);
+
+            let [totalCounts] = <[{ TOTAL_PAGE: number }[], FieldPacket[]]> await db.query(totalSql, params);
+            let totalCount = totalCounts[0].TOTAL_PAGE;
+            let totalPage = Math.ceil(totalCount / count);
+
+            return {
+                datas: result,
+                offset,
+                count,
+                totalPage
+            };
         } catch (err) {
             throw err;
         }
     }
 
-    async detail(database: IMysqlDatabase, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
+    async detail(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
         try {
             let db = await database.getConnection();
             try {
@@ -103,20 +118,20 @@ class OauthApplication implements IOauthApplication {
         }
     }
 
-    async dbDetail(db: ICustomConnection, id: string, options?: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
+    async dbDetail(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationDao> {
+        const { user: { user_id } } = options;
         try {
             let sql = `
-                SELECT * FROM OAUTH_APPLICATION WHERE ID = ?
+                SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
             `;
-            let params = [id];
-            let [rows, fields] = <[IOauthApplicationDao[], (FieldPacket & { columnType: number })[]]> await db.query(sql, params);
+            let params = [id, user_id];
+            let [rows] = <[IOauthApplicationDao[], (FieldPacket & { columnType: number })[]]> await db.query(sql, params);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
             let row = rows[0];
-            let result = db.convertTinyintToBoolean(row, fields);
 
-            return result;
+            return row;
         } catch (err) {
             throw err;
         }
@@ -266,7 +281,9 @@ class OauthApplication implements IOauthApplication {
                 redirect_uri, expires_date, not_before,
                 is_disabled, is_expires
             } = this._checkCreateUpdateBody(body);
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ?', [id]);
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
+                SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
+            `, [id, user_id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
@@ -275,7 +292,7 @@ class OauthApplication implements IOauthApplication {
                 UPDATE OAUTH_APPLICATION SET
                     ?
                 WHERE
-                    ID = ?
+                    ID = ? AND CREATE_BY = ?
             `;
             let params = <IOauthApplicationDao> {
                 ID: id,
@@ -290,7 +307,7 @@ class OauthApplication implements IOauthApplication {
             !!expires_date && (params.EXPIRES_DATE = new Date(expires_date));
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
 
-            await db.query(sql, [params, id]);
+            await db.query(sql, [params, id, user_id]);
 
             return {
                 ID: id
@@ -321,65 +338,23 @@ class OauthApplication implements IOauthApplication {
     }
 
     async dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
+        const { user: { user_id } } = options;
         try {
-            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ?', [id]);
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
+                SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
+            `, [id, user_id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
 
             let sql = `
-                DELETE FROM OAUTH_APPLICATION WHERE ID = ?
+                DELETE FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
             `;
-            let params = [id];
+            let params = [id, user_id];
             await db.query<ResultSetHeader>(sql, params);
 
             return {
                 ID: id
-            };
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async removeUser(database: IMysqlDatabase, id: string,  oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
-        try {
-            let db = await database.getConnection();
-            try {
-                await db.beginTransaction();
-                let result = await this.dbRemoveUser(db, id, oau_id, options);
-                await db.commit();
-
-                return result;
-            } catch (err) {
-                await db.rollback();
-                throw err;
-            } finally {
-                await database.end(db);
-            }
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async dbRemoveUser(db: Connection, id: string, oau_id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
-        try {
-            let [rows] = <[IOauthApplicationUserDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM OAUTH_APPLICATION_USER WHERE ID = ?
-            `, [oau_id]);
-            if (rows.length === 0) {
-                throw new Error(`[${oau_id}] oau_id not find`);
-            }
-
-            let sql = `
-                DELETE FROM OAUTH_APPLICATION_USER WHERE ID = ?
-            `;
-            let params = [ oau_id ];
-
-            await db.query(sql, params);
-
-            return {
-                ID: id,
-                OAUTH_APPLICATION_USER_ID: oau_id
             };
         } catch (err) {
             throw err;
