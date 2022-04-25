@@ -1,8 +1,8 @@
 <template>
   <Cat v-if="isShowLoad" />
-  <div class="flex flex-col">
+  <div class="flex flex-col h-screen w-screen bg-gray-800">
     <router-link class="absolute text-sm right-0 flex justify-end pr-4 mt-2 underline" to="/login">Sign in ></router-link>
-    <div class="flex flex-col w-5/12 self-center bg-green-300 mt-28 border-2 border-green-600 rounded-3xl min-w-min">
+    <div class="flex flex-col w-5/12 self-center bg-gray-600 mt-28 rounded-3xl min-w-min">
       <div class="flex flex-col mt-12 items-center w-full">
         <router-link class="flex flex-col items-center" to="/login">
           <img class="w-32" alt="Vue logo" src="@/../images/logo.png">
@@ -12,16 +12,16 @@
       <form class="mx-16 mt-6 p-4" @submit.prevent="checkForm" autocomplete="nope">
         <div class="flex flex-col items-center px-12 pb-12">
           <div class="flex my-2 items-center w-full">
-            <input type="text" autocomplete="nope" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.account" placeholder="Account:" />
+            <input type="text" autocomplete="nope" required class="w-full h-10 border rounded-xl border-gray-700 px-2 bg-transparent focus:shadow-md focus:outline-none" v-model="accountObj.account" placeholder="Account:" />
           </div>
           <div class="flex my-2 items-center w-full">
-            <input type="password" autocomplete="off" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.password" placeholder="Password:" />
+            <input type="password" autocomplete="off" required class="w-full h-10 border rounded-xl border-gray-700 px-2 bg-transparent focus:shadow-md focus:outline-none" v-model="accountObj.password" placeholder="Password:" />
           </div>
           <div class="flex my-2 items-center w-full">
-            <input type="email" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.email" placeholder="Email:" />
+            <input type="email" required class="w-full h-10 border rounded-xl border-gray-700 px-2 bg-transparent focus:shadow-md focus:outline-none" v-model="accountObj.email" placeholder="Email:" />
           </div>
           <div class="flex my-2 items-center w-full">
-            <input type="text" required class="w-full h-10 border rounded-xl border-gray-900 px-2" v-model="accountObj.phone" placeholder="Phone:" />
+            <input type="text" required class="w-full h-10 border rounded-xl border-gray-700 px-2 bg-transparent focus:shadow-md focus:outline-none" v-model="accountObj.phone" placeholder="Phone:" />
           </div>
         </div>
         <div class="flex flex-row my-2 items-center w-full justify-center">

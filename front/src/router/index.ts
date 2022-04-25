@@ -4,6 +4,7 @@ import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Application from '../views/Application.vue';
+import { decodeBase64 } from '@/utils';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -11,6 +12,9 @@ const routes: RouteRecordRaw[] = [
     name: 'Index',
     component: Index,
     redirect: { name: 'Dashboard' },
+    meta: {
+      authentication: true,
+    },
     children: [
       {
         path: 'dashboard',
@@ -18,6 +22,7 @@ const routes: RouteRecordRaw[] = [
         component: Dashboard,
         meta: {
           keepAlive: true,
+          authentication: true,
         },
       }, {
         path: 'application',
@@ -25,6 +30,7 @@ const routes: RouteRecordRaw[] = [
         component: Application,
         meta: {
           keepAlive: false,
+          authentication: true,
         },
       }, {
         path: 'application/:id',
@@ -32,6 +38,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../views/ApplicationDetail.vue'),
         meta: {
           parentPageName: ['Application'],
+          authentication: true,
         },
       },
     ],
@@ -39,10 +46,16 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: Login,
+    meta: {
+      authentication: false,
+    },
   }, {
     path: '/signup',
     name: 'SignUp',
     component: Register,
+    meta: {
+      authentication: false,
+    },
   },
 ];
 
@@ -51,5 +64,35 @@ const router = createRouter({
   history: createWebHistory((import.meta as any).env.VITE_BASE_URL),
   routes,
 });
+
+router.beforeEach((to, from, next) => {
+  if (!to.meta.authentication) {
+    next();
+  } else {
+    if (checkToken()) {
+      router.replace('/login');
+    } else {
+      next();
+    }
+  }
+});
+
+const checkToken = () => {
+  try {
+    let user;
+    const userData = localStorage.getItem('user-data');
+    const token = localStorage.getItem('token');
+    if (!token || !userData) {
+      throw new Error('No token or user-data');
+    } else {
+      user = JSON.parse(decodeBase64(userData));
+    }
+
+    return false;
+  } catch (err) {
+    return true;
+  }
+};
+
 
 export default router;

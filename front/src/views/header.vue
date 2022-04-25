@@ -16,8 +16,8 @@
       <div class="w-20">{{user.ACCOUNT}}</div>
       <i class="oauth-icon setting before:w-6 before:h-6 mr-2 cursor-pointer" title="Setting" @click.self="showSetting = !showSetting">
         <transition name="setting">
-          <div v-if="showSetting" class="absolute top-10 right-2 triangle">
-            <ul v-if="showSetting" class="absolute w-40 bg-gray-400 -right-4 top-2 rounded-md not-italic p-1">
+          <div v-if="showSetting" class="absolute top-11 right-6 z-40">
+            <ul v-if="showSetting" class="absolute w-40 bg-gray-700 border border-gray-800 -right-4 top-2 rounded-md not-italic p-1">
               <li class="p-1">Modify Profile</li>
               <router-link to="/login"><li class="border-t p-1">Logout</li></router-link>
             </ul>
@@ -51,14 +51,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.triangle {
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0.75rem 0.75rem 0.75rem;
-  border-color: transparent transparent rgba(156, 163, 175, var(--tw-bg-opacity)) transparent;
-}
-
 .setting-enter-active,
 .setting-leave-active {
   transition: all 0.5s cubic-bezier(1, 0.5, 0.8, 1);

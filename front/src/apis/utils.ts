@@ -76,7 +76,7 @@ export async function put<T = any>(
 }
 
 
-export async function remove<T = any>(
+export async function del<T = any>(
     api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
 ): Promise<T> {
     const { headers = { } } = options;
