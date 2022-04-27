@@ -14,6 +14,7 @@ import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import * as dayjs from 'dayjs';
 import { checkDateTime, checkHttpProtocol, checkRedirectUri } from '../../utils';
+import { IOauthApplicationScope, IRegistBody } from './oauth-app-scope.interface';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
@@ -157,8 +158,11 @@ class OauthApplication implements IOauthApplication {
         }
     }
 
-    private _checkCreateUpdateBody(body: ICreateBody): ICreateBody {
-        const { name, homepage_url, application_description, redirect_uri, expires_date, not_before, is_disabled, is_expires } = body;
+    private _checkCreateUpdateBody(body: IUpdateBody): IUpdateBody {
+        const {
+            name, homepage_url, application_description,
+            redirect_uri, expires_date, not_before,
+            is_disabled, is_expires, scope_ids } = body;
         try {
             if (!name) {
                 throw new Error('name is required');
@@ -182,6 +186,10 @@ class OauthApplication implements IOauthApplication {
                 } else if (!checkHttpProtocol(homepage_url, true)) {
                     throw new Error('homepage_url must https');
                 }
+            }
+
+            if (!!scope_ids && !_.isArray(scope_ids)) {
+                throw new Error('scope_id type error');
             }
 
             if (!!redirect_uri) {
@@ -274,12 +282,12 @@ class OauthApplication implements IOauthApplication {
     }
 
     async dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
-        const { user: { user_id } } = options;
+        const { user: { user_id }, oauthApplicationScope } = options;
         try {
             const {
                 name, homepage_url, application_description,
                 redirect_uri, expires_date, not_before,
-                is_disabled, is_expires
+                is_disabled, is_expires, scope_ids
             } = this._checkCreateUpdateBody(body);
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
                 SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
@@ -308,6 +316,17 @@ class OauthApplication implements IOauthApplication {
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
 
             await db.query(sql, [params, id, user_id]);
+
+            let _body = _.map(scope_ids, (scope_id) => {
+                const IS_SCOPE_DISABLED = false;
+                const IS_SCOPE_CHECKED = true;
+                return <IRegistBody> {
+                    scope_id,
+                    is_disabled: IS_SCOPE_DISABLED,
+                    is_checked: IS_SCOPE_CHECKED
+                };
+            });
+            await (<IOauthApplicationScope> oauthApplicationScope).dbRegistScope(db, id, _body, options);
 
             return {
                 ID: id

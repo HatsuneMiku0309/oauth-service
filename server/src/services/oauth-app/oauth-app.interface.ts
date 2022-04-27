@@ -41,7 +41,7 @@ export interface ICreateBody {
 }
 
 export interface IUpdateBody extends ICreateBody {
-
+    scope_ids?: string[];
 }
 
 export interface ICommonRes {

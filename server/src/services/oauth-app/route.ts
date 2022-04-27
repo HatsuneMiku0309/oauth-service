@@ -73,7 +73,10 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
         this.router.put(api, async (ctx: TContext) => {
             const { params: { id }, request: { body } } = ctx;
             try {
-                let result = await oauthApplication.update(this.database, id, body, ctx.state);
+                let result = await oauthApplication.update(this.database, id, body, {
+                    ...ctx.state,
+                    oauthApplicationScope
+                });
 
                 ctx.body = {
                     data: result
@@ -129,11 +132,11 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
 
         // oauth_application_user
 
-        api = super._getRootApi([':o_id', 'oauth_application_user']).join('/');
+        api = super._getRootApi([':oa_id', 'oauth_application_user']).join('/');
         this.router.get(api, async (ctx: TContext) => {
-            const { params: { o_id }, request: { query } } = ctx;
+            const { params: { oa_id }, request: { query } } = ctx;
             try {
-                let result = await oauthApplicationUser.list(this.database, o_id, <any> query, ctx.state);
+                let result = await oauthApplicationUser.list(this.database, oa_id, <any> query, ctx.state);
 
                 ctx.body = {
                     data: result
@@ -143,11 +146,11 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
             }
         });
 
-        api = super._getRootApi([':o_id', 'oauth_application_user', ':id']).join('/');
+        api = super._getRootApi([':oa_id', 'oauth_application_user', ':id']).join('/');
         this.router.delete(api, async (ctx: TContext) => {
-            const { o_id, id } = ctx.params;
+            const { oa_id, id } = ctx.params;
             try {
-                let result = await oauthApplicationUser.removeUser(this.database, o_id, id, ctx.state);
+                let result = await oauthApplicationUser.removeUser(this.database, oa_id, id, ctx.state);
 
                 ctx.body = {
                     data: result

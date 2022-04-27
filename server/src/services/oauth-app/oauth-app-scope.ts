@@ -5,7 +5,7 @@ import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeDaO, IRegistBody } from './oauth-app-scope.interface';
+import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeDaO, IOauthApplicationScopeDao, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
 import { v4 as uuid } from 'uuid';
 import { IApiScopeDao } from '../scope/scope.interface';
@@ -30,13 +30,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
         try {
             let db = await database.getConnection();
             try {
-                await db.beginTransaction();
                 let result = await this.dbList(db, oa_id, options);
-                await db.commit();
 
                 return result;
             } catch (err) {
-                await db.rollback();
                 throw err;
             } finally {
                 await database.end(db);
@@ -107,7 +104,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         try {
             await db.query('DELETE FROM OAUTH_SCOPE WHERE OAUTH_APPLICATION_ID = ?', [oa_id]);
             let params = body.map((data) => {
-                const { id: scope_id, is_disabled = false, is_checked = true } = data;
+                const { scope_id, is_disabled = false, is_checked = true } = data;
                 let uid = uuid();
 
                 return [uid, oa_id, scope_id, is_disabled, is_checked, oauthApplicaion.CLIENT_ID];
@@ -143,7 +140,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
 
     private async _getRequiredApiScope(db: Connection, body: IRegistBody[]) {
         try {
-            let ids = body.map((data) => data.id);
+            let scope_ids = body.map((data) => data.scope_id);
             let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
                 SELECT
                     ID
@@ -160,11 +157,11 @@ class OauthApplicationScope implements IOauthApplicationScope {
                     )
                     AND IS_REQUIRED = TRUE
                     AND ID NOT IN (?)
-            `, [ids, ids]);
+            `, [scope_ids, scope_ids]);
 
             rows.forEach((row) => {
                 body.push({
-                    id: row.ID,
+                    scope_id: row.ID,
                     is_disabled: false,
                     is_checked: true
                 });

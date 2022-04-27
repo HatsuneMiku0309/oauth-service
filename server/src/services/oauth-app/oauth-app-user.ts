@@ -26,11 +26,11 @@ class OauthApplicationUser implements IOauthApplicationUser {
         return OauthApplicationUser.instance;
     }
 
-    async list(database: IMysqlDatabase, o_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
+    async list(database: IMysqlDatabase, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
         try {
             let db = await database.getConnection();
             try {
-                let result = await this.dbList(db, o_id, query, options);
+                let result = await this.dbList(db, oa_id, query, options);
 
                 return result;
             } catch (err) {
@@ -43,7 +43,7 @@ class OauthApplicationUser implements IOauthApplicationUser {
         }
     }
 
-    async dbList(db: Connection, o_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
+    async dbList(db: Connection, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
         const { user: { user_id } } = options;
         const { q, offset = 0, count = 10 } = query;
         try {
@@ -53,7 +53,7 @@ class OauthApplicationUser implements IOauthApplicationUser {
 
             let sql = 'SELECT * FROM OAUTH_APPLICATION_USER WHERE OAUTH_APPLICATION_ID = ? AND CREATE_BY = ?';
             let whereSql = ['USER_ID LIKE ?'];
-            let params: any[] = [o_id, user_id];
+            let params: any[] = [oa_id, user_id];
             let pageParams: any[] = [Number(count), Number(offset * count)];
             !!q && params.push(`%${q}%`);
             !!q && (sql += ` AND (${whereSql.join(' OR ')})`);
@@ -78,12 +78,12 @@ class OauthApplicationUser implements IOauthApplicationUser {
         }
     }
 
-    async removeUser(database: IMysqlDatabase, o_id: string,  id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
+    async removeUser(database: IMysqlDatabase, oa_id: string,  id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
         try {
             let db = await database.getConnection();
             try {
                 await db.beginTransaction();
-                let result = await this.dbRemoveUser(db, o_id, id, options);
+                let result = await this.dbRemoveUser(db, oa_id, id, options);
                 await db.commit();
 
                 return result;
@@ -98,7 +98,7 @@ class OauthApplicationUser implements IOauthApplicationUser {
         }
     }
 
-    async dbRemoveUser(db: Connection, o_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
+    async dbRemoveUser(db: Connection, oa_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
         const { user: { user_id } } = options;
         try {
             let [rows] = <[IOauthApplicationUserDao[], FieldPacket[]]> await db.query(`
@@ -116,7 +116,7 @@ class OauthApplicationUser implements IOauthApplicationUser {
             await db.query(sql, params);
 
             return {
-                ID: o_id,
+                ID: oa_id,
                 OAUTH_APPLICATION_USER_ID: id
             };
         } catch (err) {

@@ -313,7 +313,6 @@ class Oauth implements IOauth {
                     WHERE
                         ID = ?
                 `, [ id, oauthApplicationAndUser.ID ]);
-                console.log(scope);
                 await db.commit();
 
                 return result;
@@ -604,7 +603,6 @@ class Oauth implements IOauth {
                     client_id,
                     oauthToken.ID
                 ]);
-                console.log(scope);
                 await db.commit();
 
                 return result;

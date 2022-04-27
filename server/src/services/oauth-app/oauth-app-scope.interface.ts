@@ -4,7 +4,7 @@ import { IAPIs } from "../scope/scope.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export interface IRegistBody {
-    id: string;
+    scope_id: string;
     is_disabled?: boolean;
     is_checked?: boolean;
 }

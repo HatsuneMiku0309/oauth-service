@@ -22,10 +22,10 @@ export interface IRemoveUserRes {
 
 export interface IOauthApplicationUser {
     options: TAnyObj;
-    list(database: IMysqlDatabase, o_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
-    dbList(db: Connection, o_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
-    removeUser(database: IMysqlDatabase, o_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
-    dbRemoveUser(db: Connection, o_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
+    list(database: IMysqlDatabase, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
+    dbList(db: Connection, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
+    removeUser(database: IMysqlDatabase, oa_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
+    dbRemoveUser(db: Connection, oa_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
 }
 
 // ---------- DAO -----------

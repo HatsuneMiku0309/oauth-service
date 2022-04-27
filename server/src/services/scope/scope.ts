@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { Connection, FieldPacket } from 'mysql2/promise';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody } from './scope.interface';
+import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody, IListRes } from './scope.interface';
 import { IBasicPassportRes } from '../jwt/passport.interface';
 import { Oauth } from '../oauth/oauth';
 import * as _ from 'lodash';
@@ -27,7 +27,7 @@ class Scope implements IScope {
         return Scope.instance;
     }
 
-    async list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
+    async list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
         try {
             let db = await database.getConnection();
             try {
@@ -44,38 +44,48 @@ class Scope implements IScope {
         }
     }
 
-    private _checkListQuery(query: IListQuery) {
-        const { name, system } = query;
+    // private _checkListQuery(query: IListQuery) {
+    //     const { name, system } = query;
+    //     try {
+    //         if (!!name && !_.isString(name)) {
+    //             throw new Error('name type error');
+    //         }
+    //         if (!!system && !_.isString(system)) {
+    //             throw new Error('system type error');
+    //         }
+    //     } catch (err) {
+    //         throw err;
+    //     }
+    // }
+
+    async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
+        // const { user: { user_id } } = options;
+        const { q, count = 10, offset = 0 } = query;
         try {
-            if (!!name && !_.isString(name)) {
-                throw new Error('name type error');
-            }
-            if (!!system && !_.isString(system)) {
-                throw new Error('system type error');
-            }
-        } catch (err) {
-            throw err;
-        }
-    }
+            let sql = 'SELECT * FROM API_SCOPE';
 
-    async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
-        const { user: { user_id } } = options;
-        const { name, system } = query;
-        try {
-            this._checkListQuery(query);
-            let sql = `
-                SELECT * FROM API_SCOPE WHERE
-            `;
+            let whereSql = [];
+            let params = [];
+            let pageParams: any[] = [Number(count), Number(offset * count)];
+            !!q && whereSql.push('NAME LIKE ?') && whereSql.push('`SYSTEM` LIKE ?') && params.push(`%${q}%`) && params.push(`%${q}%`);
+            !!q && (sql += ` WHERE (${whereSql.join(' OR ')})`);
+            sql += ' ORDER BY `SYSTEM`, CREATE_TIME';
+            sql += ' LIMIT ? OFFSET ?';
+            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(sql, [...params, ...pageParams]);
 
-            let whereSql = ['CREATE_BY = ?'];
-            let params = [user_id];
-            !!name && whereSql.push('NAME LIKE ?') && params.push(name);
-            !!system && whereSql.push('SYSTEM LIKE ?') && params.push(system);
-            sql += ` ${whereSql.join(' AND ')}`;
+            let totalSql = 'SELECT COUNT(1) TOTAL_PAGE FROM API_SCOPE';
+            !!q && (totalSql += ` WHERE (${whereSql.join(' OR ')})`);
 
-            let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(sql, params);
+            let [totalCounts] = <[{ TOTAL_PAGE: number }[], FieldPacket[]]> await db.query(totalSql, params);
+            let totalCount = totalCounts[0].TOTAL_PAGE;
+            let totalPage = Math.ceil(totalCount / count);
 
-            return rows;
+            return {
+                datas: rows,
+                count,
+                offset,
+                totalPage
+            };
         } catch (err) {
             throw err;
         }

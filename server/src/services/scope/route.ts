@@ -27,7 +27,7 @@ class ScopeRouter extends BaseRouter implements IRouter {
         this.router.get(api, async (ctx: TContext) => {
             const { query } = ctx.request;
             try {
-                let result = await scope.list(this.database, query, ctx.state);
+                let result = await scope.list(this.database, <any> query, ctx.state);
 
                 ctx.body = {
                     data: result

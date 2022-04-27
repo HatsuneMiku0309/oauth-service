@@ -12,9 +12,18 @@ export interface IAPIs {
 }
 
 export interface IListQuery {
-    name?: string;
-    system?: string;
+    q: string;
+    offset?: number;
+    count?: number;
 }
+
+export interface IListRes {
+    datas: IApiScopeDao[],
+    offset: number;
+    count: number;
+    totalPage: number;
+}
+
 
 export interface ICreateBody {
     name: string;
@@ -44,8 +53,8 @@ export interface IRegistBody {
 
 export interface IScope {
     options: TAnyObj;
-    list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
-    dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
+    list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
+    dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     create(database: IMysqlDatabase, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
     dbCreate(db: Connection, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
     creates(database: IMysqlDatabase, body: ICreateBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
