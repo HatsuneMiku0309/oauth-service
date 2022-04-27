@@ -4,6 +4,7 @@ import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Application from '../views/Application.vue';
+import ApplicationDetail from '../views/ApplicationDetail.vue';
 import { decodeBase64 } from '@/utils';
 
 const routes: RouteRecordRaw[] = [
@@ -35,7 +36,7 @@ const routes: RouteRecordRaw[] = [
       }, {
         path: 'application/:id',
         name: 'ApplicationDetail',
-        component: () => import('../views/ApplicationDetail.vue'),
+        component: ApplicationDetail,
         meta: {
           parentPageName: ['Application'],
           authentication: true,

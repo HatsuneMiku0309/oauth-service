@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex flex-grow bg-gray-600 bg-opacity-95 overflow-hidden">
+  <div class="relative flex flex-grow bg-gray-600 overflow-hidden">
     <router-view v-slot="{ Component, route }">
       <keep-alive v-if="route.meta.keepAlive">
         <component :is="Component" :key="route.meta.usePathKey ? route.path : undefined" />

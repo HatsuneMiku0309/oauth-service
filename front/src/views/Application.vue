@@ -1,13 +1,13 @@
 <template>
 	<Cat v-if="isShowLoad" class="w-full h-full opacity-75" />
-	<keep-alive>
+	<keep-alive name="application_create">
 		<message-popup v-if="isShowPopup" v-model="isShowPopup">
 			<template #title>
 				<span class="text-3xl mt-0">Application Create</span>
 			</template>
 			<template #default>
 				<div class="flex flex-col w-full overflow-y-auto max-h-96">
-				<form @submit.prevent="checkForm">
+				<form class="p-2" @submit.prevent="checkForm">
 					<div class="flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
 						<input class="
@@ -75,21 +75,21 @@
 			</template>
 		</message-popup>
 	</keep-alive>
-	<div class="relative flex flex-col w-full mt-5 mb-12 mx-10 overflow-hidden">
+	<div class="relative flex flex-col w-full mt-5 mb-5 mx-10 overflow-hidden">
 		<div class="relative flex items-center">
 			<input class="
-				border border-gray-600 
-				focus:outline-none focus:border-2 focus:border-gray-700 
+				border border-gray-700 
+				focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md
 				rounded-xl p-2 bg-transparent w-96"
-				type="text" placeholder="Search" @keyup.exact.enter="search" v-model="query.q"/>
-			<i class="relative right-6 oauth-icon search before:w-4 before:h-4 cursor-pointer" @click="search"></i>
+				type="text" placeholder="Search" @keyup.exact.enter="search(true)" v-model="query.q"/>
+			<i class="relative right-6 oauth-icon search before:w-4 before:h-4 cursor-pointer" @click="search(true)"></i>
 			<div class="flex items-center w-full h-full">
 				<span class="absolute right-0">
 					<button class="border rounded-xl border-gray-700 p-1 hover:bg-gray-700 hover:text-white" @click="isShowPopup = true">Create</button>
 				</span>
 			</div>
 		</div>
-		<div class="table-cell border-2 rounded-lg bg-gray-600 border-gray-700 w-full my-4 overflow-auto">
+		<div class="table-cell border-2 rounded-lg bg-gray-600 border-gray-700 w-full my-4 overflow-auto shadow-lg">
 			<div class="table-cell w-screen">
 				<div class="sticky top-0 flex flex-row border-gray-700">
 					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-20 border-r-2 border-gray-700">INDEX</div>
@@ -124,13 +124,13 @@
 				</div>
 			</div>
 		</div>
-		<pagination :pages="pages" :offset="query.offset" @update:offset="newValue => query.offset = newValue" @update:search="search"/>
+		<pagination :pageList="pageList" @update:change-page="changePage"/>
 	</div>
 </template>
 
 <script lang="ts">
 import MessagePopup from '@/components/MessagePopup.vue';
-import { computed, defineComponent, inject, onMounted, reactive, ref } from 'vue';
+import { defineComponent, inject, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { get, post } from '../apis/utils';
 import Cat from '../components/Loaders/Cat.vue';
@@ -143,7 +143,8 @@ export default defineComponent({
 		const { changeNavigation } = <any> mapStore;
 		changeNavigation(useRoute());
 
-		const query = reactive({ q: '', offset: 0, count: 10, pages: 0 });
+		const pageList = reactive({ offset: 0, count: 10, pages: 0 });
+		const query = reactive({ q: '', ...pageList });
 		let app: any = reactive({});
 		const apps = ref([]);
 		const selectIDs = ref([]);
@@ -157,30 +158,14 @@ export default defineComponent({
 			}
 		});
 
-		const pages = computed(() => {
-			let result = [];
-			const maxShowPage = 10;
-			const firstPage = query.offset - (Math.ceil(maxShowPage / 2)) <= 0 ? 0 : query.offset - (Math.ceil(maxShowPage / 2));
-			const lastPage = query.offset + (Math.ceil(maxShowPage / 2)) >= query.pages - 1 ? query.pages : query.offset + (Math.ceil(maxShowPage / 2));
-			for(let i = 0 ; i < query.pages ; ++i) {
-				if (i <= lastPage && i >= firstPage) {
-					result.push(i + 1);
-				}
-			}
+		const changePage = async (page: number) => {
+			query.offset = page - 1;
+			await search();
+		}
 
-			if (firstPage !== 0) {
-				result.unshift('...');
-				result.unshift(1);
-			}
-			if (lastPage !== query.pages) {
-				result.push('...');
-				result.push(query.pages);
-			}
-			return result;
-		})
-
-		const search = async () => {
+		const search = async (reload = false) => {
 			try {
+				reload && (query.offset = 0);
 				apps.value = [];
 				isShowLoad.value = true;
 				let result = await get('/oauth-app', {
@@ -199,6 +184,8 @@ export default defineComponent({
 			} catch (err: any) {
 				alert(err.response.data.errMsg);
 			} finally {
+				Object.assign(pageList, { offset: query.offset, count: query.count, pages: query.pages });
+				
 				isShowLoad.value = false;
 			}
 		};
@@ -236,8 +223,9 @@ export default defineComponent({
 			selectIDs,
 			search,
 			checkForm,
+			changePage,
 			query,
-			pages
+			pageList,
 		}
 	},
 });

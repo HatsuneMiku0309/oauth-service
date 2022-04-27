@@ -1,10 +1,10 @@
 <template>
   <Cat v-if="isShowLoad" />
   <div class="flex flex-col h-screen overflow-hidden">
-    <o-header class="header" :user="user" />
+    <o-header class="header border-b border-gray-500 shadow-xl" :user="user" />
     <div class="flex flex-grow main">
       <left-side />
-      <main-container />
+      <main-container class="border-l border-gray-500"/>
     </div>
   </div>
 </template>

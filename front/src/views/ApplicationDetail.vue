@@ -1,5 +1,5 @@
 <template>
-  <Cat v-if="isShowLoad" class="w-full h-full opacity-75" />
+  <cat v-if="isShowLoad" class="w-full h-full opacity-75 z-50" />
   <transition name="message-popup">
     <!-- <message-popup v-if="isShowPopup" @update:isShowPopup="newValue => isShowPopup = newValue"> -->
     <message-popup v-if="isShowPopup" v-model="isShowPopup">
@@ -32,7 +32,7 @@
         <span class="text-3xl mt-0">Are you sure remove?</span>
       </template>
       <template #default>
-        <form @submit.prevent="remove">
+        <form class="w-full" @submit.prevent="remove">
           <div class="text-sm">Please enter your app_id <label class="bg-gray-700 p-1">{{app.ID}}</label> to make sure you know to remove</div>
           <div class="mt-4"><input class="
               bg-transparent border rounded-xl border-gray-700 p-2
@@ -46,7 +46,7 @@
       </template>
     </message-popup>
   </transition>
-  <div class="w-full h-full overflow-x-hidden overflow-y-auto">
+  <div class=" w-full h-full overflow-x-hidden overflow-y-auto">
     <div class="w-full h-14 flex items-center relative">
       <div class="absolute left-10">
         <button class="border rounded-xl border-gray-700 p-1 text-red-600 hover:bg-gray-700" @click="isShowRemovePopup = true">Remove</button>
@@ -55,108 +55,90 @@
         <button class="border rounded-xl border-gray-700 p-1 hover:bg-gray-700 hover:text-white" @click="isShowPopup = true">Get Client</button>
       </div>
     </div>
-    <div class="w-full h-14 flex items-center relative">
-      <div class="ml-10">User Count: {{users.length}}</div>
-    </div>
-    <div class="flex flex-col w-full mb-12 mx-10 overflow-hidden">
-      <form @submit.prevent="checkForm">
-        <div class="flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="text" maxlength="100" required v-model="app.NAME" />
+    <div class="flex w-full h-auto overflow-y-hidden overflow-x-auto">
+      <div class="flex flex-col flex-shrink-0 w-1/2 h-full overflow-hidden" style="min-width: 450px;">
+      <div class="w-full h-14 flex items-center relative">
+        <div class="ml-10">User Count: {{users.length}}</div>
+      </div>
+        <div class="flex flex-col w-auto mb-12 mx-10 overflow-hidden">
+          <form @submit.prevent="checkForm">
+            <div class="flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
+              <common-input v-model="app.NAME" type="text" maxlength="100" required />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
+              <common-input v-model="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
+            </div>
+            <div class="relative flex h-auto my-2">
+              <div class="relative flex flex-shrink-0 items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
+              <common-input v-model="app.APPLICATION_DESCRIPTION" type="textarea" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
+              <common-input v-model="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+              <common-input v-model="app.EXPIRES_DATE" type="text" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
+              <common-input v-model="app.NOT_BEFORE" type="text" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
+              <common-input v-model="app.IS_DISABLED" type="checkbox" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+              <common-input v-model="app.IS_EXPIRES" type="checkbox" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">CHECKED :</span></div>
+              <common-input v-model="app.IS_CHECKED" type="checkbox" />
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">UPDATE TIME :</span></div>
+              <common-input v-model="app.UPDATE_TIME" type="text" readonly />
+            </div>
+            <div class="relative flex justify-center mt-8">
+              <common-input :modelValue="'submit'" type="submit" />
+              <common-input :modelValue="'back'" type="router-link" to="/application" />
+              <!-- <div>
+                <input type="submit" class="
+                  mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
+                  border-gray-700 p-2 hover:bg-gray-900" value="submit" />
+              </div>
+              <div>
+                <router-link class="
+                  flex items-center justify-center
+                  mx-4 cursor-pointer w-32 bg-transparent border rounded-full
+                  border-gray-700 p-2 hover:bg-gray-900" to="/application">back</router-link>
+              </div> -->
+            </div>
+          </form>
         </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="url" pattern="https://.*" maxlengh="255" required v-model="app.HOMEPAGE_URL" />
-        </div>
-        <div class="relative flex h-auto my-2">
-          <div class="relative flex items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
-          <textarea class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96 h-24" v-model="app.APPLICATION_DESCRIPTION"></textarea>
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="url" maxlength="100" pattern="https://.*" maxlengh="255" required v-model="app.REDIRECT_URI" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="text" v-model="app.EXPIRES_DATE" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="text" v-model="app.NOT_BEFORE" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2 w-96 h-4
-            focus:border-2 focus:border-gray-700"
-            type="checkbox" v-model="app.IS_DISABLED" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2 w-96 h-4
-            focus:border-2 focus:border-gray-700"
-            type="checkbox" v-model="app.IS_EXPIRES" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">CHECKED :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2 w-96 h-4
-            focus:border-2 focus:border-gray-700"
-            type="checkbox" v-model="app.IS_CHECKED" />
-        </div>
-        <div class="relative flex h-14 items-center my-2">
-          <div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">UPDATE TIME :</span></div>
-          <input class="
-            bg-transparent border rounded-xl border-gray-700 p-2
-            focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-            type="text" v-model="app.UPDATE_TIME" />
-        </div>
-        <div class="relative flex mt-8">
-          <div>
-            <input type="submit" class="
-              mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
-              border-gray-700 p-2 hover:bg-gray-900" value="submit" />
-          </div>
-          <div>
-            <router-link class="
-              flex items-center justify-center
-              mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
-              border-gray-700 p-2 hover:bg-gray-900" to="/application">back</router-link>
-          </div>
-        </div>
-      </form>
+      </div>
+      <div class="w-1/2 h-full overflow-hidden" style="min-width: 450px;">
+        <application-scope v-if="app.ID" :oauth_application_id="app.ID" @update:oauth-scope="syncOauthScope" />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, inject, onMounted, ref, toHandlerKey } from 'vue'
+import { defineComponent, inject, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import Cat from '../components/Loaders/Cat.vue';
 import MessagePopup from '../components/MessagePopup.vue';
+import ApplicationScope from './ApplicationScope.vue';
 import { get, put, del } from '../apis/utils';
 import dayjs from 'dayjs';
+import CommonInput from '../components/common/CommonInput.vue';
 
 export default defineComponent({
-  components: { Cat, MessagePopup },
+  components: { Cat, MessagePopup, ApplicationScope, CommonInput },
   setup() {
     const users = ref([]);
     const app = ref({ });
@@ -170,6 +152,21 @@ export default defineComponent({
     const isShowLoad = ref(true);
     const isShowPopup = ref(false);
     const isShowRemovePopup = ref(false);
+
+    onBeforeMount(async () => {
+      try {
+        let result = await get('/oauth-app/' + route.params.id);
+        app.value = convertDate(result.data.data);
+
+        result = await get('/oauth-app/' + route.params.id + '/oauth_application_user');
+        users.value = result.data.data.datas;
+      } catch (err: any) {
+        alert(err.response.data.errMsg);
+        router.replace('/application');
+      } finally {
+        isShowLoad.value = false;
+      }
+    });
 
     const convertDate = (data: any) => {
       data.EXPIRES_DATE = data.EXPIRES_DATE
@@ -188,6 +185,10 @@ export default defineComponent({
       return data;
     }
 
+    const syncOauthScope = (scopeIds: string[]) => {
+      (app.value as any).SCOPE_IDS = scopeIds;
+    };
+
     const checkForm = async () => {
       try {
         isShowLoad.value = true;
@@ -201,7 +202,8 @@ export default defineComponent({
           not_before: putData.NOT_BEFORE,
           is_disabled: putData.IS_DISABLED,
           is_expires: putData.IS_EXPIRES,
-          is_checked: putData.IS_CHECKED
+          is_checked: putData.IS_CHECKED,
+          scope_ids: putData.SCOPE_IDS
         });
         result = await get('/oauth-app/' + result.data.data.ID);
         let data = convertDate(result.data.data);
@@ -229,27 +231,12 @@ export default defineComponent({
       } finally {
         isShowLoad.value = false;
       }
-    }
-
-    onMounted(async () => {
-      try {
-        let result = await get('/oauth-app/' + route.params.id);
-        app.value = convertDate(result.data.data);
-
-        result = await get('/oauth-app/' + route.params.id + '/oauth_application_user');
-        users.value = result.data.data.datas;
-        
-      } catch (err: any) {
-        alert(err.response.data.errMsg);
-        router.replace('/application');
-      } finally {
-        isShowLoad.value = false;
-      }
-    });
+    };
 
     return {
       checkForm,
       remove,
+      syncOauthScope,
       isShowLoad,
       isShowPopup,
       isShowRemovePopup,
