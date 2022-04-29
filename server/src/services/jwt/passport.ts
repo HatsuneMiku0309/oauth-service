@@ -68,7 +68,7 @@ class Passport {
         const NOW_DATE = new Date();
         try {
             const COLUMNS = ['client_id', 'client_secret'];
-            let token = await Passport.resolveHeaderToken('basic', ctx);
+            let token = await Passport.resolveHeaderToken('Basic', ctx);
             if (token === undefined || token === null || token === '') {
                 _err.state = 401;
                 _err.message = 'Bad Authorization header format. Format is "Authorization: Basic <token>"';
@@ -143,7 +143,7 @@ class Passport {
             try {
                 const { UNLESS, PUBLIC_KEY } = config ? config : Passport.config;
                 if (!new RegExp(UNLESS.join('|')).test(ctx.url)) {
-                    let token = await Passport.resolveHeaderToken('bearer', ctx);
+                    let token = await Passport.resolveHeaderToken('Bearer', ctx);
                     if (token === undefined || token === null || token === '') {
                         _err.state = 401;
                         _err.message = 'Bad Authorization header format. Format is "Authorization: Bearer <token>"';
@@ -193,6 +193,11 @@ class Passport {
                 }
 
                 await next();
+                if (ctx.status === 404) {
+                    _err = new Error('Not Found');
+                    _err.state = ctx.status;
+                    throw _err;
+                }
             } catch (err: any) {
                 _err = err;
                 _err.state = _err.state ? _err.state : 500;
@@ -203,7 +208,7 @@ class Passport {
     }
 
     static async resolveHeaderToken(type: TTokenType, ctx: TContext): Promise<any> {
-        const TOKEN_TYPE = type === 'basic'
+        const TOKEN_TYPE = type === 'Basic'
             ? Passport.BASIC_TOKEN_TYPE
             : Passport.TOKEN_TYPE;
         try {

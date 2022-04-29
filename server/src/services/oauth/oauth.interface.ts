@@ -1,6 +1,7 @@
 import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IBasicPassportRes } from "../jwt/passport.interface";
+import { IOauthApplicationScopeAndApiScopeRes } from "../oauth-app/oauth-app-scope.interface";
 import { IOauthApplicationDao } from "../oauth-app/oauth-app.interface";
 import { IJWTCotext } from "../utils.interface";
 
@@ -10,7 +11,7 @@ import { IJWTCotext } from "../utils.interface";
  * token: Access Token
  */
 export type TResponseType = 'code' | 'token';
-export type TTokenType = 'bearer' | 'basic';
+export type TTokenType = 'Bearer' | 'Basic';
 
 export interface IErrorRes {
     error: {
@@ -70,8 +71,19 @@ export interface IVerifyTokenBody {
     state?: string;
 }
 
+export interface IOauthApplicationScopeRes {
+    SCOPES: IOauthApplicationScopeAndApiScopeRes[];
+    APP: {
+        NAME: string;
+        HOMEPAGE_URL: string;
+        USER_ACCOUNT: string;
+    };
+    CLIENT_ACCOUNT: string;
+}
+
 export interface IOauth {
     options: TAnyObj;
+    getOauthApplicationScope(database: IMysqlDatabase, client_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeRes>;
     checkOauthApplication(db: Connection, client_id: string, options: TAnyObj): Promise<IOauthApplicationDao>;
     grantCodeToken(database: IMysqlDatabase, body: IGrantTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantTokenRes | IAccessTokenRes>;
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;

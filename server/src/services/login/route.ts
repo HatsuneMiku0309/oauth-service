@@ -24,10 +24,37 @@ class LoginRouter extends BaseRouter implements IRouter {
     registerAPIs(): void {
         let login = Login.getInstance(this.options);
         let api = super._getRootApi().join('/');
+        this.router.get(api, async (ctx: TContext, next: Next) => {
+            try {
+                ctx.redirect('https://www.google.com.tw/');
+            } catch (err: any) {
+                throw err;
+            }
+        });
+
         this.router.post(api, async (ctx: TContext, next: Next) => {
             try {
                 let result = await login.login(ctx, this.database);
+                ctx.body = {
+                    data: result
+                };
+            } catch (err: any) {
+                throw err;
+            }
+        });
 
+        api = super._getRootApi('token').join('/');
+        this.router.post(api, async (ctx: TContext, next: Next) => {
+            const { body } = ctx.request;
+            try {
+                let result = await login.tokenLogin(ctx, this.database, body, ctx.state);
+                // ctx.cookies.set('location', '/', {
+                //     signed: true,
+                //     maxAge: 5 * 1000,
+                //     httpOnly: false,
+                //     overwrite: false
+                // });
+                // ctx.status = 302;
                 ctx.body = result;
             } catch (err: any) {
                 throw err;
@@ -39,7 +66,9 @@ class LoginRouter extends BaseRouter implements IRouter {
             try {
                 let result = await login.regist(this.database, body, this.options);
 
-                ctx.body = result;
+                ctx.body = {
+                    data: result
+                };
             } catch (err: any) {
                 throw err;
             }

@@ -5,7 +5,7 @@ import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeDaO, IOauthApplicationScopeDao, IRegistBody } from './oauth-app-scope.interface';
+import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeRes, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
 import { v4 as uuid } from 'uuid';
 import { IApiScopeDao } from '../scope/scope.interface';
@@ -26,7 +26,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         return OauthApplicationScope.instance;
     }
 
-    async list(database: IMysqlDatabase, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
+    async list(database: IMysqlDatabase, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         try {
             let db = await database.getConnection();
             try {
@@ -43,7 +43,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    async dbList(db: Connection, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
+    async dbList(db: Connection, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         try {
             let sql = `
                 SELECT
@@ -52,6 +52,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
                     os.SCOPE_ID ,
                     as2.NAME ,
                     as2.\`SYSTEM\` ,
+                    as2.DESCRIPTION,
                     as2.APIS,
                     as2.IS_REQUIRED ,
                     os.IS_DISABLED ,
@@ -68,7 +69,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
                     AND os.SCOPE_ID = as2.ID
             `;
             let params = [oa_id];
-            let [rows] = <[IOauthApplicationScopeAndApiScopeDaO[], FieldPacket[]]> await db.query(sql, params);
+            let [rows] = <[IOauthApplicationScopeAndApiScopeRes[], FieldPacket[]]> await db.query(sql, params);
 
             return rows;
         } catch (err) {
@@ -76,7 +77,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    async registScope(database: IMysqlDatabase, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
+    async registScope(database: IMysqlDatabase, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         try {
             let db = await database.getConnection();
             try {
@@ -128,9 +129,6 @@ class OauthApplicationScope implements IOauthApplicationScope {
                 throw new Error(`[${oa_id}] not find`);
             }
             let oauthApplicaion = oauthApplications[0];
-            if (!!oauthApplicaion.IS_DISABLED) {
-                throw new Error(`[${oa_id}] id disabled`);
-            }
 
             return oauthApplicaion;
         } catch (err) {
@@ -173,7 +171,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeDaO[]> {
+    async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         const COLUMNS = ['ID', 'OAUTH_APPLICATION_ID', 'SCOPE_ID', 'IS_DISABLED', 'IS_CHECKED', 'CREATE_BY'];
         try {
             let oauthApplicaion = await this._checkOauthApplication(db, oa_id);

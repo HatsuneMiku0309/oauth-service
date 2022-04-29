@@ -46,7 +46,7 @@ class Config implements IConfig {
                 EXPIRES_TYPE: <TExpiresType> EXPIRES_TYPE,
                 ALGORITHM: <Algorithm> ALGORITHM,
                 UNLESS: [
-                    '^\/api\/login',
+                    '^\/api\/login$',
                     '^\/api\/register',
                     '^\/api\/oauth\/access-token',
                     '^\/api\/oauth\/refresh-token',

@@ -23,7 +23,7 @@ class Middleware implements IMiddleware {
         ctx: TContext,
         next: () => Promise<any>) => {
         try {
-            return await next();
+            await next();
         } catch (err: any) {
             // if (this.config.DEBUG) {
             //     console.error(err);
@@ -59,6 +59,7 @@ class Middleware implements IMiddleware {
 
     async registerMiddleware(): Promise<void> {
         Passport.config = this.config.getJWTConfig();
+        this.app.keys = ['secret'];
         const middles: any[] = [
             this._errorHandle,
             json(),
@@ -72,7 +73,10 @@ class Middleware implements IMiddleware {
                 strict: true
             }),
             cors({
-                exposeHeaders: ['Authorization'],
+                // origin: 'http://localhost:3002',
+                credentials: true,
+                // maxAge: 3600 * 1000,
+                exposeHeaders: ['Authorization', 'Set-Cookie'],
                 allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
             }),
             await Passport.passport(this.database, this.config.getJWTConfig())

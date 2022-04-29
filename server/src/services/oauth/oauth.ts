@@ -7,7 +7,7 @@ import { IError, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import {
     IOauth, IGrantTokenBody, IAccessTokenBody, IGrantTokenRes, IAccessTokenRes,
     IRefreshTokenBody, IOauthApplicationAndUserDao, TTokenType, IOauthTokenDao,
-    IVerifyTokenBody
+    IVerifyTokenBody, IOauthApplicationScopeRes
 } from './oauth.interface';
 import { IOauthApplicationDao } from '../oauth-app/oauth-app.interface';
 import { FieldPacket } from 'mysql2';
@@ -16,13 +16,14 @@ import { IJWTCotext } from '../utils.interface';
 import { Passport } from '../jwt/passport';
 import { IBasicPassportRes } from '../jwt/passport.interface';
 import { checkHttpProtocol, checkRedirectUri } from '../../utils';
+import { OauthApplicationScope } from '../oauth-app/oauth-app-scope';
 
 class Oauth implements IOauth {
     static instance: IOauth;
     private _USE_LIMIT: number = 1;
     readonly SEC_TIME: number = 60 * 1000;
     readonly EXPIRES_MIN = 15;
-    readonly TOKEN_TYPE: TTokenType = 'bearer';
+    readonly TOKEN_TYPE: TTokenType = 'Bearer';
     options: TAnyObj;
     private constructor(options: TAnyObj = { }) {
         this.options = options;
@@ -34,6 +35,52 @@ class Oauth implements IOauth {
         }
 
         return Oauth.instance;
+    }
+
+    async getOauthApplicationScope(database: IMysqlDatabase, client_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeRes> {
+        const { user: { user_id } } = options;
+        try {
+            let db = await database.getConnection();
+            let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
+            try {
+                let oauthApplicaion = await this._checkOauthApplication(db, client_id, options);
+                let sql = 'SELECT ACCOUNT FROM USER WHERE ID = ?';
+                let [users] = <[{ ACCOUNT: string }[], FieldPacket[]]> await db.query(sql, [ oauthApplicaion.USER_ID ]);
+                if (users.length === 0) {
+                    throw new Error(`[${oauthApplicaion.ID}] user not find`);
+                }
+                let user = users[0];
+                let oauthScopes = await oauthApplicationScope.dbList(db, oauthApplicaion.ID, options);
+                oauthScopes.forEach((oauthScope) => {
+                    if (oauthScope.IS_DISABLED) {
+                        throw new Error(`[${oauthScope.SYSTEM}-${oauthScope.NAME}] disabled`);
+                    } else if (!oauthScope.IS_CHECKED) {
+                        throw new Error(`[${oauthScope.SYSTEM}-${oauthScope.NAME}] not checked`);
+                    }
+                });
+                let [clientUsers] = <[{ ACCOUNT: string }[], FieldPacket[]]> await db.query(sql, [ user_id ]);
+                if (clientUsers.length === 0) {
+                    throw new Error('Client user not find');
+                }
+                let clientUser = clientUsers[0];
+
+                return {
+                    SCOPES: oauthScopes,
+                    APP: {
+                        NAME: oauthApplicaion.NAME,
+                        HOMEPAGE_URL: oauthApplicaion.HOMEPAGE_URL,
+                        USER_ACCOUNT: user.ACCOUNT
+                    },
+                    CLIENT_ACCOUNT: clientUser.ACCOUNT
+                };
+            } catch (err) {
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
     }
 
     private _checkGrantTokenBody(body: IGrantTokenBody): void {
@@ -233,7 +280,7 @@ class Oauth implements IOauth {
         database: IMysqlDatabase, body: IGrantTokenBody, options: TAnyObj & IJWTCotext
     ): Promise<IGrantTokenRes | IAccessTokenRes> {
         const { user: { user_id } } = options;
-        const { response_type, client_id, redirect_uri, state, scope } = body;
+        const { response_type, client_id, redirect_uri, state /*, scope */ } = body;
         const NOW_DATE = new Date();
         const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
         let result: IGrantTokenRes | IAccessTokenRes;
@@ -256,8 +303,12 @@ class Oauth implements IOauth {
                 switch (response_type) {
                     case 'code':
                         result = {
-                            code: code
+                            code: code,
+                            redirect_uri: oauthApplicationAndUser.REDIRECT_URI
                         };
+                        if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
+                            throw new Error('redirect_uri error');
+                        }
                         !!redirect_uri && (result.redirect_uri = redirect_uri);
                         !!state && (result.state = state);
                         await db.query(`
@@ -282,8 +333,12 @@ class Oauth implements IOauth {
                         result = {
                             access_token: access_token, // grant access_token is jwt
                             token_type: this.TOKEN_TYPE,
-                            expires_in: (EXPIRES_TIME) / 1000
+                            expires_in: (EXPIRES_TIME) / 1000,
+                            redirect_uri: oauthApplicationAndUser.REDIRECT_URI
                         };
+                        if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
+                            throw new Error('redirect_uri error');
+                        }
                         !!redirect_uri && (result.redirect_uri = redirect_uri);
                         !!state && (result.state = state);
                         await db.query(`
@@ -445,7 +500,10 @@ class Oauth implements IOauth {
             this._checkAccessTokenBody(body);
             const db = await database.getConnection();
             try {
-                await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
+                let oauthApplicaion = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
+                if (redirect_uri !== oauthApplicaion.REDIRECT_URI) {
+                    throw new Error('redirect_uri error');
+                }
                 let oauthTokenData = await this._accessTokenCheck(db, code, NOW_DATE);
                 let accessToken = Passport.grantJWTToken({
                     grant_type, client_id
@@ -565,7 +623,7 @@ class Oauth implements IOauth {
 
     async refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes> {
         const { user: { client_id } } = options;
-        const { refresh_token, scope, state } = body;
+        const { refresh_token /*, scope */, state } = body;
         const NOW_DATE = new Date();
         const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
         try {

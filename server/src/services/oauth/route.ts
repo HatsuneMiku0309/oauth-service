@@ -85,6 +85,20 @@ class OauthRouter extends BaseRouter implements IRouter {
                 throw err;
             }
         });
+
+        api = super._getRootApi(':client_id').join('/');
+        this.router.get(api, async (ctx: TContext) => {
+            const { params: { client_id } } = ctx;
+            try {
+                let result = await oauth.getOauthApplicationScope(this.database, client_id, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
     }
 }
 

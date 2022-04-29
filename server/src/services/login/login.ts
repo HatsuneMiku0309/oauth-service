@@ -1,9 +1,9 @@
 import { install } from 'source-map-support';
 import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
-import { TContext } from '../utils.interface';
+import { IJWTCotext, TContext } from '../utils.interface';
 install();
 
-import { IRegistBody, ILogin, ILoginBody, IUserDAO } from './login.interface';
+import { IRegistBody, ILogin, ILoginBody, IUserDAO, ITokenLoginBody, ITokenLoginTokenBody } from './login.interface';
 import { Passport } from '../jwt/passport';
 import { FieldPacket } from 'mysql2';
 import * as _ from 'lodash';
@@ -29,6 +29,7 @@ class Login implements ILogin {
         const { body } = <{ body: ILoginBody }> ctx.request;
         try {
             let db = await database.getConnection();
+            await db.beginTransaction();
             try {
                 let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ACCOUNT = ? AND PASSWORD = ?', [body.account, body.password]);
                 if (rows.length === 0) {
@@ -43,7 +44,9 @@ class Login implements ILogin {
                     // nbf: Math.ceil((+new Date()) / 1000),
                     // nonce: '123123fds'
                 }, options);
+                await db.query('UPDATE USER SET ? WHERE ID = ?', [{ TOKEN: token }, row.ID]);
                 ctx.set('Authorization', `${Passport.TOKEN_TYPE} ${token}`);
+                await db.commit();
 
                 return <any> {
                     ID: row.ID,
@@ -52,6 +55,51 @@ class Login implements ILogin {
                     PHONE: row.PHONE
                 };
             } catch (err) {
+                await db.rollback();
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async tokenLogin(ctx: TContext, database: IMysqlDatabase, body: ITokenLoginTokenBody, options: TAnyObj & IJWTCotext): Promise<IUserDAO> {
+        const { user: { user_id }, jwt } = options;
+        const { user_token } = body;
+        try {
+            let db = await database.getConnection();
+            await db.beginTransaction();
+            try {
+                let sql = 'SELECT * FROM USER WHERE ID = ?';
+                let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query(sql, [ user_id ]);
+                if (rows.length === 0) {
+                    throw new Error(`[${user_id}] user_id not find`);
+                }
+                let row = rows[0];
+                if (row.TOKEN !== jwt) {
+                    throw new Error('login fail');
+                }
+                let userData: ITokenLoginBody = JSON.parse(Buffer.from(user_token, 'base64').toString('ascii'));
+                if (
+                    row.ID !== userData.ID ||
+                    row.ACCOUNT !== userData.ACCOUNT ||
+                    row.EMAIL !== userData.EMAIL ||
+                    row.PHONE !== userData.PHONE
+                ) {
+                    throw new Error('login fail');
+                }
+                await db.commit();
+
+                return <any> {
+                    ID: row.ID,
+                    ACCOUNT: row.ACCOUNT,
+                    EMAIL: row.EMAIL,
+                    PHONE: row.PHONE
+                };
+            } catch (err) {
+                await db.rollback();
                 throw err;
             } finally {
                 await database.end(db);
