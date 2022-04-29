@@ -19,7 +19,7 @@
           <div v-if="showSetting" class="absolute top-11 right-6 z-40">
             <ul v-if="showSetting" class="absolute w-40 bg-gray-700 border border-gray-800 -right-4 top-2 rounded-md not-italic p-1">
               <li class="p-1">Modify Profile</li>
-              <router-link to="/login"><li class="border-t p-1">Logout</li></router-link>
+              <a @click="logout"><li class="border-t p-1">Logout</li></a>
             </ul>
           </div>
         </transition>
@@ -30,18 +30,26 @@
 
 <script lang="ts">
 import { defineComponent, inject, ref, toRefs } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
     name: 'OHeader',
     props: ['user'],
     setup(prop) {
+      const router = useRouter();
       const showSetting = ref(false);
-      const user = prop.user;
+      const { user } = toRefs(prop);
       const mapStore = inject('mapStore');
       const { state } = <any> mapStore;
       const { navigation } = toRefs(state);
+      const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user-data');
+        router.replace('/login');
+      };
 
       return {
+        logout,
         showSetting,
         user,
         navigation

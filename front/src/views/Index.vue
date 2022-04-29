@@ -25,7 +25,7 @@ export default defineComponent({
     const router = useRouter();
     const isShowLoad = ref(false);
     const showSetting = ref(false);
-    let user = { };
+    let user = ref({ });
     const checkToken = () => {
       try {
         let userData = localStorage.getItem('user-data');
@@ -33,7 +33,7 @@ export default defineComponent({
         if (!token || !userData) {
           throw new Error('No token or user-data')
         } else {
-          user = JSON.parse(decodeBase64(userData))
+          user.value = JSON.parse(decodeBase64(userData))
         }
 
         return false;
@@ -41,9 +41,12 @@ export default defineComponent({
         return true;
       }
     };
-    if (checkToken()) {
-      router.replace('/login');
-    }
+
+    onMounted(() => {
+      if (checkToken()) {
+        router.replace('/login');
+      }
+    })
 
     return {
       isShowLoad,

@@ -64,27 +64,27 @@
           <form @submit.prevent="checkForm">
             <div class="flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
-              <common-input v-model="app.NAME" type="text" maxlength="100" required />
+              <common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
-              <common-input v-model="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
+              <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
             </div>
             <div class="relative flex h-auto my-2">
               <div class="relative flex flex-shrink-0 items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
-              <common-input v-model="app.APPLICATION_DESCRIPTION" type="textarea" />
+              <common-input v-model.trim="app.APPLICATION_DESCRIPTION" type="textarea" />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
-              <common-input v-model="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
+              <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
-              <common-input v-model="app.EXPIRES_DATE" type="text" />
+              <common-input v-model="app.EXPIRES_DATE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
-              <common-input v-model="app.NOT_BEFORE" type="text" />
+              <common-input v-model="app.NOT_BEFORE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
@@ -96,15 +96,15 @@
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">CHECKED :</span></div>
-              <common-input v-model="app.IS_CHECKED" type="checkbox" />
+              <common-input :modelValue="app.IS_CHECKED" type="checkbox" onclick="return false;"/>
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">UPDATE TIME :</span></div>
               <common-input v-model="app.UPDATE_TIME" type="text" readonly />
             </div>
             <div class="relative flex justify-center mt-8">
-              <common-input :modelValue="'submit'" type="submit" />
-              <common-input :modelValue="'back'" type="router-link" to="/application" />
+              <common-button :modelValue="'submit'" type="submit" />
+              <common-button :modelValue="'back'" type="router-link" to="/application" />
               <!-- <div>
                 <input type="submit" class="
                   mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
@@ -136,9 +136,10 @@ import ApplicationScope from './ApplicationScope.vue';
 import { get, put, del } from '../apis/utils';
 import dayjs from 'dayjs';
 import CommonInput from '../components/common/CommonInput.vue';
+import CommonButton from '../components/common/CommonButton.vue';
 
 export default defineComponent({
-  components: { Cat, MessagePopup, ApplicationScope, CommonInput },
+  components: { Cat, MessagePopup, ApplicationScope, CommonInput, CommonButton },
   setup() {
     const users = ref([]);
     const app = ref({ });
@@ -205,13 +206,9 @@ export default defineComponent({
           is_checked: putData.IS_CHECKED,
           scope_ids: putData.SCOPE_IDS
         });
-        result = await get('/oauth-app/' + result.data.data.ID);
-        let data = convertDate(result.data.data);
-        
-        app.value = data;
+        router.go(0);
       } catch (err: any) {
         alert(err.response.data.errMsg);
-      } finally {
         isShowLoad.value = false;
       }
     };

@@ -93,7 +93,7 @@ export default defineComponent({
           tempCount++;
         }
       });
-      if (tempCount === apiScopeCount) {
+      if (tempCount === apiScopeCount && tempCount !== 0) {
         selectedAll.value = true;
       } else {
         selectedAll.value = false;

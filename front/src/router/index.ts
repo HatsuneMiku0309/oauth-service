@@ -5,6 +5,7 @@ import Register from '../views/Register.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Application from '../views/Application.vue';
 import ApplicationDetail from '../views/ApplicationDetail.vue';
+import Authorization from '../views/Authorization.vue';
 import { decodeBase64 } from '@/utils';
 
 const routes: RouteRecordRaw[] = [
@@ -44,6 +45,13 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   }, {
+    path: '/oauth/authorization',
+    name: 'Authorization',
+    component: Authorization,
+    meta: {
+      authentication: false,
+    },
+  }, {
     path: '/login',
     name: 'Login',
     component: Login,
@@ -66,17 +74,17 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  if (!to.meta.authentication) {
-    next();
-  } else {
-    if (checkToken()) {
-      router.replace('/login');
-    } else {
-      next();
-    }
-  }
-});
+// router.beforeEach((to, from, next) => {
+//   if (!to.meta.authentication) {
+//     next();
+//   } else {
+//     if (checkToken()) {
+//       router.replace('/login');
+//     } else {
+//       next();
+//     }
+//   }
+// });
 
 const checkToken = () => {
   try {

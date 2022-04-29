@@ -10,58 +10,35 @@
 				<form class="p-2" @submit.prevent="checkForm">
 					<div class="flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-							type="text" maxlength="100" required v-model="app.NAME" />
+						<common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-							type="url" pattern="https://.*" maxlengh="255" required v-model="app.HOMEPAGE_URL" />
+						<common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
 					</div>
 					<div class="relative flex h-auto my-2">
 						<div class="relative flex items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
-						<textarea class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96 h-24" v-model="app.APPLICATION_DESCRIPTION"></textarea>
+						<common-input v-model.trim="app.APPLICATION_DESCRIPTION" type="textarea" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-							type="url" maxlength="100" pattern="https://.*" maxlengh="255" required v-model="app.REDIRECT_URI" />
+						<common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-							type="text" v-model="app.EXPIRES_DATE" />
+						<common-input v-model="app.EXPIRES_DATE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2
-							focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md w-96"
-							type="text" v-model="app.NOT_BEFORE" />
+						<common-input v-model="app.NOT_BEFORE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2 w-96 h-4
-							focus:border-2 focus:border-gray-700"
-							type="checkbox" v-model="app.IS_DISABLED" />
+						<common-input v-model="app.IS_DISABLED" type="checkbox" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
 						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
-						<input class="
-							bg-transparent border rounded-xl border-gray-700 p-2 w-96 h-4
-							focus:border-2 focus:border-gray-700"
-							type="checkbox" v-model="app.IS_EXPIRES" />
+						<common-input v-model="app.IS_EXPIRES" type="checkbox" />
 					</div>
 					<div class="relative flex mt-8">
 						<div>
@@ -135,9 +112,12 @@ import { useRoute } from 'vue-router';
 import { get, post } from '../apis/utils';
 import Cat from '../components/Loaders/Cat.vue';
 import Pagination from '../components/Pagination.vue';
+import CommonInput from '../components/common/CommonInput.vue';
+import CommonButton from '../components/common/CommonButton.vue';
+import Input from '@/components/common/Input.vue';
 
 export default defineComponent({
-	components: { Cat, MessagePopup, Pagination },
+	components: { Cat, MessagePopup, Pagination, CommonInput, CommonButton },
 	setup() {
 		const mapStore = inject('mapStore');
 		const { changeNavigation } = <any> mapStore;
