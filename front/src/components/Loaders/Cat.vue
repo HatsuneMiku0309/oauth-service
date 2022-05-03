@@ -1,5 +1,5 @@
 <template>
-  <div class="z-10 absolute">
+  <div class="z-50 absolute">
     <div class="box h-full">
       <div class="cat">
         <div class="cat__body"></div>

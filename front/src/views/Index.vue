@@ -1,5 +1,5 @@
 <template>
-  <Cat v-if="isShowLoad" />
+  <cat v-if="isShowLoad" class="w-full h-full opacity-75" />
   <div class="flex flex-col h-screen overflow-hidden">
     <o-header class="header border-b border-gray-500 shadow-xl" :user="user" />
     <div class="flex flex-grow main">
@@ -10,7 +10,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+import { post } from '@/apis/utils';
+import { defineComponent, onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Cat from '../components/Loaders/Cat.vue';
 import { decodeBase64 } from '../utils';
@@ -22,31 +23,43 @@ export default defineComponent({
   name: 'Index',
   components: { Cat, OHeader, LeftSide, MainContainer },
   setup() {
+    const initTokenLoginBody = 'e30';
     const router = useRouter();
     const isShowLoad = ref(false);
     const showSetting = ref(false);
     let user = ref({ });
-    const checkToken = () => {
-      try {
-        let userData = localStorage.getItem('user-data');
-        let token = localStorage.getItem('token');
-        if (!token || !userData) {
-          throw new Error('No token or user-data')
-        } else {
-          user.value = JSON.parse(decodeBase64(userData))
-        }
+    let userData = <string> localStorage.getItem('user-data');
+    user.value = JSON.parse(decodeBase64(userData));
 
-        return false;
-      } catch (err) {
-        return true;
-      }
-    };
+    // const checkToken = async () => {
+    //   try {
+    //     let userData = localStorage.getItem('user-data');
+    //     let token = localStorage.getItem('token');
+    //     if (!token || !userData) {
+    //       throw new Error('No token or user-data')
+    //     } else {
+    //       try {
+    //         await post('/login/token', { user_token: userData || initTokenLoginBody });
+    //         user.value = JSON.parse(decodeBase64(userData))
+    //       } catch (err: any) {
+    //         localStorage.removeItem('user-data');
+    //         localStorage.removeItem('token');
+    //         alert(err.response.data.errMsg);
+    //         router.replace('/login');
+    //       }
+    //     }
 
-    onMounted(() => {
-      if (checkToken()) {
-        router.replace('/login');
-      }
-    })
+    //     return false;
+    //   } catch (err) {
+    //     return true;
+    //   }
+    // };
+
+    // onBeforeMount(async () => {
+    //   if (await checkToken()) {
+    //     router.replace('/login');
+    //   }
+    // })
 
     return {
       isShowLoad,

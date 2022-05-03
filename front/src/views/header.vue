@@ -1,5 +1,20 @@
 <template>
   <div class="flex items-center flex-grow-0 flex-shrink-0 w-full bg-gray-700">
+    <transition name="message-popup">
+      <message-popup v-if="isShowApps" v-model="isShowApps">
+        <template v-slot:title>
+          <span class="text-3xl mt-0">Authorization Apps</span>
+        </template>
+        <template #default>
+          <ul class="w-full">
+            <li class="p-2" v-for="(profileApp, index) in profileApps" :key="index">
+              <span><common-button class="p-1 text-red-600" type="button" :modelValue="'Remove'" @click="removeApp(profileApp.ID)" /></span>
+              <span class="ml-3">{{profileApp.APP_NAME}}</span>
+            </li>
+          </ul>
+        </template>
+      </message-popup>
+    </transition>
     <div class="flex flex-shrink-0 text-2xl ml-4 font-bold hover:text-gray-400"><router-link to="/">Oauth</router-link></div>
     <div class="flex ml-12">
       <div class="flex" v-for="(value, index) in navigation" :key="index">
@@ -18,7 +33,8 @@
         <transition name="setting">
           <div v-if="showSetting" class="absolute top-11 right-6 z-40">
             <ul v-if="showSetting" class="absolute w-40 bg-gray-700 border border-gray-800 -right-4 top-2 rounded-md not-italic p-1">
-              <li class="p-1">Modify Profile</li>
+              <li class="p-1" @click.stop="getProfile">Modify Profile</li>
+              <li class="p-1" @click.stop="getUserApps">Apps</li>
               <a @click="logout"><li class="border-t p-1">Logout</li></a>
             </ul>
           </div>
@@ -29,13 +45,20 @@
 </template>
 
 <script lang="ts">
+import { del, get } from '@/apis/utils';
+import CommonButton from '@/components/common/CommonButton.vue';
 import { defineComponent, inject, ref, toRefs } from 'vue';
 import { useRouter } from 'vue-router';
+import MessagePopup from '../components/MessagePopup.vue';
 
 export default defineComponent({
     name: 'OHeader',
+    components: { CommonButton, MessagePopup },
     props: ['user'],
     setup(prop) {
+      const profileApps = ref([]);
+      const isShowApps = ref(false);
+      const isShowProfile = ref(false);
       const router = useRouter();
       const showSetting = ref(false);
       const { user } = toRefs(prop);
@@ -48,8 +71,45 @@ export default defineComponent({
         router.replace('/login');
       };
 
+      const getUserApps = async () => {
+        try {
+          let result = await get('/oauth-app/profile/oauth_application_user');
+          profileApps.value = result.data.data;
+          isShowApps.value = true;
+        } catch (err: any) {
+          alert(err.response.data.errMsg);
+        }
+      };
+
+      const removeApp = async (oau_id: string) => {
+        try {
+          let checked = confirm('Are you sure you want to remove?');
+          if (checked) {
+            await del('/oauth-app/profile/oauth_application_user/' + oau_id);
+            await getUserApps();
+          }
+        } catch (err: any) {
+          alert(err.response.data.errMsg);
+        }
+      };
+
+      const getProfile = async () => {
+        try {
+          console.log('profile');
+          isShowProfile.value = true;
+        } catch (err: any) {
+          alert(err.response.data.errMsg);
+        }
+      }
+
       return {
         logout,
+        getUserApps,
+        getProfile,
+        removeApp,
+        profileApps,
+        isShowApps,
+        isShowProfile,
         showSetting,
         user,
         navigation
@@ -67,6 +127,17 @@ export default defineComponent({
 .setting-enter-from,
 .setting-leave-to {
   transform: translateX(20px);
+  opacity: 0;
+}
+
+.message-popup-enter-active,
+.message-popup-leave-active {
+  transition: all 0.3s ease-in-out;
+}
+
+.message-popup-enter-from,
+.message-popup-leave-to {
+  transform: translateY(-20px);
   opacity: 0;
 }
 

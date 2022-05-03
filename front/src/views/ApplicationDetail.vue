@@ -8,19 +8,19 @@
       </template>
       <template #default>
         <div class="text-sm text-red-600">Please keep this information safe, exposure will cause security problems.</div>
-        <div class="relative flex w-full h-14 items-center">
-          <div class="relative flex items-center h-14 mr-2 w-36"><span class="absolute right-0">Client ID :</span></div>
-          <label class="flex items-center w-full p-2 h-4">{{ app.CLIENT_ID }}</label>
+        <div class="relative flex w-full items-center py-1">
+          <div class="relative flex items-center mr-2 w-36"><span class="absolute right-0">Client ID :</span></div>
+          <label class="flex items-center p-2 select-all bg-gray-700 text-xs">{{ app.CLIENT_ID }}</label>
         </div>
-        <div class="relative flex h-auto w-full items-center">
+        <div class="relative flex w-full items-center py-1">
           <div class="relative flex self-start mr-2 w-36 pt-2"><span class="absolute right-0">Client Secret :</span></div>
-          <label id="secret" class="flex items-center p-2 w-full h-full break-all">{{ app.CLIENT_SECRET }}</label>
+          <label id="secret" class="flex items-center p-2 break-all select-all bg-gray-700 text-xs">{{ app.CLIENT_SECRET }}</label>
         </div>
         <div class="relative flex h-14 w-full items-center">
           <div class="absolute right-0 top-4">
-            <button class="ml-3 mr-3 bg-transparent border-2 rounded-2xl border-gray-700 p-2 hover:bg-gray-700">reload</button>
-            <button class="ml-3 mr-3 bg-transparent border-2 rounded-2xl border-gray-700 p-2 hover:bg-gray-700">copy</button>
-            <button class="ml-3 mr-3 bg-transparent border-2 rounded-2xl border-gray-700 p-2 hover:bg-gray-700">download</button>
+            <common-button class="p-2" type="button" :modelValue="'Reload'" @click="reloadSecret"/>
+            <common-button id="download-config" class="p-2 ml-3 mr-3" type="button" :modelValue="'Download'" @click="downloadConfig"/>
+            <a id="downloadEE" style="display:none"></a>
           </div>
         </div>
       </template>
@@ -33,7 +33,7 @@
       </template>
       <template #default>
         <form class="w-full" @submit.prevent="remove">
-          <div class="text-sm">Please enter your app_id <label class="bg-gray-700 p-1">{{app.ID}}</label> to make sure you know to remove</div>
+          <div class="text-sm">Please enter your app_id <label class="bg-gray-700 p-1 select-all">{{app.ID}}</label> to make sure you know to remove</div>
           <div class="mt-4"><input class="
               bg-transparent border rounded-xl border-gray-700 p-2
               focus:outline-none focus:border-2 focus:border-gray-700 w-96"
@@ -63,20 +63,20 @@
         <div class="flex flex-col w-auto mb-12 mx-10 overflow-hidden">
           <form @submit.prevent="checkForm">
             <div class="flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
+              <div class="required relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
               <common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
             </div>
-            <div class="relative flex h-14 items-center my-2">
+            <div class="required relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
-              <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
+              <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-auto my-2">
               <div class="relative flex flex-shrink-0 items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
               <common-input v-model.trim="app.APPLICATION_DESCRIPTION" type="textarea" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
-              <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
+              <div class="required relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
+              <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
@@ -103,8 +103,8 @@
               <common-input v-model="app.UPDATE_TIME" type="text" readonly />
             </div>
             <div class="relative flex justify-center mt-8">
-              <common-button :modelValue="'submit'" type="submit" />
-              <common-button :modelValue="'back'" type="router-link" to="/application" />
+              <common-button class="w-32" :modelValue="'submit'" type="submit" />
+              <common-button class="w-32" :modelValue="'back'" type="router-link" to="/application" />
               <!-- <div>
                 <input type="submit" class="
                   mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
@@ -230,10 +230,36 @@ export default defineComponent({
       }
     };
 
+    const reloadSecret = () => {
+      alert('Not yet implemented');
+    }
+
+    const downloadConfig = () => {
+      const _app: any = app.value;
+      const config = {
+        web: {
+          client_id: _app.CLIENT_ID,
+          application_id: _app.ID,
+          auth_uri: window.location.protocol + '//' + window.location.host + '/oauth/authorization',
+          token_uri: window.location.protocol + '//' + window.location.host + '/api/oauth/access-token',
+          register_uri: window.location.protocol + '//' + window.location.host + '/api/api-scope/register/:system',
+          client_secret: _app.CLIENT_SECRET,
+          redirect_uri: _app.REDIRECT_URI
+        }
+      };
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config));
+      const downloadElem = document.getElementById('downloadEE');
+      downloadElem?.setAttribute("href", dataStr);
+      downloadElem?.setAttribute("download", "client_secret" + _app.CLIENT_ID + ".json");
+      downloadElem?.click();
+    }
+
     return {
       checkForm,
       remove,
       syncOauthScope,
+      reloadSecret,
+      downloadConfig,
       isShowLoad,
       isShowPopup,
       isShowRemovePopup,
@@ -246,6 +272,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.required:before {
+  content: "*";
+  display: inline-flex;
+  color: red;
+  margin-right: 0.3rem;
+}
+
 .message-popup-enter-active,
 .message-popup-leave-active {
   transition: all 0.3s ease-in-out;

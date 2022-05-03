@@ -7,6 +7,7 @@ import Application from '../views/Application.vue';
 import ApplicationDetail from '../views/ApplicationDetail.vue';
 import Authorization from '../views/Authorization.vue';
 import { decodeBase64 } from '@/utils';
+import { post } from '@/apis/utils';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -74,27 +75,36 @@ const router = createRouter({
   routes,
 });
 
-// router.beforeEach((to, from, next) => {
-//   if (!to.meta.authentication) {
-//     next();
-//   } else {
-//     if (checkToken()) {
-//       router.replace('/login');
-//     } else {
-//       next();
-//     }
-//   }
-// });
+router.beforeEach(async(to, from, next) => {
+  if (!to.meta.authentication) {
+    next();
+  } else {
+    if (await checkToken()) {
+      router.replace('/login');
+    } else {
+      next();
+    }
+  }
+});
 
-const checkToken = () => {
+const checkToken = async () => {
   try {
-    let user;
+    const initTokenLoginBody = 'e30';
     const userData = localStorage.getItem('user-data');
     const token = localStorage.getItem('token');
+    let user = {};
     if (!token || !userData) {
-      throw new Error('No token or user-data');
+      throw new Error('No token or user-data')
     } else {
-      user = JSON.parse(decodeBase64(userData));
+      try {
+        await post('/login/token', { user_token: userData || initTokenLoginBody });
+        user = JSON.parse(decodeBase64(userData));
+      } catch (err: any) {
+        localStorage.removeItem('user-data');
+        localStorage.removeItem('token');
+        alert(err.response.data.errMsg);
+        return false;
+      }
     }
 
     return false;

@@ -13,7 +13,8 @@ function errorHandle(err: any) {
         if ([401, 403].includes(err.response.status)) {
             window.localStorage.removeItem('token');
             window.localStorage.removeItem('user-data');
-            window.location.href = '/login';
+            const search = window.location.search;
+            window.location.href = '/login' + search;
             throw err;
         } else if ([301, 302].includes(err.response.status)) {
             window.location.href = err.response.location;
@@ -33,7 +34,6 @@ const PARAMS = {
         'X-Custom-Header': 'Oauth',
         'content-type': 'application/json',
         // 'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': localStorage.getItem('token'),
     },
 };
 const instance = axios.create(PARAMS);
@@ -66,6 +66,7 @@ export async function get<T = any>(
     try {
         const res: T = await instance.get(api, {
             params,
+            headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
         });
 
         return res;
@@ -79,7 +80,9 @@ export async function post<T = any>(
 ): Promise<T> {
     const { headers = { } } = options;
     try {
-        const res: T = await instance.post(api, data);
+        const res: T = await instance.post(api, data, {
+            headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+        });
 
         return res;
     } catch (err: any) {
@@ -176,7 +179,9 @@ export async function put<T = any>(
 ): Promise<T> {
     const { headers = { } } = options;
     try {
-        const res: T = await instance.put(api, data);
+        const res: T = await instance.put(api, data, {
+            headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+        });
 
         return res;
     } catch (err) {
@@ -190,7 +195,10 @@ export async function del<T = any>(
 ): Promise<T> {
     const { headers = { } } = options;
     try {
-        const res: T = await instance.delete(api, data);
+        const res: T = await instance.delete(api, {
+            data,
+            headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+        });
 
         return res;
     } catch (err) {

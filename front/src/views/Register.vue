@@ -1,5 +1,5 @@
 <template>
-  <Cat v-if="isShowLoad" />
+  <cat v-if="isShowLoad" class="w-full h-full opacity-75" />
   <div class="flex flex-col h-screen w-screen bg-gray-800">
     <router-link class="absolute text-sm right-0 flex justify-end pr-4 mt-2 underline hover:text-white" to="/login">Sign in ></router-link>
     <div class="flex flex-col w-5/12 self-center bg-gray-600 mt-28 rounded-3xl min-w-min">
@@ -11,21 +11,25 @@
       </div>
       <form class="mx-16 mt-6 p-4" @submit.prevent="checkForm" autocomplete="off">
         <div class="flex flex-col items-center px-12 pb-12">
-          <div class="flex my-2 items-center w-full">
-            <common-input type="text" v-model="accountObj.account" @keyup.exact.enter="submit" required placeholder="Account:" autocomplete="off" />
+          <div class="my-2 items-center w-full">
+            <span class="required mr-2">Account: </span>
+            <common-input type="text" v-model="accountObj.account" required placeholder="Account:" autocomplete="off" />
           </div>
-          <div class="flex my-2 items-center w-full">
-            <common-input type="password" v-model="accountObj.password" @keyup.exact.enter="submit" required placeholder="Password:" autocomplete="off" />
+          <div class="my-2 items-center w-full">
+            <span class="required mr-2">Password: </span>
+            <common-input type="password" v-model="accountObj.password" required placeholder="Password:" autocomplete="off" />
           </div>
-          <div class="flex my-2 items-center w-full">
-            <common-input type="email" v-model="accountObj.email" @keyup.exact.enter="submit" required placeholder="Email:" autocomplete="off" />
+          <div class="my-2 items-center w-full">
+            <span class="required mr-2">Email: </span>
+            <common-input type="email" v-model="accountObj.email" required placeholder="Email:" autocomplete="off" />
           </div>
-          <div class="flex my-2 items-center w-full">
-            <common-input type="text" v-model="accountObj.phone" @keyup.exact.enter="submit" required placeholder="Phone:" autocomplete="off" />
+          <div class="my-2 items-center w-full">
+            <span class="mr-2">Phone: </span>
+            <common-input type="text" v-model="accountObj.phone" required placeholder="Phone:" autocomplete="off" />
           </div>
         </div>
         <div class="flex flex-row my-2 items-center w-full justify-center">
-          <common-button type="submit" :modelValue="'Sign up'" />
+          <common-button class="w-32" type="submit" :modelValue="'Sign up'" />
         </div>
       </form>
     </div>
@@ -44,7 +48,6 @@ export default defineComponent({
   name: 'Register',
   components: { Cat, CommonInput, CommonButton },
   setup() {
-    localStorage.removeItem('token');
     const isShowLoad = ref(false);
     const accountObj: {
       account?: string;
@@ -81,5 +84,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
+.required:before {
+  content: "*";
+  display: inline-flex;
+  color: red;
+  margin-right: 0.3rem;
+}
 </style>

@@ -8,36 +8,36 @@
 			<template #default>
 				<div class="flex flex-col w-full overflow-y-auto max-h-96">
 				<form class="p-2" @submit.prevent="checkForm">
-					<div class="flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
+					<div class="flex = h-14 items-center my-2">
+						<div class="relative flex items-center mr-2 w-52"><span class="required absolute right-0">Application Name :</span></div>
 						<common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
-						<common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.*" maxlengh="255" required />
+						<div class="relative flex items-center mr-2 w-52"><span class="required absolute right-0">Homepage URL :</span></div>
+						<common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https?://.+" maxlengh="255" required />
 					</div>
 					<div class="relative flex h-auto my-2">
-						<div class="relative flex items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
+						<div class="relative flex items-start mr-2 w-52"><span class="absolute right-0">Description :</span></div>
 						<common-input v-model.trim="app.APPLICATION_DESCRIPTION" type="textarea" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
-						<common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.*" maxlengh="255" required />
+						<div class="relative flex items-center mr-2 w-52"><span class="required absolute right-0">Redirect URI :</span></div>
+						<common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https?://.+" maxlengh="255" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">EXPIRES :</span></div>
 						<common-input v-model="app.EXPIRES_DATE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">NOT BEFORE :</span></div>
 						<common-input v-model="app.NOT_BEFORE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">DISABLED :</span></div>
 						<common-input v-model="app.IS_DISABLED" type="checkbox" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">EXPIRES :</span></div>
 						<common-input v-model="app.IS_EXPIRES" type="checkbox" />
 					</div>
 					<div class="relative flex mt-8">
@@ -212,6 +212,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.required:before {
+  content: "*";
+  display: inline-flex;
+  color: red;
+  margin-right: 0.3rem;
+}
+
 .oauth-icon:before {
   content: "";
   display: flex;

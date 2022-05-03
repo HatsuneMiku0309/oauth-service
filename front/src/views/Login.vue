@@ -1,5 +1,5 @@
 <template>
-  <Cat v-if="isShowLoad" class="w-full h-full opacity-50"/>
+  <cat v-if="isShowLoad" class="w-full h-full opacity-50"/>
   <div class="flex flex-col items-center h-screen bg-gray-800">
     <div class="flex flex-col w-5/12 self-center bg-gray-600 mt-28 rounded-3xl min-w-min">
       <div class="flex flex-col mt-12 items-center w-full">
@@ -25,9 +25,9 @@
           </div>
         </div>
         <div class="flex flex-row my-2 items-center w-full justify-center mt-10">
-          <common-button v-if="'return_to' in $route.query" type="router-link" :to="{ path: '/signup', query: $route.query }" :modelValue="'Sign up'" />
-          <common-button v-else type="router-link" to="/signup" :modelValue="'Sign up'" />
-          <common-button :modelValue="'Sign in'" type="submit" />
+          <common-button class="w-32" v-if="'return_to' in $route.query" type="router-link" :to="{ path: '/signup', query: $route.query }" :modelValue="'Sign up'" />
+          <common-button class="w-32" v-else type="router-link" to="/signup" :modelValue="'Sign up'" />
+          <common-button class="w-32" :modelValue="'Sign in'" type="submit" />
         </div>
       </form>
     </div>
@@ -55,11 +55,12 @@ export default defineComponent({
     const condGoPage = () => {
       const { return_to = '' } = route.query; 
       if (return_to === '/oauth/authorization') {
-        let query = '';
+        let query = [];
         for(let key in route.query) {
-          query += key + '=' + route.query[key]
+          query.push(key + '=' + route.query[key]);
         }
-        router.push('/oauth/authorization?' + query);
+        // console.log('/oauth/authorization?' + query.join('&'));
+        router.push('/oauth/authorization?' + query.join('&'));
       } else {
         router.push('/');
       }
@@ -124,10 +125,5 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.required:before {
-  content: "*";
-  display: inline-flex;
-  color: red;
-  margin-right: 0.3rem;
-}
+
 </style>
