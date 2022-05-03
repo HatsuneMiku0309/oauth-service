@@ -1,3 +1,4 @@
+import { JwtPayload } from "jsonwebtoken";
 import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IBasicPassportRes } from "../jwt/passport.interface";
@@ -28,7 +29,7 @@ export interface IErrorRes {
     state: string;
 }
 
-export interface IGrantTokenBody {
+export interface IGrantCodeTokenBody {
     response_type: TResponseType;
     client_id: string;
     redirect_uri?: string;
@@ -36,7 +37,7 @@ export interface IGrantTokenBody {
     scope?: string;
 }
 
-export interface IGrantTokenRes {
+export interface IGrantCodeTokenRes {
     code: string;
     state?: string;
     redirect_uri?: string;
@@ -66,9 +67,11 @@ export interface IRefreshTokenBody {
     state?: string;
 }
 
-export interface IVerifyTokenBody {
-    access_token: string;
-    state?: string;
+export interface IVerifyTokenBody extends JwtPayload {
+    ACTIVE: boolean;
+    CLIENT_ID: string;
+    USER_ID: string;
+    SCOPES: IOauthApplicationScopeAndApiScopeRes[];
 }
 
 export interface IOauthApplicationScopeRes {
@@ -77,15 +80,33 @@ export interface IOauthApplicationScopeRes {
         NAME: string;
         HOMEPAGE_URL: string;
         USER_ACCOUNT: string;
+        CREATE_TIME: Date;
+        USER_COUNT: number;
     };
     CLIENT_ACCOUNT: string;
+}
+
+export interface IGrantBaseData {
+    OAUTH_APPLICATION_ID: string;
+    OAUTH_APPLICATION_USER_ID: string;
+    USER_ID: string;
+}
+
+export interface IGrantTokenResult extends IGrantBaseData {
+    RESPONSE_TYPE: TResponseType | 'refresh_token';
+    OAUTH_TOKEN_ID: string;
+    OAUTH_SCOPES: IOauthApplicationScopeAndApiScopeRes[];
+}
+
+export interface IAccessTokenCheckRes extends IOauthTokenDao {
+    USER_ID: string;
 }
 
 export interface IOauth {
     options: TAnyObj;
     getOauthApplicationScope(database: IMysqlDatabase, client_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeRes>;
     checkOauthApplication(db: Connection, client_id: string, options: TAnyObj): Promise<IOauthApplicationDao>;
-    grantCodeToken(database: IMysqlDatabase, body: IGrantTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantTokenRes | IAccessTokenRes>;
+    grantCodeToken(database: IMysqlDatabase, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantCodeTokenRes | IAccessTokenRes>;
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<any>;

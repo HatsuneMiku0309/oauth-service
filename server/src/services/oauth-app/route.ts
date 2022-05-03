@@ -132,6 +132,33 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
 
         // oauth_application_user
 
+        api = super._getRootApi(['profile', 'oauth_application_user']).join('/');
+        this.router.get(api, async (ctx: TContext) => {
+            try {
+                let result = await oauthApplicationUser.userApps(this.database, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
+
+        api = super._getRootApi(['profile', 'oauth_application_user', ':id']).join('/');
+        this.router.delete(api, async (ctx: TContext) => {
+            const { id } = ctx.params;
+            try {
+                let result = await oauthApplicationUser.userRemoveApps(this.database, id, ctx.state);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
+
         api = super._getRootApi([':oa_id', 'oauth_application_user']).join('/');
         this.router.get(api, async (ctx: TContext) => {
             const { params: { oa_id }, request: { query } } = ctx;

@@ -38,6 +38,7 @@ export interface IUserDAO {
     EMAIL: string; // varchar(255)
     PHONE?: string; // varchar(100)
     TOKEN: string; // varchar(1000)
+    RESET_TOKEN: string; // varchar(100)
     CREATE_TIME: Date; // Datetime
     CREATE_BY: string; // varchar(100)
 }

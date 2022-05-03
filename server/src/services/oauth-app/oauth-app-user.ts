@@ -9,7 +9,7 @@ import {
     IRemoveUserRes
 } from './oauth-app.interface';
 import * as _ from 'lodash';
-import { IListQuery, IListRes, IOauthApplicationUser, IOauthApplicationUserDao } from './oauth-app-user.interface';
+import { IListQuery, IListRes, IOauthApplicationUser, IOauthApplicationUserDao, IUserAppsRes } from './oauth-app-user.interface';
 
 class OauthApplicationUser implements IOauthApplicationUser {
     static instance: IOauthApplicationUser;
@@ -72,6 +72,81 @@ class OauthApplicationUser implements IOauthApplicationUser {
                 offset,
                 count,
                 totalPage
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async userApps(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<IUserAppsRes[]> {
+        try {
+            let db = await database.getConnection();
+            try {
+                let result = await this.dbUserApps(db, options);
+
+                return result;
+            } catch (err) {
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbUserApps(db: Connection, options: TAnyObj & IJWTCotext): Promise<IUserAppsRes[]> {
+        const { user: { user_id } } = options;
+        try {
+            let sql = `
+                SELECT
+                    oau.ID,
+                    oa.NAME APP_NAME
+                FROM
+                    OAUTH_APPLICATION_USER oau,
+                    OAUTH_APPLICATION oa
+                WHERE
+                    oau.OAUTH_APPLICATION_ID = oa.ID
+                    AND oau.USER_ID = ?
+            `;
+            let params = [user_id];
+            let [rows] = <[IUserAppsRes[], FieldPacket[]]> await db.query(sql, params);
+
+            return rows;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async userRemoveApps(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string; }> {
+        try {
+            let db = await database.getConnection();
+            try {
+                await db.beginTransaction();
+                let result = await this.dbUserRemoveApps(db, id, options);
+                await db.commit();
+
+                return result;
+            } catch (err) {
+                await db.rollback();
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbUserRemoveApps(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string; }> {
+        const { user: { user_id } } = options;
+        try {
+            await db.query(`
+                DELETE FROM OAUTH_APPLICATION_USER WHERE ID = ? AND USER_ID = ?
+            `, [ id, user_id ]);
+
+            return {
+                ID: id
             };
         } catch (err) {
             throw err;

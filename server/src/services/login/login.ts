@@ -33,7 +33,7 @@ class Login implements ILogin {
             try {
                 let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ACCOUNT = ? AND PASSWORD = ?', [body.account, body.password]);
                 if (rows.length === 0) {
-                    throw new Error('Can\'t find user');
+                    throw new Error('Account or password error');
                 }
                 let row = rows[0];
                 let token = await Passport.signup({
@@ -75,11 +75,11 @@ class Login implements ILogin {
                 let sql = 'SELECT * FROM USER WHERE ID = ?';
                 let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query(sql, [ user_id ]);
                 if (rows.length === 0) {
-                    throw new Error(`[${user_id}] user_id not find`);
+                    throw new Error('token check fail');
                 }
                 let row = rows[0];
                 if (row.TOKEN !== jwt) {
-                    throw new Error('login fail');
+                    throw new Error('token check fail');
                 }
                 let userData: ITokenLoginBody = JSON.parse(Buffer.from(user_token, 'base64').toString('ascii'));
                 if (
@@ -88,7 +88,7 @@ class Login implements ILogin {
                     row.EMAIL !== userData.EMAIL ||
                     row.PHONE !== userData.PHONE
                 ) {
-                    throw new Error('login fail');
+                    throw new Error('token check fail');
                 }
                 await db.commit();
 

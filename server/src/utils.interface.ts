@@ -76,9 +76,9 @@ export interface IServer {
     readonly config: IServerConfig;
     httpServer: http.Server;
     httpsServer: https.Server;
-    serveHTTP(options: IServerConfig): void;
-    serveHTTPS(options: IServerConfig): void;
-    serve(options: IServerConfig): void;
+    serveHTTP(config: IServerConfig): void;
+    serveHTTPS(config: IServerConfig): void;
+    serve(isHttps?: boolean): void;
 }
 
 export interface IMiddleware {

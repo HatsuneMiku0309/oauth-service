@@ -61,32 +61,14 @@ class Passport {
         }
     }
 
-    static async basicPassport(
-        database: IMysqlDatabase, ctx: TContext, options: TAnyObj = { }
+    static async appClientSecretParser(
+        database: IMysqlDatabase,
+        result: IBasicPassportRes,
+        options: TAnyObj = { }
     ): Promise<IBasicPassportRes> {
-        let _err: IError = new Error();
         const NOW_DATE = new Date();
         try {
-            const COLUMNS = ['client_id', 'client_secret'];
-            let token = await Passport.resolveHeaderToken('Basic', ctx);
-            if (token === undefined || token === null || token === '') {
-                _err.state = 401;
-                _err.message = 'Bad Authorization header format. Format is "Authorization: Basic <token>"';
-
-                throw _err;
-            }
-
-            let decodeToken = Buffer.from(token, 'base64').toString('ascii');
-            let splitToken = decodeToken.split(':');
-            if (splitToken.length !== COLUMNS.length) {
-                _err.state = 401;
-                _err.message = 'Bad token format. Format is <client_id:client_secret> base64 encode';
-            }
-            let result = <IBasicPassportRes> _.reduce(COLUMNS, (_r, column, index) => {
-                _r[column] = splitToken[index];
-
-                return _r;
-            }, <any> { });
+            let _err: IError = new Error();
             const db = await database.getConnection();
             try {
                 let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
@@ -128,6 +110,41 @@ class Passport {
             } finally {
                 await database.end(db);
             }
+
+            return result;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    static async basicPassport<T = IBasicPassportRes>(
+        database: IMysqlDatabase, ctx: TContext,
+        options: TAnyObj & { parser?: (database: IMysqlDatabase, result: T, ...other: any[]) => Promise<T> } = { }
+    ): Promise<T> {
+        let _err: IError = new Error();
+        const { parser = Passport.appClientSecretParser } = options;
+        try {
+            const COLUMNS = ['client_id', 'client_secret'];
+            let token = await Passport.resolveHeaderToken('Basic', ctx);
+            if (token === undefined || token === null || token === '') {
+                _err.state = 401;
+                _err.message = 'Bad Authorization header format. Format is "Authorization: Basic <token>"';
+
+                throw _err;
+            }
+
+            let decodeToken = Buffer.from(token, 'base64').toString('ascii');
+            let splitToken = decodeToken.split(':');
+            if (splitToken.length !== COLUMNS.length) {
+                _err.state = 401;
+                _err.message = 'Bad token format. Format is <client_id:client_secret> base64 encode';
+            }
+            let result = <T> _.reduce(COLUMNS, (_r, column, index) => {
+                _r[column] = splitToken[index];
+
+                return _r;
+            }, <any> { });
+            result = <T> await parser(database, <any> result, options);
 
             return result;
         } catch (err: any) {

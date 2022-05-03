@@ -314,7 +314,6 @@ class OauthApplication implements IOauthApplication {
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);
             !!expires_date && (params.EXPIRES_DATE = new Date(expires_date));
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
-            let a = db.format(sql, [params, id, user_id]);
             await db.query(sql, [params, id, user_id]);
 
             let _body = _.map(scope_ids, (scope_id) => {
