@@ -4,7 +4,8 @@ const PROTOCOL = (import.meta as any).env.VITE_PROTOCOL || 'http';
 // tslint:disable-next-line: whitespace
 const URL = (import.meta as any).env.VITE_BASE_URL || 'localhost';
 // tslint:disable-next-line: whitespace
-const PORT = (import.meta as any).env.VITE_PORT || '8080';
+// const PORT = (import.meta as any).env.VITE_PORT || window.location.port;
+const PORT = window.location.port;
 // tslint:disable-next-line: whitespace
 const TIMEOUT = Number((import.meta as any).env.VITE_TIMEOUT) || 1000;
 
@@ -28,7 +29,7 @@ function errorHandle(err: any) {
 }
 
 const PARAMS = {
-    baseURL: `${PROTOCOL}://${URL}:${PORT}/api`,
+    baseURL: `${PROTOCOL}://${URL}${PORT !== '' ? `:${PORT}` : ''}/api`,
     timeout: TIMEOUT,
     headers: {
         'X-Custom-Header': 'Oauth',
