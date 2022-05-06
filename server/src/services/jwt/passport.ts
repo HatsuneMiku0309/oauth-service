@@ -190,6 +190,11 @@ class Passport {
 
                                 throw _err;
                             }
+                            let row = rows[0];
+                            if (row.TOKEN !== token) {
+                                _err.state = 403;
+                                _err.message = 'Authentication Error';
+                            }
                         } catch (err: any) {
                             _err = err;
                             _err.state = _err.state ? _err.state : 500;

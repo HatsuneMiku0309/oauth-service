@@ -114,13 +114,17 @@ class Scope implements IScope {
 
     private _checkCreateBody(body: ICreateBody): void {
         try {
-            const { description, is_required, system, apis } = body;
-
+            const { name, description, is_required, system, apis } = body;
             if (!system) {
                 throw new Error('system is required');
-            }
-            if (!apis) {
+            } else if (!name) {
+                throw new Error('name is required');
+            } else if (!apis) {
                 throw new Error('apis is required');
+            }
+
+            if (!!name && !_.isString(name)) {
+                throw new Error('name type error');
             }
             if (!!description && !_.isString(description)) {
                 throw new Error('description type error');
@@ -130,9 +134,31 @@ class Scope implements IScope {
                     throw new Error('is_required type error');
                 }
             }
-            if (!_.isArray(apis)) {
+            if (!!apis && !_.isArray(apis)) {
                 throw new Error('apis type error');
             }
+            if (!!apis && apis.length === 0) {
+                throw new Error('apis is required');
+            }
+
+            apis.forEach((api) => {
+                const whiteList = ['api', 'method', 'params'];
+                let keys = Object.keys(api);
+                let otherKeys = _.without(keys, ...whiteList);
+                if (otherKeys.length !== 0) {
+                    throw new Error('invalid parameter in apis');
+                }
+                const { api: _api, method } = api;
+                if (!_api) {
+                    throw new Error('api is required');
+                }
+                if (!!_api && !_.isString(_api)) {
+                    throw new Error('api type error');
+                }
+                if (!this._METHODS.includes(method)) {
+                    throw new Error(`[${method}] Error method`);
+                }
+            });
         } catch (err) {
             throw err;
         }
@@ -188,13 +214,29 @@ class Scope implements IScope {
 
     private _checkCreatesBody(body: ICreateBody[]): void {
         try {
+            let dupTemp: string[] = [];
+            if (!body) {
+                throw new Error('body is required');
+            }
+            if (!!body && !_.isArray(body)) {
+                throw new Error('body type error');
+            }
+            if (!!body && body.length === 0) {
+                throw new Error('body is required');
+            }
+
             body.forEach((data) => {
-                const { description, is_required, system, apis } = data;
+                const { name, description, is_required, system, apis } = data;
                 if (!system) {
                     throw new Error('system is required');
-                }
-                if (!apis) {
+                } else if (!name) {
+                    throw new Error('name is required');
+                } else if (!apis) {
                     throw new Error('apis is required');
+                }
+
+                if (!!name && !_.isString(name)) {
+                    throw new Error('name type error');
                 }
                 if (!!description && !_.isString(description)) {
                     throw new Error('description type error');
@@ -204,9 +246,36 @@ class Scope implements IScope {
                         throw new Error('is_required type error');
                     }
                 }
-                if (!_.isArray(apis)) {
+                if (!!apis && !_.isArray(apis)) {
                     throw new Error('apis type error');
                 }
+                if (!!apis && apis.length === 0) {
+                    throw new Error('apis is required');
+                }
+
+                apis.forEach((api) => {
+                    const whiteList = ['api', 'method', 'params'];
+                    let keys = Object.keys(api);
+                    let otherKeys = _.without(keys, ...whiteList);
+                    if (otherKeys.length !== 0) {
+                        throw new Error('invalid parameter in apis');
+                    }
+                    const { api: _api, method } = api;
+                    if (!_api) {
+                        throw new Error(`[${name}] api is required`);
+                    }
+                    if (!!_api && !_.isString(_api)) {
+                        throw new Error('api type error');
+                    }
+                    if (!this._METHODS.includes(method)) {
+                        throw new Error(`[${method}] Error method`);
+                    }
+                });
+
+                if (dupTemp.includes(name)) {
+                    throw new Error(`[${name}] name is duplicate register`);
+                }
+                dupTemp.push(name);
             });
         } catch (err) {
             throw err;
@@ -286,6 +355,28 @@ class Scope implements IScope {
             if (!_.isArray(apis)) {
                 throw new Error('apis type error');
             }
+            if (!!apis && apis.length === 0) {
+                throw new Error('apis is required');
+            }
+
+            apis.forEach((api) => {
+                const whiteList = ['api', 'method', 'params'];
+                let keys = Object.keys(api);
+                let otherKeys = _.without(keys, ...whiteList);
+                if (otherKeys.length !== 0) {
+                    throw new Error('invalid parameter in apis');
+                }
+                const { api: _api, method } = api;
+                if (!_api) {
+                    throw new Error('api is required');
+                }
+                if (!!_api && !_.isString(_api)) {
+                    throw new Error('api type error');
+                }
+                if (!this._METHODS.includes(method)) {
+                    throw new Error(`[${method}] Error method`);
+                }
+            });
         } catch (err) {
             throw err;
         }
@@ -342,8 +433,19 @@ class Scope implements IScope {
 
     private _checkUpdatesBody(body: IUpdatesBody[]): void {
         try {
+            let dupTemp: string[] = [];
+            if (!body) {
+                throw new Error('body is required');
+            }
+            if (!!body && !_.isArray(body)) {
+                throw new Error('body type error');
+            }
+            if (!!body && body.length === 0) {
+                throw new Error('body is required');
+            }
+
             body.forEach((data) => {
-                const { id, description, is_required, system, apis } = data;
+                const { id, name, description, is_required, system, apis } = data;
                 if (!id) {
                     throw new Error('id is required');
                 }
@@ -364,6 +466,33 @@ class Scope implements IScope {
                 if (!_.isArray(apis)) {
                     throw new Error('apis type error');
                 }
+                if (!!apis && apis.length === 0) {
+                    throw new Error('apis is required');
+                }
+
+                apis.forEach((api) => {
+                    const whiteList = ['api', 'method', 'params'];
+                    let keys = Object.keys(api);
+                    let otherKeys = _.without(keys, ...whiteList);
+                    if (otherKeys.length !== 0) {
+                        throw new Error('invalid parameter in apis');
+                    }
+                    const { api: _api, method } = api;
+                    if (!_api) {
+                        throw new Error(`[${name}] api is required`);
+                    }
+                    if (!!_api && !_.isString(_api)) {
+                        throw new Error('api type error');
+                    }
+                    if (!this._METHODS.includes(method)) {
+                        throw new Error(`[${method}] Error method`);
+                    }
+                });
+
+                if (dupTemp.includes(name)) {
+                    throw new Error(`[${name}] name is duplicate register`);
+                }
+                dupTemp.push(name);
             });
         } catch (err) {
             throw err;
@@ -503,6 +632,12 @@ class Scope implements IScope {
                 }
 
                 apis.forEach((api) => {
+                    const whiteList = ['api', 'method', 'params'];
+                    let keys = Object.keys(api);
+                    let otherKeys = _.without(keys, ...whiteList);
+                    if (otherKeys.length !== 0) {
+                        throw new Error('invalid parameter in apis');
+                    }
                     const { api: _api, method } = api;
                     if (!_api) {
                         throw new Error(`[${name}] api is required`);

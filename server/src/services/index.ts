@@ -6,6 +6,7 @@ import * as Router from 'koa-router';
 import { IService } from './utils.interface';
 import { IConfig, IMysqlDatabase, TAnyObj } from '../utils.interface';
 
+import { ProfileRouter } from './profile/route';
 import { LoginRouter } from './login/route';
 import { OauthRouter } from './oauth/route';
 import { OauthApplicationRouter } from './oauth-app/route';
@@ -25,6 +26,7 @@ class Service implements IService {
 
     registerAPIs(): void {
         let routers = [
+            new ProfileRouter(this._database, this._options),
             new LoginRouter(this._database, this._options),
             new OauthRouter(this._database, this._options),
             new OauthApplicationRouter(this._database, this._options),

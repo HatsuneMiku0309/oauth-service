@@ -42,6 +42,7 @@ export interface IUpdateBody {
 
 export interface IUpdatesBody extends IUpdateBody {
     id: string;
+    name: string;
 }
 
 export interface IRegistBody {
@@ -71,6 +72,8 @@ export interface IScope {
 
 // ---------- DAO -----------
 
+export type TPublic = 'PUBLIC' | 'PRIVATE';
+
 export interface IApiScopeDao {
     ID: string;
     NAME: string;
@@ -78,6 +81,7 @@ export interface IApiScopeDao {
     SYSTEM: string;
     APIS: IAPIs[] | string; // setting string type because JSON.stringify(apis)
     IS_REQUIRED?: boolean; // default: 0
+    IS_PUBLIC?: TPublic; // default: 'PRIVATE'
     CREATE_TIME?: Date;
     CREATE_BY: string;
     UPDATE_TIME?: Date;
