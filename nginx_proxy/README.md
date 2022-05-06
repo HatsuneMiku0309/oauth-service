@@ -8,6 +8,7 @@ $ docker build -t oauth:1.0 .
 
 $ docker run -d --name oauth-f -p 8888:80 -p 7777:443 oauth:1.0
 $ docker run -d --name oauth-f oauth:1.0
+$ docker run -d --restart=always --name oauth-f oauth:1.0
 ```
 
 ## back-end
@@ -16,6 +17,7 @@ $ docker build -t oauth-s:1.0 .
 
 $ docker run -d --name oauth-s -p 5555:5555 -p 5556:5556 --link oauth-mysql-test:oauth-mysql oauth-s:1.0
 $ docker run -d --name oauth-s --link oauth-mysql-test:oauth-mysql oauth-s:1.0
+$ docker run -d --restart=always --name oauth-s --link oauth-mysql-test:oauth-mysql oauth-s:1.0
 ```
 
 ### link
@@ -27,7 +29,10 @@ $ docker run -d --name oauth-s --link oauth-mysql-test:oauth-mysql oauth-s:1.0
 
 ## proxy
 ```shell=
+$ docker build -t oauth:nginx .
+
 $ docker run -d --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth:nginx
+$ docker run -d --restart=always --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth:nginx
 ```
 
 ### link
