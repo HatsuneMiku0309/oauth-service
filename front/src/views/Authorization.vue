@@ -17,7 +17,7 @@
           </div>
         </div>
         <div class="flex items-center justify-center h-16 text-2xl whitespace-pre-wrap">
-            授權 {{oauthObj.APP.NAME}}
+            Authorize {{oauthObj.APP.NAME}}
         </div>
       </div>
       <div class="mx-auto my-0">
@@ -113,7 +113,7 @@ export default defineComponent({
     onBeforeMount(async () => {
       if (!('client_id' in route.query)) {
         isShowLoad.value = false;
-        // 404 page
+        router.replace('/404');
       } else {
         try {
           let result = await get('/oauth/' + client_id);
@@ -123,8 +123,10 @@ export default defineComponent({
           let month = (createDate.getMonth() + 1).toString().padStart(2, '0');
           let date = createDate.getDate();
           (oauthObj.value as any).APP.CREATE_TIME = `${year}-${month}-${date}`;
-        } catch (err) {
-          // 404 page
+        } catch (err: any) {
+          if (![401, 403].includes(err.response.status)) {
+            router.replace('/404');
+          }
         } finally {
           isShowLoad.value = false;
         }
@@ -144,12 +146,11 @@ export default defineComponent({
           redirectQuery.push(key + '=' + result.data.data[key]);
         }
         if (redirectQuery.length === 0) {
-          throw new Error('go 404 page');
+          throw new Error('404 page');
         }
         window.location.href = result.data.data.redirect_uri + '?' + redirectQuery.join('&');
       } catch (err) {
-        // 404 page
-        console.log('404 page');
+        router.replace('/404');
       } finally {
         isShowLoad.value = false;
       }

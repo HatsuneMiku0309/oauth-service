@@ -63,11 +63,11 @@
         <div class="flex flex-col w-auto mb-12 mx-10 overflow-hidden">
           <form @submit.prevent="checkForm">
             <div class="flex h-14 items-center my-2">
-              <div class="required relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Application Name :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Application Name :</span></div>
               <common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
             </div>
-            <div class="required relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Homepage URL :</span></div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Homepage URL :</span></div>
               <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-auto my-2">
@@ -75,7 +75,7 @@
               <common-input v-model.trim="app.APPLICATION_DESCRIPTION" type="textarea" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="required relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Redirect URI :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Redirect URI :</span></div>
               <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
@@ -105,17 +105,6 @@
             <div class="relative flex justify-center mt-8">
               <common-button class="w-32" :modelValue="'submit'" type="submit" />
               <common-button class="w-32" :modelValue="'back'" type="router-link" to="/application" />
-              <!-- <div>
-                <input type="submit" class="
-                  mx-4 cursor-pointer w-32 bg-transparent border rounded-full 
-                  border-gray-700 p-2 hover:bg-gray-900" value="submit" />
-              </div>
-              <div>
-                <router-link class="
-                  flex items-center justify-center
-                  mx-4 cursor-pointer w-32 bg-transparent border rounded-full
-                  border-gray-700 p-2 hover:bg-gray-900" to="/application">back</router-link>
-              </div> -->
             </div>
           </form>
         </div>

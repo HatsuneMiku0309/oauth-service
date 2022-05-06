@@ -25,7 +25,7 @@
           </div>
           <div class="my-2 items-center w-full">
             <span class="mr-2">Phone: </span>
-            <common-input type="text" v-model="accountObj.phone" required placeholder="Phone:" autocomplete="off" />
+            <common-input type="text" v-model="accountObj.phone" placeholder="Phone:" autocomplete="off" />
           </div>
         </div>
         <div class="flex flex-row my-2 items-center w-full justify-center">

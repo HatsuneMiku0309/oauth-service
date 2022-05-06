@@ -2,10 +2,13 @@ import axios, { AxiosRequestConfig } from 'axios';
 // tslint:disable-next-line: whitespace
 const PROTOCOL = (import.meta as any).env.VITE_PROTOCOL || 'http';
 // tslint:disable-next-line: whitespace
-const URL = (import.meta as any).env.VITE_BASE_URL || 'localhost';
+// const URL = (import.meta as any).env.VITE_BASE_URL || 'localhost';
+// tslint:disable-next-line: whitespace
+const URL = (import.meta as any).env.VITE_BASE_URL || window.location.hostname;
 // tslint:disable-next-line: whitespace
 // const PORT = (import.meta as any).env.VITE_PORT || window.location.port;
-const PORT = window.location.port;
+// tslint:disable-next-line: whitespace
+const PORT = (import.meta as any).env.VITE_PORT || window.location.port;
 // tslint:disable-next-line: whitespace
 const TIMEOUT = Number((import.meta as any).env.VITE_TIMEOUT) || 1000;
 
@@ -110,7 +113,7 @@ export async function postFetch<T = any>(
     const { headers = { } } = options;
     try {
         const controller = new AbortController();
-        setTimeout(() => {
+        const timeId = setTimeout(() => {
             controller.abort();
         }, timeout);
         const p = {
@@ -120,6 +123,7 @@ export async function postFetch<T = any>(
             headers: Object.assign(_headers, headers),
             signal: controller.signal,
         };
+        // clearTimeout(timeId);
         const res = await fetch(`${baseURL}${api}`, {
             ...p, credentials: 'include',
         });

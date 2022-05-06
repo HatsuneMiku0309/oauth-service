@@ -8,6 +8,7 @@ import ApplicationDetail from '../views/ApplicationDetail.vue';
 import Authorization from '../views/Authorization.vue';
 import { decodeBase64 } from '@/utils';
 import { post } from '@/apis/utils';
+import Err404 from '../views/Err404.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -66,6 +67,20 @@ const routes: RouteRecordRaw[] = [
     meta: {
       authentication: false,
     },
+  }, {
+    path: '/:pathMatch(.*)*',
+    name: 'AnyErr404',
+    component: Err404,
+    meta: {
+      authentication: false,
+    },
+  }, {
+    path: '/404',
+    name: 'Err404',
+    component: Err404,
+    meta: {
+      authentication: false,
+    },
   },
 ];
 
@@ -75,7 +90,7 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async(to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (!to.meta.authentication) {
     next();
   } else {
@@ -103,7 +118,7 @@ const checkToken = async () => {
         localStorage.removeItem('user-data');
         localStorage.removeItem('token');
         alert(err.response.data.errMsg);
-        return false;
+        return true;
       }
     }
 

@@ -1,20 +1,64 @@
 <template>
   <div class="flex items-center flex-grow-0 flex-shrink-0 w-full bg-gray-700">
     <transition name="message-popup">
-      <message-popup v-if="isShowApps" v-model="isShowApps">
+      <message-popup v-if="isShowProfile" v-model="isShowProfile">
         <template v-slot:title>
-          <span class="text-3xl mt-0">Authorization Apps</span>
+          <span class="text-3xl mt-0">Profile</span>
         </template>
         <template #default>
+          <form class="w-full" @submit.prevent="checkProfileForm">
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="required absolute right-0">Account :</span></div>
+              <common-input v-model.trim="profile.ACCOUNT" type="text" required readonly/>
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="absolute right-0">Password :</span></div>
+              <common-input v-model.trim="profile.PASSWORD" type="password" autocomplete="off"/>
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="required absolute right-0">EMAIL :</span></div>
+              <common-input v-model.trim="profile.EMAIL" type="email" required/>
+            </div>
+            <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="absolute right-0">Phone :</span></div>
+              <common-input v-model.trim="profile.PHONE" type="text"/>
+            </div>
+            <div class="relative flex justify-center mt-8">
+              <common-button class="w-32" :modelValue="'submit'" type="submit" />
+            </div>
+          </form>
+          <!-- <div class="mb-4"><span class="text-sm">Remove App，讓第三方App不可再使用您的權限取得資源</span></div>
           <ul class="w-full">
             <li class="p-2" v-for="(profileApp, index) in profileApps" :key="index">
               <span><common-button class="p-1 text-red-600" type="button" :modelValue="'Remove'" @click="removeApp(profileApp.ID)" /></span>
               <span class="ml-3">{{profileApp.APP_NAME}}</span>
             </li>
-          </ul>
+          </ul> -->
         </template>
       </message-popup>
     </transition>
+    <transition name="message-popup">
+      <message-popup v-if="isShowApps" v-model="isShowApps">
+        <template v-slot:title>
+          <span class="text-3xl mt-0">Authorization Apps</span>
+        </template>
+        <template #default>
+          <div class="mb-4">
+            <span class="text-sm underline">Remove authorized Apps to stop authorizing third-party Apps to operate your resource</span>
+            <br />
+            <span class="text-sm underline">If you remove the app, you can still reauthorize third-party Apps </span>
+          </div>
+          <ul v-if="profileApps.length !== 0" class="w-full">
+            <li class="p-2" v-for="(profileApp, index) in profileApps" :key="index">
+              <span><common-button class="p-1 text-red-600" type="button" :modelValue="'Remove'" @click="removeApp(profileApp.ID)" /></span>
+              <span class="ml-3">{{profileApp.APP_NAME}}</span>
+            </li>
+          </ul>
+          <div class="text-lg font-semibold" v-else>You no authorizaing any Apps :)</div>
+        </template>
+      </message-popup>
+    </transition>
+    {{isShowProfile}}
     <div class="flex flex-shrink-0 text-2xl ml-4 font-bold hover:text-gray-400"><router-link to="/">Oauth</router-link></div>
     <div class="flex ml-12">
       <div class="flex" v-for="(value, index) in navigation" :key="index">
@@ -33,7 +77,7 @@
         <transition name="setting">
           <div v-if="showSetting" class="absolute top-11 right-6 z-40">
             <ul v-if="showSetting" class="absolute w-40 bg-gray-700 border border-gray-800 -right-4 top-2 rounded-md not-italic p-1">
-              <li class="p-1" @click.stop="getProfile">Modify Profile</li>
+              <li class="p-1" @click.stop="getProfile">Profile</li>
               <li class="p-1" @click.stop="getUserApps">Apps</li>
               <a @click="logout"><li class="border-t p-1">Logout</li></a>
             </ul>
@@ -45,17 +89,20 @@
 </template>
 
 <script lang="ts">
-import { del, get } from '@/apis/utils';
+import { del, get, put } from '@/apis/utils';
 import CommonButton from '@/components/common/CommonButton.vue';
+import CommonInput from '@/components/common/CommonInput.vue';
+import { encodeBase64 } from '@/utils';
 import { defineComponent, inject, ref, toRefs } from 'vue';
 import { useRouter } from 'vue-router';
 import MessagePopup from '../components/MessagePopup.vue';
 
 export default defineComponent({
     name: 'OHeader',
-    components: { CommonButton, MessagePopup },
+    components: { CommonButton, CommonInput, MessagePopup },
     props: ['user'],
     setup(prop) {
+      const profile = ref({});
       const profileApps = ref([]);
       const isShowApps = ref(false);
       const isShowProfile = ref(false);
@@ -73,7 +120,7 @@ export default defineComponent({
 
       const getUserApps = async () => {
         try {
-          let result = await get('/oauth-app/profile/oauth_application_user');
+          let result = await get('/profile/oauth_application_user');
           profileApps.value = result.data.data;
           isShowApps.value = true;
         } catch (err: any) {
@@ -85,7 +132,7 @@ export default defineComponent({
         try {
           let checked = confirm('Are you sure you want to remove?');
           if (checked) {
-            await del('/oauth-app/profile/oauth_application_user/' + oau_id);
+            await del('/profile/oauth_application_user/' + oau_id);
             await getUserApps();
           }
         } catch (err: any) {
@@ -95,10 +142,41 @@ export default defineComponent({
 
       const getProfile = async () => {
         try {
-          console.log('profile');
+          let result = await get('/profile');
+          profile.value = result.data.data;
           isShowProfile.value = true;
         } catch (err: any) {
           alert(err.response.data.errMsg);
+        }
+      };
+
+      const checkProfileForm = async () => {
+        try {
+          let _profile: any = profile.value;
+          let data: { [key: string]: any } = {
+            account: _profile.ACCOUNT,
+            email: _profile.EMAIL,
+            phone: _profile.PHONE
+          };
+          !!_profile.PASSWORD && (data.password = _profile.PASSWORD);
+          let result = await put('/profile/' + _profile.ID, data);
+          let updateRes = result.data.data;
+          if (updateRes.reload) {
+            window.localStorage.removeItem('token');
+            window.localStorage.removeItem('user-data');
+            router.replace('/login');
+          } else {
+            window.localStorage.setItem('user-data', encodeBase64(JSON.stringify({
+              ID: updateRes.ID,
+              ACCOUNT: updateRes.ACCOUNT,
+              EMAIL: updateRes.EMAIL,
+              PHONE: updateRes.PHONE
+            })));
+          }
+        } catch (err: any) {
+          alert(err.response.data.errMsg);
+        } finally {
+          isShowProfile.value = false;
         }
       }
 
@@ -106,7 +184,9 @@ export default defineComponent({
         logout,
         getUserApps,
         getProfile,
+        checkProfileForm,
         removeApp,
+        profile,
         profileApps,
         isShowApps,
         isShowProfile,
@@ -119,6 +199,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.required:before {
+  content: "*";
+  display: inline-flex;
+  color: red;
+  margin-right: 0.3rem;
+}
+
 .setting-enter-active,
 .setting-leave-active {
   transition: all 0.5s cubic-bezier(1, 0.5, 0.8, 1);
