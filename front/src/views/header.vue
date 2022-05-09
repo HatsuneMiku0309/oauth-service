@@ -16,7 +16,7 @@
               <common-input v-model.trim="profile.PASSWORD" type="password" autocomplete="off"/>
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="required absolute right-0">EMAIL :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="required absolute right-0">Email :</span></div>
               <common-input v-model.trim="profile.EMAIL" type="email" required/>
             </div>
             <div class="relative flex h-14 items-center my-2">
@@ -27,13 +27,6 @@
               <common-button class="w-32" :modelValue="'submit'" type="submit" />
             </div>
           </form>
-          <!-- <div class="mb-4"><span class="text-sm">Remove App，讓第三方App不可再使用您的權限取得資源</span></div>
-          <ul class="w-full">
-            <li class="p-2" v-for="(profileApp, index) in profileApps" :key="index">
-              <span><common-button class="p-1 text-red-600" type="button" :modelValue="'Remove'" @click="removeApp(profileApp.ID)" /></span>
-              <span class="ml-3">{{profileApp.APP_NAME}}</span>
-            </li>
-          </ul> -->
         </template>
       </message-popup>
     </transition>
@@ -46,7 +39,7 @@
           <div class="mb-4">
             <span class="text-sm underline">Remove authorized Apps to stop authorizing third-party Apps to operate your resource</span>
             <br />
-            <span class="text-sm underline">If you remove the app, you can still reauthorize third-party Apps </span>
+            <span class="text-sm underline">If you remove apps, you can still reauthorize third-party Apps </span>
           </div>
           <ul v-if="profileApps.length !== 0" class="w-full">
             <li class="p-2" v-for="(profileApp, index) in profileApps" :key="index">
