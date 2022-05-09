@@ -41,16 +41,18 @@ export interface ILogin {
 }
 
 export type TSource = 'SELF' | 'COMPAL';
+export type TUSER_TYPE = 'VIEWER' | 'DEVELOPER' | 'ADMIN' | 'ROOT';
 
 export interface IUserDAO {
     ID: string; // uuid
     SOURCE?: TSource; // varchar(100)
+    USER_TYPE?: TUSER_TYPE // varchar(100) default: 'VIEWER'
     ACCOUNT: string; // varchar(12)
     PASSWORD: string; //varchar(100)
     EMAIL: string; // varchar(255)
     PHONE?: string; // varchar(100)
     TOKEN: string; // varchar(1000)
-    RESET_TOKEN: string; // varchar(100)
+    RESET_TOKEN?: string; // varchar(100)
     CREATE_TIME: Date; // Datetime
     CREATE_BY: string; // varchar(100)
     UPDATE_BY: string; // varchar(100)

@@ -7,8 +7,6 @@ import { Connection, FieldPacket } from 'mysql2/promise';
 import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody, IListRes } from './scope.interface';
-import { IBasicPassportRes } from '../jwt/passport.interface';
-import { Oauth } from '../oauth/oauth';
 import * as _ from 'lodash';
 
 class Scope implements IScope {
@@ -571,7 +569,7 @@ class Scope implements IScope {
         }
     }
 
-    async regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]> {
+    async regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
         try {
             let db = await database.getConnection();
             try {
@@ -660,13 +658,11 @@ class Scope implements IScope {
         }
     }
 
-    async dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]> {
-        const { user: { client_id } } = options;
+    async dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
+        const { user: { user_id } } = options;
         const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
         try {
             this._checkRegistBody(body);
-            let oauth = Oauth.getInstance(this.options);
-            let oauthApplicaion = await oauth.checkOauthApplication(db, client_id, options);
             let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let params = body.map((data) => {
                 const { name, description = '', is_required, apis } = data;
@@ -676,7 +672,7 @@ class Scope implements IScope {
                     id, system, name, description,
                     JSON.stringify(apis),
                     is_required || false,
-                    oauthApplicaion.USER_ID
+                    user_id
                 ];
             });
 

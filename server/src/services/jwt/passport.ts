@@ -191,9 +191,18 @@ class Passport {
                                 throw _err;
                             }
                             let row = rows[0];
+                            // maybe this function remove...
                             if (row.TOKEN !== token) {
                                 _err.state = 403;
                                 _err.message = 'Authentication Error';
+
+                                throw _err;
+                            }
+                            if (row.USER_TYPE === 'VIEWER' && ctx.req.method !== 'GET') {
+                                _err.state = 403;
+                                _err.message = 'Authentication Error, your account not permission';
+
+                                throw _err;
                             }
                         } catch (err: any) {
                             _err = err;

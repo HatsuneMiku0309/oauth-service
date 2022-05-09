@@ -1,6 +1,6 @@
 import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
-import { ILoginRes, TSource } from "../login/login.interface";
+import { ILoginRes } from "../login/login.interface";
 import { IJWTCotext, TContext } from "../utils.interface";
 
 export interface IGetProfileRes {

@@ -405,7 +405,8 @@ class Login implements ILogin {
                 ACCOUNT: account,
                 PASSWORD: Buffer.from(password).toString('base64'),
                 EMAIL: email,
-                SOURCE: source
+                SOURCE: source,
+                USER_TYPE: source === 'SELF' ? 'DEVELOPER' : 'VIEWER'
             };
             !!phone && (params.PHONE = phone);
 

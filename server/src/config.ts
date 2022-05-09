@@ -50,8 +50,7 @@ class Config implements IConfig {
                     '^\/api\/register',
                     '^\/api\/oauth\/access-token',
                     '^\/api\/oauth\/refresh-token',
-                    '^\/api\/oauth\/verify-token',
-                    '^\/api\/api-scope\/register'
+                    '^\/api\/oauth\/verify-token'
                 ]
             },
             databaseConfig: {

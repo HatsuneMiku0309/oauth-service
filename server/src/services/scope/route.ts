@@ -6,7 +6,6 @@ import { IRouter, TContext } from '../utils.interface';
 import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Scope } from './scope';
 import { BaseRouter } from '../utils';
-import { Passport } from '../jwt/passport';
 
 class ScopeRouter extends BaseRouter implements IRouter {
     readonly api: string = '/api-scope';
@@ -121,8 +120,7 @@ class ScopeRouter extends BaseRouter implements IRouter {
         this.router.post(api, async (ctx: TContext) => {
             const { params: { system }, request: { body } } = ctx;
             try {
-                let basicObj = await Passport.basicPassport(this.database, ctx);
-                let result = await scope.regist(this.database, system, body, { user: basicObj });
+                let result = await scope.regist(this.database, system, body, ctx.state);
 
                 ctx.body = {
                     data: result

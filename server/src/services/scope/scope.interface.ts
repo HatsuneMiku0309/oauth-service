@@ -1,14 +1,12 @@
 import { Connection } from "mysql2/promise";
 import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
-import { IBasicPassportRes } from "../jwt/passport.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export type TMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-export interface IAPIs {
+export interface IAPIs extends TAnyObj {
     api: string;
     method: TMethod;
-    params?: any;
 }
 
 export interface IListQuery {
@@ -66,8 +64,8 @@ export interface IScope {
     dbUpdates(db: Connection, body: IUpdatesBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
     remove(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
     dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]>;
-    dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]>;
+    regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
+    dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
 }
 
 // ---------- DAO -----------
