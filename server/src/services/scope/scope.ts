@@ -8,6 +8,7 @@ import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody, IListRes } from './scope.interface';
 import * as _ from 'lodash';
+import { IUserDAO } from '../login/login.interface';
 
 class Scope implements IScope {
     static instance: IScope;
@@ -663,6 +664,15 @@ class Scope implements IScope {
         const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
         try {
             this._checkRegistBody(body);
+            let [users] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ID = ? AND SOURCE = ?', [user_id, 'SELF']);
+            if (users.length === 0) {
+                throw new Error('Not found user');
+            }
+            let user = users[0];
+            if (user.USER_TYPE !== 'ADMIN') {
+                throw new Error('Not admin account');
+            }
+
             let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let params = body.map((data) => {
                 const { name, description = '', is_required, apis } = data;
