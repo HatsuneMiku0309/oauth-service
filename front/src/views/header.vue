@@ -51,7 +51,6 @@
         </template>
       </message-popup>
     </transition>
-    {{isShowProfile}}
     <div class="flex flex-shrink-0 text-2xl ml-4 font-bold hover:text-gray-400"><router-link to="/">Oauth</router-link></div>
     <div class="flex ml-12">
       <div class="flex" v-for="(value, index) in navigation" :key="index">

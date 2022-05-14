@@ -68,7 +68,7 @@
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Homepage URL :</span></div>
-              <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https://.+" maxlengh="255" required />
+              <common-input v-model.trim="app.HOMEPAGE_URL" type="url" pattern="https?://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-auto my-2">
               <div class="relative flex flex-shrink-0 items-start mr-2 w-40"><span class="absolute right-0">Description :</span></div>
@@ -76,7 +76,7 @@
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Redirect URI :</span></div>
-              <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https://.+" maxlengh="255" required />
+              <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https?://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
@@ -231,7 +231,6 @@ export default defineComponent({
           application_id: _app.ID,
           auth_uri: window.location.protocol + '//' + window.location.host + '/oauth/authorization',
           token_uri: window.location.protocol + '//' + window.location.host + '/api/oauth/access-token',
-          register_uri: window.location.protocol + '//' + window.location.host + '/api/api-scope/register/:system',
           client_secret: _app.CLIENT_SECRET,
           redirect_uri: _app.REDIRECT_URI
         }

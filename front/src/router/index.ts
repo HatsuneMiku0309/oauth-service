@@ -6,8 +6,8 @@ import Dashboard from '../views/Dashboard.vue';
 import Application from '../views/Application.vue';
 import ApplicationDetail from '../views/ApplicationDetail.vue';
 import Authorization from '../views/Authorization.vue';
-import { decodeBase64 } from '@/utils';
-import { post } from '@/apis/utils';
+import { decodeBase64, encodeBase64 } from '@/utils';
+import { get } from '@/apis/utils';
 import Err404 from '../views/Err404.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -104,15 +104,16 @@ router.beforeEach(async (to, from, next) => {
 
 const checkToken = async () => {
   try {
-    const initTokenLoginBody = 'e30';
     const userData = localStorage.getItem('user-data');
     const token = localStorage.getItem('token');
     let user = {};
     if (!token || !userData) {
-      throw new Error('No token or user-data')
+      throw new Error('No token or user-data');
     } else {
       try {
-        await post('/login/token', { user_token: userData || initTokenLoginBody });
+        const result = await get('/login/token');
+        const userDataRes = result.data.data;
+        localStorage.setItem('user-data', encodeBase64(JSON.stringify(userDataRes)));
         user = JSON.parse(decodeBase64(userData));
       } catch (err: any) {
         localStorage.removeItem('user-data');

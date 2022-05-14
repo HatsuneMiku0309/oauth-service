@@ -38,7 +38,7 @@
 import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Cat from '../components/Loaders/Cat.vue';
-import { post } from '../apis/utils';
+import { get, post } from '../apis/utils';
 import { encodeBase64 } from '../utils';
 import CommonInput from '../components/common/CommonInput.vue';
 import CommonButton from '../components/common/CommonButton.vue';
@@ -47,7 +47,6 @@ export default defineComponent({
   name: 'Login',
   components: { Cat, CommonInput, CommonButton },
   setup() {
-    const initTokenLoginBody = 'e30';
     const token = localStorage.getItem('token');
     const isShowLoad = ref(false);
     const route = useRoute();
@@ -67,10 +66,11 @@ export default defineComponent({
     }
 
     if (token) {
-      const userData = localStorage.getItem('user-data');
       (async () => {
         try {
-          await post('/login/token', { user_token: userData || initTokenLoginBody });
+          let result = await get('/login/token');
+          let userDataRes = result.data.data;
+          localStorage.setItem('user-data', encodeBase64(JSON.stringify(userDataRes)));
           condGoPage();
         } catch (err: any) {
           localStorage.removeItem('user-data');
@@ -97,10 +97,10 @@ export default defineComponent({
               account: loginData.account,
               password: loginData.password
           });
-          let userData = result.data.data;
+          let userDataRes = result.data.data;
           let token = result.headers.authorization;
 
-          localStorage.setItem('user-data', encodeBase64(JSON.stringify(userData)));
+          localStorage.setItem('user-data', encodeBase64(JSON.stringify(userDataRes)));
           localStorage.setItem('token', token);
 
           condGoPage();

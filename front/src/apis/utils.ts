@@ -14,7 +14,7 @@ const TIMEOUT = Number((import.meta as any).env.VITE_TIMEOUT) || 1000;
 
 function errorHandle(err: any) {
     if (!!err.response) {
-        if ([401, 403].includes(err.response.status)) {
+        if ([401].includes(err.response.status)) {
             window.localStorage.removeItem('token');
             window.localStorage.removeItem('user-data');
             const search = window.location.search;
