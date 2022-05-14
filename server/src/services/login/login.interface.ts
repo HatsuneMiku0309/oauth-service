@@ -8,21 +8,11 @@ export interface ILoginBody {
 }
 
 export interface IRegistBody {
+    empNo?: string;
     account: string;
     password: string; // base64
     email: string;
     phone?: string;
-}
-
-export interface ITokenLoginTokenBody {
-    user_token: string;
-}
-
-export interface ITokenLoginBody {
-    ID: string;
-    ACCOUNT: string;
-    EMAIL: string;
-    PHONE: string;
 }
 
 export interface ILoginRes {
@@ -30,12 +20,14 @@ export interface ILoginRes {
     ACCOUNT: string;
     EMAIL: string;
     PHONE: string;
+    SOURCE: TSource;
+    USER_TYPE: TUSER_TYPE;
 }
 
 export interface ILogin {
     options: TAnyObj;
     login(ctx: TContext, database: IMysqlDatabase, options?: TAnyObj): Promise<ILoginRes>;
-    tokenLogin(ctx: TContext, database: IMysqlDatabase, body: ITokenLoginTokenBody, options: TAnyObj & IJWTCotext): Promise<ILoginRes>; 
+    tokenLogin(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<ILoginRes>; 
     regist(database: IMysqlDatabase, body: IRegistBody, options?: TAnyObj): Promise<{ ID: string }>;
     dbRegist(db: Connection, body: IRegistBody, options?: TAnyObj): Promise<{ ID: string }>;
 }
@@ -46,7 +38,8 @@ export type TUSER_TYPE = 'VIEWER' | 'DEVELOPER' | 'ADMIN' | 'ROOT';
 export interface IUserDAO {
     ID: string; // uuid
     SOURCE?: TSource; // varchar(100)
-    USER_TYPE?: TUSER_TYPE // varchar(100) default: 'VIEWER'
+    USER_TYPE?: TUSER_TYPE; // varchar(100) default: 'VIEWER'
+    EMP_NO?: string; // varchar(100) default: ''
     ACCOUNT: string; // varchar(12)
     PASSWORD: string; //varchar(100)
     EMAIL: string; // varchar(255)

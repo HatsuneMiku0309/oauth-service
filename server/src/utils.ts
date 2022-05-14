@@ -38,7 +38,7 @@ function checkHttpProtocol (url: string, https: boolean = false) {
     try {
         const re = https === true
             ? /^https:\/\/.+/
-            : /^http?:\/\/.+/;
+            : /^https?:\/\/.+/;
         if (re.test(url)) {
             return true;
         }

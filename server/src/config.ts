@@ -47,10 +47,13 @@ class Config implements IConfig {
                 ALGORITHM: <Algorithm> ALGORITHM,
                 UNLESS: [
                     '^\/api\/login$',
-                    '^\/api\/register',
-                    '^\/api\/oauth\/access-token',
-                    '^\/api\/oauth\/refresh-token',
-                    '^\/api\/oauth\/verify-token'
+                    '^\/api\/register$',
+                    '^\/api\/oauth\/access-token$',
+                    '^\/api\/oauth\/refresh-token$',
+                    '^\/api\/oauth\/verify-token$'
+                ],
+                VIEWER_WHITE_LIST: [
+                    '^\/api\/oauth\/grant-code-token$'
                 ]
             },
             databaseConfig: {

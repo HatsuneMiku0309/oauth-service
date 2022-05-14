@@ -46,7 +46,8 @@ export interface IJWTConfig {
     EXPIRES_IN: number;
     EXPIRES_TYPE: TExpiresType;
     ALGORITHM: Algorithm;
-    UNLESS: string[]
+    UNLESS: string[];
+    VIEWER_WHITE_LIST: string[];
 }
 
 export interface IDatabaseConfig extends mysql2.ConnectionOptions, mysql2.PoolOptions  {

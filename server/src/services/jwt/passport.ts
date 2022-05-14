@@ -21,6 +21,14 @@ class Passport {
     static config: IJWTConfig;
     private constructor() { }
 
+    // other token encode/decode //
+
+    /**
+     * todo-cosmo: grantJWTToken should other private_key....
+     * @param body 
+     * @param options 
+     * @returns 
+     */
     static grantJWTToken(body: any, options: TAnyObj & jwt.SignOptions): string {
         const { ALGORITHM, PRIVATE_KEY } = Passport.config;
         const { expiresIn } = options;
@@ -36,6 +44,11 @@ class Passport {
         }
     }
 
+    /**
+     * todo-cosmo: decodeJWTPayload should other public_key....
+     * @param token 
+     * @returns 
+     */
     static decodeJWTPayload<T extends TAnyObj = TAnyObj>(token: string): T {
         const { PUBLIC_KEY } = Passport.config;
         try {
@@ -46,6 +59,8 @@ class Passport {
             throw err;
         }
     }
+
+    // verify AC login token //
 
     static async signup(body: ISignupBody, options: TAnyObj = { }): Promise<string> {
         try {
@@ -158,7 +173,7 @@ class Passport {
         return async (ctx: TContext, next: Next) => {
             let _err: IError = new Error();
             try {
-                const { UNLESS, PUBLIC_KEY } = config ? config : Passport.config;
+                const { UNLESS, PUBLIC_KEY, VIEWER_WHITE_LIST } = config ? config : Passport.config;
                 if (!new RegExp(UNLESS.join('|')).test(ctx.url)) {
                     let token = await Passport.resolveHeaderToken('Bearer', ctx);
                     if (token === undefined || token === null || token === '') {
@@ -198,7 +213,15 @@ class Passport {
 
                                 throw _err;
                             }
-                            if (row.USER_TYPE === 'VIEWER' && ctx.req.method !== 'GET') {
+
+                            /**
+                             * need AC jwt token oper, viewer can't call not `GET` method
+                             * but white_list except
+                             */
+                            if (
+                                row.USER_TYPE === 'VIEWER' && ctx.req.method !== 'GET' &&
+                                !new RegExp(VIEWER_WHITE_LIST.join('|')).test(ctx.url)
+                            ) {
                                 _err.state = 403;
                                 _err.message = 'Authentication Error, your account not permission';
 

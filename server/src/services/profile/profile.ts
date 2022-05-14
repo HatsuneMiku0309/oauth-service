@@ -4,7 +4,7 @@ install();
 import * as _ from 'lodash';
 import { Connection, FieldPacket } from 'mysql2/promise';
 import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
-import { ILoginRes, IUserDAO } from '../login/login.interface';
+import { ILoginRes, IUserDAO, TUSER_TYPE } from '../login/login.interface';
 import { IJWTCotext, TContext } from '../utils.interface';
 import { IGetProfileRes, IProfile, IUpdateBody, IUserAppsRes } from './profile.interface';
 
@@ -115,7 +115,9 @@ class Profile implements IProfile {
                 ID: id,
                 ACCOUNT: account,
                 EMAIL: email,
-                PHONE: phone || ''
+                PHONE: phone || '',
+                SOURCE: row.SOURCE,
+                USER_TYPE: <TUSER_TYPE> row.USER_TYPE
             };
             !!password && (result.reload = true);
 

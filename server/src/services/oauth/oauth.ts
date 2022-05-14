@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import { IError, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import {
     IOauth, IGrantCodeTokenBody, IAccessTokenBody, IGrantCodeTokenRes, IAccessTokenRes,
-    IRefreshTokenBody, IOauthApplicationAndUserDao, TTokenType, IOauthTokenDao,
+    IRefreshTokenBody, IOauthApplicationAndUserDao, TTokenType, IOauthTokenDao, IVerifyTokenRes,
     IVerifyTokenBody, IOauthApplicationScopeRes, IGrantBaseData, IGrantTokenResult, TResponseType, IAccessTokenCheckRes
 } from './oauth.interface';
 import { IOauthApplicationDao } from '../oauth-app/oauth-app.interface';
@@ -19,6 +19,7 @@ import { checkHttpProtocol, checkRedirectUri } from '../../utils';
 import { OauthApplicationScope } from '../oauth-app/oauth-app-scope';
 import { IUserDAO } from '../login/login.interface';
 import { JwtPayload } from 'jsonwebtoken';
+import { TMethod } from '../scope/scope.interface';
 
 class Oauth implements IOauth {
     static instance: IOauth;
@@ -350,6 +351,7 @@ class Oauth implements IOauth {
             if (users.length !== 1) {
                 throw new Error('Grant token fail');
             }
+            let user = users[0];
             // todo-cosmo: user state check
 
             let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
@@ -377,6 +379,8 @@ class Oauth implements IOauth {
                 OAUTH_APPLICATION_ID: oa_id,
                 OAUTH_APPLICATION_USER_ID: baseData.OAUTH_APPLICATION_USER_ID,
                 USER_ID: baseData.USER_ID,
+                USER_EMP_NO: user.EMP_NO || '',
+                USER_ACCOUNT: user.ACCOUNT,
                 OAUTH_TOKEN_ID: oat_id,
                 OAUTH_SCOPES: scopes
             };
@@ -512,7 +516,7 @@ class Oauth implements IOauth {
             if (!!redirect_uri) {
                 if (!_.isString(redirect_uri)) {
                     throw new Error('redirect_uri type error');
-                } else if (!checkHttpProtocol(redirect_uri, true)) {
+                } else if (!checkHttpProtocol(redirect_uri, false)) {
                     throw new Error('redirect_uri must https');
                 } else if (!checkRedirectUri(redirect_uri)) {
                     throw new Error('redirect_uri must have path, ex: https://localhost/callback');
@@ -810,9 +814,9 @@ class Oauth implements IOauth {
         const { access_token, state } = body;
         try {
             if (!access_token) {
-                throw new Error('No refresh_token');
+                throw new Error('No access_token');
             } else if (!!access_token && !_.isString(access_token)) {
-                throw new Error('refresh_token type error');
+                throw new Error('access_token type error');
             } else if (!!state && !_.isString(state)) {
                 throw new Error('state format error');
             }
@@ -821,10 +825,11 @@ class Oauth implements IOauth {
         }
     }
 
-    private async _useTokenModifySome(db: Connection, token_id: string): Promise<void> {
+    private async _useTokenModifySome(db: Connection, token_id: string, options: TAnyObj & { user: IBasicPassportRes }): Promise<void> {
+        const { user: { client_id } } = options;
         try {
-            let sql = 'UPDATE OAUTH_TOKEN SET USE_COUNT = USE_COUNT + 1 WHERE ID = ?';
-            let params = [ token_id ];
+            let sql = 'UPDATE OAUTH_TOKEN SET UPDATE_BY = ?, USE_COUNT = USE_COUNT + 1 WHERE ID = ?';
+            let params = [client_id, token_id ];
             await db.query(sql, params);
         } catch (err) {
             throw err;
@@ -897,7 +902,7 @@ class Oauth implements IOauth {
 
     async verifyToken(
         database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }
-    ): Promise<IVerifyTokenBody> {
+    ): Promise<IVerifyTokenRes> {
         const { user: { client_id } } = options;
         const { access_token } = body;
         const NOW_DATE = new Date();
@@ -905,6 +910,7 @@ class Oauth implements IOauth {
             this._checkVerifyTokenBody(body);
             let {
                 exp, iat, USER_ID,
+                USER_EMP_NO, USER_ACCOUNT,
                 OAUTH_APPLICATION_ID,
                 // OAUTH_APPLICATION_USER_ID,
                 OAUTH_TOKEN_ID,
@@ -919,13 +925,19 @@ class Oauth implements IOauth {
                 } else if (oauthToken.ID !== OAUTH_TOKEN_ID) {
                     throw new Error('Verify fail');
                 }
-                await this. _useTokenModifySome(db, oauthToken.ID);
+                await this. _useTokenModifySome(db, oauthToken.ID, options);
+                let apis = <({ api: string, method: TMethod } & TAnyObj)[]> OAUTH_SCOPES.map((scope) => {
+                    return scope.APIS;
+                }).flat(Infinity);
 
                 return {
                     ACTIVE: true,
                     CLIENT_ID: client_id,
-                    USER_ID: USER_ID,
-                    SCOPES: OAUTH_SCOPES,
+                    USER_ID,
+                    USER_EMP_NO,
+                    USER_ACCOUNT,
+                    OAUTH_SCOPES,
+                    APIS: apis,
                     exp: exp,
                     iat: iat
                 };

@@ -4,6 +4,7 @@ import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IBasicPassportRes } from "../jwt/passport.interface";
 import { IOauthApplicationScopeAndApiScopeRes } from "../oauth-app/oauth-app-scope.interface";
 import { IOauthApplicationDao } from "../oauth-app/oauth-app.interface";
+import { TMethod } from "../scope/scope.interface";
 import { IJWTCotext } from "../utils.interface";
 
 /**
@@ -68,10 +69,18 @@ export interface IRefreshTokenBody {
 }
 
 export interface IVerifyTokenBody extends JwtPayload {
+    access_token: string;
+    state?: string;
+}
+
+export interface IVerifyTokenRes extends JwtPayload {
     ACTIVE: boolean;
     CLIENT_ID: string;
     USER_ID: string;
-    SCOPES: IOauthApplicationScopeAndApiScopeRes[];
+    USER_EMP_NO: string;
+    USER_ACCOUNT: string;
+    OAUTH_SCOPES: IOauthApplicationScopeAndApiScopeRes[];
+    APIS: ({ api: string, method: TMethod } & TAnyObj)[];
 }
 
 export interface IOauthApplicationScopeRes {
@@ -90,6 +99,8 @@ export interface IGrantBaseData {
     OAUTH_APPLICATION_ID: string;
     OAUTH_APPLICATION_USER_ID: string;
     USER_ID: string;
+    USER_EMP_NO: string;
+    USER_ACCOUNT: string;
 }
 
 export interface IGrantTokenResult extends IGrantBaseData {
@@ -109,7 +120,7 @@ export interface IOauth {
     grantCodeToken(database: IMysqlDatabase, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantCodeTokenRes | IAccessTokenRes>;
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
-    verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<any>;
+    verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IVerifyTokenRes>;
 }
 
 // ---------- DAO -----------

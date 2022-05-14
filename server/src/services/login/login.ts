@@ -4,12 +4,13 @@ install();
 import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { IJWTCotext, TContext } from '../utils.interface';
 import * as ldap from 'ldapjs';
-import { IRegistBody, ILogin, ILoginBody, IUserDAO, ITokenLoginBody, ITokenLoginTokenBody, ILdapUserDao, TSource, ILoginRes } from './login.interface';
+import { IRegistBody, ILogin, ILoginBody, IUserDAO, ILdapUserDao, TSource, ILoginRes, TUSER_TYPE } from './login.interface';
 import { Passport } from '../jwt/passport';
 import { FieldPacket } from 'mysql2';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Connection } from 'mysql2/promise';
+import { ISignupBody } from '../jwt/passport.interface';
 
 class Login implements ILogin {
     private static instance: ILogin;
@@ -158,14 +159,11 @@ class Login implements ILogin {
     }
 
     private async _grantLoginToken(
-        db: Connection, id: string,
-        body: { account: string }, options: TAnyObj = { }
+        db: Connection, body: ISignupBody, options: TAnyObj = { }
     ): Promise<string> {
+        const { user_id: id } = body;
         try {
-            let token = await Passport.signup({
-                user_id: id,
-                account: body.account
-            }, options);
+            let token = await Passport.signup(body, options);
             await db.query('UPDATE USER SET ? WHERE ID = ?', [{ TOKEN: token }, id]);
 
             return token;
@@ -174,7 +172,7 @@ class Login implements ILogin {
         }
     }
 
-    private async _dbLdapLogin(ctx: TContext, db: Connection, options: TAnyObj) {
+    private async _dbLdapLogin(ctx: TContext, db: Connection, options: TAnyObj): Promise<ILoginRes> {
         const { body: { account, password }, ip } = <{ body: ILoginBody, ip: string }> ctx.request;
         try {
             let res = await this.ldapLogin(db, { account, password }, { ip });
@@ -182,36 +180,47 @@ class Login implements ILogin {
                 let _password = Buffer.from(`${res.auth};${res.emp_name};${res.email};${res.phone}`).toString('base64');
                 let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query(`
                     SELECT * FROM USER WHERE ACCOUNT = ? AND SOURCE = ?
-                `, [res.emp_name, 'COMPAL']);
+                `, [account, 'COMPAL']);
                 if (rows.length === 0) { // if not find use, auto register
                     let { ID } = await this.dbRegist(db, {
-                        account: res.emp_name,
+                        empNo: res.emp_no,
+                        account: account,
                         password: _password,
                         email: res.email,
                         phone: res.phone
                     }, { source: 'COMPAL' });
-                    let token = await this._grantLoginToken(db, ID, { account: res.emp_name }, options);
+                    let token = await this._grantLoginToken(db, {
+                        user_id: ID, account: account,
+                        source: 'COMPAL', user_type: 'VIEWER'
+                    }, options);
                     ctx.set('Authorization', `${Passport.TOKEN_TYPE} ${token}`);
 
                     return {
                         ID,
-                        ACCOUNT: res.emp_name,
+                        ACCOUNT: account,
                         EMAIL: res.email,
-                        PHONE: res.phone
+                        PHONE: res.phone,
+                        SOURCE: 'COMPAL',
+                        USER_TYPE: 'VIEWER'
                     };
                 } else { // find use, check password and go!
                     let row = rows[0];
                     if (row.PASSWORD !== Buffer.from(_password).toString('base64')) {
                         throw new Error('[LADP] password in [AC] fail');
                     }
-                    let token = await this._grantLoginToken(db, row.ID, { account: row.ACCOUNT }, options);
+                    let token = await this._grantLoginToken(db, {
+                        user_id: row.ID, account: row.ACCOUNT,
+                        source: <TSource> row.SOURCE, user_type: <TUSER_TYPE> row.USER_TYPE
+                    }, options);
                     ctx.set('Authorization', `${Passport.TOKEN_TYPE} ${token}`);
 
                     return {
                         ID: row.ID,
                         ACCOUNT: row.ACCOUNT,
                         EMAIL: row.EMAIL,
-                        PHONE: <string> row.PHONE
+                        PHONE: <string> row.PHONE,
+                        SOURCE: <TSource> row.SOURCE,
+                        USER_TYPE: <TUSER_TYPE> row.USER_TYPE
                     };
                 }
             } else {
@@ -263,8 +272,11 @@ class Login implements ILogin {
             if (row.PASSWORD !== Buffer.from(password).toString('base64')) {
                 throw new Error('Account or password error');
             }
-            let token = await this._grantLoginToken(db, row.ID, {
-                account: account
+            let token = await this._grantLoginToken(db, {
+                user_id: row.ID,
+                account: account,
+                source: <TSource> row.SOURCE,
+                user_type: <TUSER_TYPE> row.USER_TYPE
                 // iss: 'cosmo_serives',
                 // sub: body.account,
                 // nbf: Math.ceil((+new Date()) / 1000),
@@ -276,16 +288,17 @@ class Login implements ILogin {
                 ID: row.ID,
                 ACCOUNT: row.ACCOUNT,
                 EMAIL: row.EMAIL,
-                PHONE: <string> row.PHONE
+                PHONE: row.PHONE || '',
+                SOURCE: <TSource> row.SOURCE,
+                USER_TYPE: <TUSER_TYPE> row.USER_TYPE
             };
         } catch (err) {
             throw err;
         }
     }
 
-    async tokenLogin(ctx: TContext, database: IMysqlDatabase, body: ITokenLoginTokenBody, options: TAnyObj & IJWTCotext): Promise<ILoginRes> {
+    async tokenLogin(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<ILoginRes> {
         const { user: { user_id }, jwt } = options;
-        const { user_token } = body;
         try {
             let db = await database.getConnection();
             await db.beginTransaction();
@@ -299,22 +312,15 @@ class Login implements ILogin {
                 if (row.TOKEN !== jwt) {
                     throw new Error('token check fail');
                 }
-                let userData: ITokenLoginBody = JSON.parse(Buffer.from(user_token, 'base64').toString('ascii'));
-                if (
-                    row.ID !== userData.ID ||
-                    row.ACCOUNT !== userData.ACCOUNT ||
-                    row.EMAIL !== userData.EMAIL ||
-                    row.PHONE !== userData.PHONE
-                ) {
-                    throw new Error('token check fail');
-                }
                 await db.commit();
 
                 return {
                     ID: row.ID,
                     ACCOUNT: row.ACCOUNT,
                     EMAIL: row.EMAIL,
-                    PHONE: row.PHONE
+                    PHONE: row.PHONE || '',
+                    SOURCE: <TSource> row.SOURCE,
+                    USER_TYPE: <TUSER_TYPE> row.USER_TYPE
                 };
             } catch (err) {
                 await db.rollback();
@@ -328,7 +334,7 @@ class Login implements ILogin {
     }
 
     private _checkRegistBody(body: IRegistBody): void {
-        const { account, password, email, phone } = body;
+        const { empNo = '', account, password, email, phone } = body;
         try {
             if (!account) {
                 throw new Error('account is required');
@@ -336,6 +342,10 @@ class Login implements ILogin {
                 throw new Error('password is required');
             } else if (!email) {
                 throw new Error('email is required');
+            }
+
+            if (!!empNo && !_.isString(empNo)) {
+                throw new Error('empNo type error');
             }
 
             if (!!account && !_.isString(account)) {
@@ -391,7 +401,7 @@ class Login implements ILogin {
     }
 
     async dbRegist(db: Connection, body: IRegistBody, options?: TAnyObj & { source?: TSource; }): Promise<{ ID: string; }> {
-        const { account, password, email, phone } = body;
+        const { empNo = '', account, password, email, phone } = body;
         const { source = 'SELF' } = options || { };
         try {
             this._checkRegistBody(body);
@@ -402,6 +412,7 @@ class Login implements ILogin {
             let id = uuid();
             let params = <IUserDAO> {
                 ID: id,
+                EMP_NO: empNo,
                 ACCOUNT: account,
                 PASSWORD: Buffer.from(password).toString('base64'),
                 EMAIL: email,

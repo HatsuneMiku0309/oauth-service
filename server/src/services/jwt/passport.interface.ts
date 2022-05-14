@@ -1,8 +1,11 @@
 import { JwtPayload } from "jsonwebtoken";
+import { TSource, TUSER_TYPE } from "../login/login.interface";
 
 export interface ISignupBody extends JwtPayload {
     user_id: string; // uuid
     account: string;
+    source: TSource;
+    user_type: TUSER_TYPE;
 }
 
 export interface IBasicPassportRes {
