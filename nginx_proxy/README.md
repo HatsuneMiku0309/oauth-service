@@ -4,11 +4,11 @@ Release
 
 ## Front-end
 ```shell=
-$ docker build -t oauth:1.0 .
+$ docker build -t oauth-f:1.0 .
 
-$ docker run -d --name oauth-f -p 8888:80 -p 7777:443 oauth:1.0
-$ docker run -d --name oauth-f oauth:1.0
-$ docker run -d --restart=always --name oauth-f oauth:1.0
+$ docker run -d --name oauth-f -p 8888:80 -p 7777:443 oauth-f:1.0
+$ docker run -d --name oauth-f oauth-f:1.0
+$ docker run -d --restart=always --name oauth-f oauth-f:1.0
 ```
 
 ## back-end
@@ -29,10 +29,10 @@ $ docker run -d --restart=always --name oauth-s --link oauth-mysql-test:oauth-my
 
 ## proxy
 ```shell=
-$ docker build -t oauth:nginx .
+$ docker build -t oauth-n:1.0 .
 
-$ docker run -d --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth:nginx
-$ docker run -d --restart=always --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth:nginx
+$ docker run -d --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth-n:1.0
+$ docker run -d --restart=always --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 80:80 -p 443:443 oauth-n:1.0
 ```
 
 ### link
