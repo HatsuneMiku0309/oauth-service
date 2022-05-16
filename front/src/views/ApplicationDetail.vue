@@ -2,6 +2,24 @@
   <cat v-if="isShowLoad" class="w-full h-full opacity-75 z-50" />
   <transition name="message-popup">
     <!-- <message-popup v-if="isShowPopup" @update:isShowPopup="newValue => isShowPopup = newValue"> -->
+    <message-popup v-if="isShowUpdateCheckPopup" v-model="isShowUpdateCheckPopup">
+      <template v-slot:title>
+        <span class="text-3xl mt-0">Update Check</span>
+      </template>
+      <template #default>
+        <div class="">If you want update the App, you will likely need to re-audit the registered api scope!</div>
+        <div class="mt-5">Are sure?</div>
+        <div class="relative flex h-14 w-full items-center">
+          <div class="absolute right-0 top-4">
+            <common-button class="p-2" type="button" :modelValue="'Cancel'" @click="isShowUpdateCheckPopup = false"/>
+            <common-button class="p-2 ml-3 mr-3" type="button" :modelValue="'Sure'" @click="checkUpdate"/>
+          </div>
+        </div>
+      </template>
+    </message-popup>
+  </transition>
+  <transition name="message-popup">
+    <!-- <message-popup v-if="isShowPopup" @update:isShowPopup="newValue => isShowPopup = newValue"> -->
     <message-popup v-if="isShowPopup" v-model="isShowPopup">
       <template v-slot:title>
         <span class="text-3xl mt-0">Application Secret</span>
@@ -139,6 +157,7 @@ export default defineComponent({
 
     const router = useRouter();
     const tempRemoveID = ref();
+    const isShowUpdateCheckPopup = ref(false);
     const isShowLoad = ref(true);
     const isShowPopup = ref(false);
     const isShowRemovePopup = ref(false);
@@ -179,8 +198,9 @@ export default defineComponent({
       (app.value as any).SCOPE_IDS = scopeIds;
     };
 
-    const checkForm = async () => {
+    const checkUpdate = async () => {
       try {
+        isShowUpdateCheckPopup.value = false;
         isShowLoad.value = true;
         const putData = <any> app.value;
         let result = await put('/oauth-app/' + route.params.id, {
@@ -200,6 +220,10 @@ export default defineComponent({
         alert(err.response.data.errMsg);
         isShowLoad.value = false;
       }
+    }
+
+    const checkForm = async () => {
+      isShowUpdateCheckPopup.value = true;
     };
 
     const remove = async () => {
@@ -244,10 +268,12 @@ export default defineComponent({
 
     return {
       checkForm,
+      checkUpdate,
       remove,
       syncOauthScope,
       reloadSecret,
       downloadConfig,
+      isShowUpdateCheckPopup,
       isShowLoad,
       isShowPopup,
       isShowRemovePopup,
