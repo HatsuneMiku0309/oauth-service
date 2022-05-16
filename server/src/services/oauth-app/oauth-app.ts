@@ -183,7 +183,7 @@ class OauthApplication implements IOauthApplication {
             if (!!homepage_url) {
                 if (!_.isString(homepage_url)) {
                     throw new Error('homepage_url type error');
-                } else if (!checkHttpProtocol(homepage_url, true)) {
+                } else if (!checkHttpProtocol(homepage_url, false)) {
                     throw new Error('homepage_url must https');
                 }
             }
@@ -195,7 +195,7 @@ class OauthApplication implements IOauthApplication {
             if (!!redirect_uri) {
                 if (!_.isString(redirect_uri)) {
                     throw new Error('redirect_uri type error');
-                } else if (!checkHttpProtocol(redirect_uri, true)) {
+                } else if (!checkHttpProtocol(redirect_uri, false)) {
                     throw new Error('redirect_uri must https');
                 } else if (!checkRedirectUri(redirect_uri)) {
                     throw new Error('redirect_uri must have path, ex: https://localhost/callback');
@@ -287,13 +287,32 @@ class OauthApplication implements IOauthApplication {
             const {
                 name, homepage_url, application_description,
                 redirect_uri, expires_date, not_before,
-                is_disabled, is_expires, scope_ids
+                is_disabled = false, is_expires = false, scope_ids
             } = this._checkCreateUpdateBody(body);
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
                 SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
             `, [id, user_id]);
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
+            }
+
+            let _body = _.map(scope_ids, (scope_id) => {
+                const IS_SCOPE_DISABLED = false;
+                const IS_SCOPE_CHECKED = true;
+                return <IRegistBody> {
+                    scope_id,
+                    is_disabled: IS_SCOPE_DISABLED,
+                    is_checked: IS_SCOPE_CHECKED
+                };
+            });
+            let apiScopes =  await (<IOauthApplicationScope> oauthApplicationScope).dbRegistScope(db, id, _body, options);
+            let IS_CHECKED = true;
+            for (let apiScope of apiScopes) {
+                if (!!apiScope.REQUIRE_CHECK) {
+                    IS_CHECKED = false;
+
+                    break;
+                }
             }
 
             let sql = `
@@ -307,8 +326,9 @@ class OauthApplication implements IOauthApplication {
                 NAME: name,
                 HOMEPAGE_URL: homepage_url,
                 REDIRECT_URI: redirect_uri,
-                IS_DISABLED: is_disabled || false,
-                IS_EXPIRES: is_expires || false,
+                IS_DISABLED: is_disabled,
+                IS_EXPIRES: is_expires,
+                IS_CHECKED: IS_CHECKED,
                 UPDATE_BY: user_id
             };
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);
@@ -316,16 +336,6 @@ class OauthApplication implements IOauthApplication {
             !!not_before && (params.NOT_BEFORE = new Date(not_before));
             await db.query(sql, [params, id, user_id]);
 
-            let _body = _.map(scope_ids, (scope_id) => {
-                const IS_SCOPE_DISABLED = false;
-                const IS_SCOPE_CHECKED = true;
-                return <IRegistBody> {
-                    scope_id,
-                    is_disabled: IS_SCOPE_DISABLED,
-                    is_checked: IS_SCOPE_CHECKED
-                };
-            });
-            await (<IOauthApplicationScope> oauthApplicationScope).dbRegistScope(db, id, _body, options);
 
             return {
                 ID: id

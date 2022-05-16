@@ -113,7 +113,7 @@ class Scope implements IScope {
 
     private _checkCreateBody(body: ICreateBody): void {
         try {
-            const { name, description, is_required, system, apis } = body;
+            const { name, description, is_required, require_check, system, apis } = body;
             if (!system) {
                 throw new Error('system is required');
             } else if (!name) {
@@ -127,6 +127,11 @@ class Scope implements IScope {
             }
             if (!!description && !_.isString(description)) {
                 throw new Error('description type error');
+            }
+            if (require_check !== undefined) {
+                if (!_.isBoolean(require_check)) {
+                    throw new Error('require_check type error');
+                }
             }
             if (is_required !== undefined) {
                 if (!_.isBoolean(is_required)) {
@@ -165,7 +170,7 @@ class Scope implements IScope {
 
     async dbCreate(db: Connection, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }> {
         const { user: { user_id } } = options;
-        const { name, description = '', is_required, system, apis } = body;
+        const { name, description = '', is_required = false, require_check, system, apis } = body;
         try {
             this._checkCreateBody(body);
             let id = uuid();
@@ -176,7 +181,8 @@ class Scope implements IScope {
                 DESCRIPTION: description,
                 SYSTEM: system,
                 APIS: JSON.stringify(apis),
-                IS_REQUIRED: is_required || false,
+                IS_REQUIRED: is_required,
+                REQUIRE_CHECK: require_check,
                 CREATE_BY: user_id
             }];
 
@@ -225,7 +231,7 @@ class Scope implements IScope {
             }
 
             body.forEach((data) => {
-                const { name, description, is_required, system, apis } = data;
+                const { name, description, is_required, require_check, system, apis } = data;
                 if (!system) {
                     throw new Error('system is required');
                 } else if (!name) {
@@ -239,6 +245,11 @@ class Scope implements IScope {
                 }
                 if (!!description && !_.isString(description)) {
                     throw new Error('description type error');
+                }
+                if (require_check !== undefined) {
+                    if (!_.isBoolean(require_check)) {
+                        throw new Error('require_check type error');
+                    }
                 }
                 if (is_required !== undefined) {
                     if (!_.isBoolean(is_required)) {
@@ -283,20 +294,21 @@ class Scope implements IScope {
 
     async dbCreates(db: Connection, body: ICreateBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]> {
         const { user: { user_id } } = options;
-        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
+        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'REQUIRE_CHECK', 'CREATE_BY'];
         try {
             this._checkCreatesBody(body);
             let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let ids: { ID: string }[] = [];
             let params = body.map((data) => {
-                const { name, description = '', is_required, system, apis } = data;
+                const { name, description = '', is_required = false, require_check = false, system, apis } = data;
                 let id = uuid();
                 ids.push({ ID: id });
 
                 return [
                     id, name, description,
                     system, apis,
-                    is_required || false,
+                    is_required,
+                    require_check,
                     user_id
                 ];
             });
@@ -335,7 +347,7 @@ class Scope implements IScope {
 
     private _checkUpdateBody(body: IUpdateBody): void {
         try {
-            const { description, is_required, system, apis } = body;
+            const { description, is_required, require_check, system, apis } = body;
 
             if (!system) {
                 throw new Error('system is required');
@@ -345,6 +357,11 @@ class Scope implements IScope {
             }
             if (!!description && !_.isString(description)) {
                 throw new Error('description type error');
+            }
+            if (require_check !== undefined) {
+                if (!_.isBoolean(require_check)) {
+                    throw new Error('require_check type error');
+                }
             }
             if (is_required !== undefined) {
                 if (!_.isBoolean(is_required)) {
@@ -383,7 +400,7 @@ class Scope implements IScope {
 
     async dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }> {
         const { user: { user_id } } = options;
-        const { description = '', is_required, system, apis } = body;
+        const { description = '', is_required = false, require_check = false, system, apis } = body;
         try {
             this._checkUpdateBody(body);
             let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE ID = ?', [id]);
@@ -397,7 +414,8 @@ class Scope implements IScope {
                 DESCRIPTION: description,
                 SYSTEM: system,
                 APIS: apis,
-                IS_REQUIRED: is_required || false,
+                IS_REQUIRED: is_required,
+                REQUIRE_CHECK: require_check,
                 UPDATE_BY: user_id
             },  id]);
 
@@ -444,7 +462,7 @@ class Scope implements IScope {
             }
 
             body.forEach((data) => {
-                const { id, name, description, is_required, system, apis } = data;
+                const { id, name, description, is_required, require_check, system, apis } = data;
                 if (!id) {
                     throw new Error('id is required');
                 }
@@ -456,6 +474,11 @@ class Scope implements IScope {
                 }
                 if (!!description && !_.isString(description)) {
                     throw new Error('description type error');
+                }
+                if (require_check !== undefined) {
+                    if (!_.isBoolean(require_check)) {
+                        throw new Error('require_check type error');
+                    }
                 }
                 if (is_required !== undefined) {
                     if (!_.isBoolean(is_required)) {
@@ -504,7 +527,7 @@ class Scope implements IScope {
             this._checkUpdatesBody(body);
             let sql = 'UPDATE API_SCOPE SET ? WHERE ID = ?';
             let ids: { ID: string }[] = await Q.all(body.map(async (data) => {
-                const { id, description = '', is_required, system, apis } = data;
+                const { id, description = '', is_required = false, require_check = false, system, apis } = data;
                 let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query('SELECT * FROM API_SCOPE WHERE ID = ?', [id]);
                 if (rows.length === 0) {
                     throw new Error(`[${id}] not find`);
@@ -515,7 +538,8 @@ class Scope implements IScope {
                     DESCRIPTION: description,
                     SYSTEM: system,
                     APIS: apis,
-                    IS_REQUIRED: is_required || false,
+                    IS_REQUIRED: is_required,
+                    REQUIRE_CHECK: require_check,
                     UPDATE_BY: user_id
                 });
                 params.push(id);
@@ -605,7 +629,7 @@ class Scope implements IScope {
             }
 
             body.forEach((data) => {
-                const { name, description, is_required, apis } = data;
+                const { name, description, is_required, require_check, apis } = data;
                 if (!name) {
                     throw new Error('name is required');
                 } else if (!apis) {
@@ -617,6 +641,11 @@ class Scope implements IScope {
                 }
                 if (!!description && !_.isString(description)) {
                     throw new Error('description type error');
+                }
+                if (require_check !== undefined) {
+                    if (!_.isBoolean(require_check)) {
+                        throw new Error('require_check type error');
+                    }
                 }
                 if (is_required !== undefined) {
                     if (!_.isBoolean(is_required)) {
@@ -661,7 +690,7 @@ class Scope implements IScope {
 
     async dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]> {
         const { user: { user_id } } = options;
-        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'CREATE_BY'];
+        const COLUMNS = ['ID', '`SYSTEM`', 'NAME', 'DESCRIPTION', 'APIS', 'IS_REQUIRED', 'REQUIRE_CHECK', 'CREATE_BY'];
         try {
             this._checkRegistBody(body);
             let [users] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ID = ? AND SOURCE = ?', [user_id, 'SELF']);
@@ -675,13 +704,14 @@ class Scope implements IScope {
 
             let sql = `INSERT INTO API_SCOPE (${COLUMNS.join(', ')})`;
             let params = body.map((data) => {
-                const { name, description = '', is_required, apis } = data;
+                const { name, description = '', require_check = false, is_required = false, apis } = data;
                 let id = uuid();
 
                 return [
                     id, system, name, description,
                     JSON.stringify(apis),
-                    is_required || false,
+                    is_required,
+                    require_check,
                     user_id
                 ];
             });
@@ -690,7 +720,8 @@ class Scope implements IScope {
                 VALUES (${params.map(() => '?').join('), (')})
                 ON DUPLICATE KEY UPDATE
                 NAME = VALUES(NAME), DESCRIPTION = VALUES(DESCRIPTION),
-                APIS = VALUES(APIS), UPDATE_BY = VALUES(CREATE_BY)
+                APIS = VALUES(APIS), IS_REQUIRED = VALUES(IS_REQUIRED), REQUIRE_CHECK = VALUES(REQUIRE_CHECK),
+                UPDATE_BY = VALUES(CREATE_BY)
             `;
 
             await db.query(sql, params);

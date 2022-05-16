@@ -5,8 +5,8 @@ import { IJWTCotext } from "../utils.interface";
 
 export interface IRegistBody {
     scope_id: string;
-    is_disabled?: boolean;
-    is_checked?: boolean;
+    is_disabled?: boolean; // default: false
+    is_checked?: boolean; // default: true
 }
 
 export interface IOauthApplicationScopeAndApiScopeRes {
@@ -18,6 +18,7 @@ export interface IOauthApplicationScopeAndApiScopeRes {
     DESCRIPTION: string;
     APIS: IAPIs[],
     IS_REQUIRED: boolean;
+    REQUIRE_CHECK: boolean;
     IS_DISABLED: boolean;
     IS_CHECKED: boolean;
     CREATE_TIME: Date;

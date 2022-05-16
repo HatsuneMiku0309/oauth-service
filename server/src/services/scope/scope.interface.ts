@@ -29,6 +29,7 @@ export interface ICreateBody {
     system: string;
     apis: IAPIs[];
     is_required?: boolean;
+    require_check?: boolean; // default: false
 }
 
 export interface IUpdateBody {
@@ -36,6 +37,7 @@ export interface IUpdateBody {
     system: string;
     apis: IAPIs[];
     is_required?: boolean;
+    require_check?: boolean; // default: false
 }
 
 export interface IUpdatesBody extends IUpdateBody {
@@ -47,7 +49,8 @@ export interface IRegistBody {
     name: string;
     description?: string;
     apis: IAPIs[];
-    is_required?: boolean;
+    is_required?: boolean; // default: false
+    require_check?: boolean; // default: false
 }
 
 export interface IScope {
@@ -80,6 +83,7 @@ export interface IApiScopeDao {
     APIS: IAPIs[] | string; // setting string type because JSON.stringify(apis)
     IS_REQUIRED?: boolean; // default: 0
     IS_PUBLIC?: TPublic; // default: 'PRIVATE'
+    REQUIRE_CHECK?: boolean; // default: false
     CREATE_TIME?: Date;
     CREATE_BY: string;
     UPDATE_TIME?: Date;

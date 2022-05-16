@@ -3,7 +3,7 @@ install();
 
 import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
-import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase, IError } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeRes, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
@@ -55,6 +55,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
                     as2.DESCRIPTION,
                     as2.APIS,
                     as2.IS_REQUIRED ,
+                    as2.REQUIRE_CHECK ,
                     os.IS_DISABLED ,
                     os.IS_CHECKED ,
                     os.CREATE_TIME ,
@@ -139,29 +140,49 @@ class OauthApplicationScope implements IOauthApplicationScope {
     private async _getRequiredApiScope(db: Connection, body: IRegistBody[]) {
         try {
             let scope_ids = body.map((data) => data.scope_id);
+            let [apiScopes] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
+            SELECT
+                *
+            FROM
+                API_SCOPE
+            WHERE
+                ID IN (?)
+            `, [scope_ids]);
+            if (apiScopes.length !== scope_ids.length) {
+                let err: IError = new Error();
+                err.datas = [];
+                err.message = `apiScope count error [${apiScopes.length}(db)/${scope_ids.length}(select)]`;
+                let apiScopesId = apiScopes.map((apiScope) => apiScope.ID);
+                scope_ids.forEach((scope_id) => {
+                    !apiScopesId.includes(scope_id) && err.datas?.push(scope_id);
+                });
+
+                throw err;
+            }
+            apiScopes.forEach((apiScope) => {
+                let index = scope_ids.indexOf(apiScope.ID);
+                body[index].is_checked = apiScope.REQUIRE_CHECK ? false : true;
+                body[index].is_disabled = apiScope.REQUIRE_CHECK;
+            });
+            let systems = _.union(apiScopes.map((apiScope) => {
+                return apiScope.SYSTEM;
+            }));
             let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
                 SELECT
                     ID
                 FROM
                     API_SCOPE as2
                 WHERE
-                    \`SYSTEM\` IN (
-                        SELECT
-                            DISTINCT \`SYSTEM\`
-                        FROM
-                            API_SCOPE
-                        WHERE
-                            ID IN (?)
-                    )
+                    \`SYSTEM\` IN (?)
                     AND IS_REQUIRED = TRUE
                     AND ID NOT IN (?)
-            `, [scope_ids, scope_ids]);
+            `, [systems, scope_ids]);
 
             rows.forEach((row) => {
                 body.push({
                     scope_id: row.ID,
-                    is_disabled: false,
-                    is_checked: true
+                    is_disabled: row.REQUIRE_CHECK,
+                    is_checked: row.REQUIRE_CHECK ? false : true
                 });
             });
 
@@ -174,6 +195,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
     async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         const COLUMNS = ['ID', 'OAUTH_APPLICATION_ID', 'SCOPE_ID', 'IS_DISABLED', 'IS_CHECKED', 'CREATE_BY'];
         try {
+            if (body.length === 0) {
+                return [];
+            }
+
             let oauthApplicaion = await this._checkOauthApplication(db, oa_id);
             let _body = await this._getRequiredApiScope(db, body);
 

@@ -113,7 +113,7 @@ class Oauth implements IOauth {
             if (!!redirect_uri) {
                 if (!_.isString(redirect_uri)) {
                     throw new Error('redirect_uri type error');
-                } else if (!checkHttpProtocol(redirect_uri, true)) {
+                } else if (!checkHttpProtocol(redirect_uri, false)) {
                     throw new Error('redirect_uri must https');
                 } else if (!checkRedirectUri(redirect_uri)) {
                     throw new Error('redirect_uri must have path, ex: https://localhost/callback');
