@@ -126,6 +126,8 @@ export default defineComponent({
         } catch (err: any) {
           if (![401, 403].includes(err.response.status)) {
             router.replace('/404');
+          } else if (403 === err.response.status) {
+            router.replace({ name: 'Login', query: route.query });
           }
         } finally {
           isShowLoad.value = false;

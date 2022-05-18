@@ -59,7 +59,7 @@ export default defineComponent({
           query.push(key + '=' + route.query[key]);
         }
         // console.log('/oauth/authorization?' + query.join('&'));
-        router.push('/oauth/authorization?' + query.join('&'));
+        router.push({ path: '/oauth/authorization', query: route.query });
       } else {
         router.push('/');
       }
