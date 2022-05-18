@@ -118,7 +118,9 @@ export interface IOauth {
     getOauthApplicationScope(database: IMysqlDatabase, client_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeRes>;
     checkOauthApplication(db: Connection, client_id: string, options: TAnyObj): Promise<IOauthApplicationDao>;
     grantCodeToken(database: IMysqlDatabase, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantCodeTokenRes | IAccessTokenRes>;
+    dbGrantCodeToken(db: Connection, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantCodeTokenRes | IAccessTokenRes>;
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
+    dbAccessToken(db: Connection, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IVerifyTokenRes>;
 }

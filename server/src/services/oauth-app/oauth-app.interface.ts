@@ -76,12 +76,14 @@ export interface IOauthApplicationDao {
     USER_ID: string; // varchar(100)
     CLIENT_ID: string; // varchar(100)
     CLIENT_SECRET: string; // varchar(255) ID:USER_ID:CLIENT_ID BASE64
+    API_KEY?: string; // text
     REDIRECT_URI: string; // varchar(255)
     EXPIRES_DATE?: Date;
     NOT_BEFORE?: Date;
     IS_DISABLED?: boolean; // default: 0
     IS_EXPIRES?: boolean; // default: 0
     IS_CHECKED?: boolean; // default: 1
+    IS_ORIGIN?: boolean; // default: 0
     AUDIT_STATE?: string; // varchar(100)
     CREATE_TIME?: Date;
     CREATE_BY: string; // varchar(100)

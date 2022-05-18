@@ -137,7 +137,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
         }
     }
 
-    private async _getRequiredApiScope(db: Connection, body: IRegistBody[]) {
+    private async _getRequiredApiScope(db: Connection, body: IRegistBody[], oauthApplicaion: IOauthApplicationDao, options: TAnyObj = { }) {
         try {
             let scope_ids = body.map((data) => data.scope_id);
             let [apiScopes] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
@@ -161,8 +161,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
             }
             apiScopes.forEach((apiScope) => {
                 let index = scope_ids.indexOf(apiScope.ID);
-                body[index].is_checked = apiScope.REQUIRE_CHECK ? false : true;
-                body[index].is_disabled = apiScope.REQUIRE_CHECK;
+                body[index].is_checked = oauthApplicaion.IS_ORIGIN
+                    ? true
+                    : apiScope.REQUIRE_CHECK ? false : true;
+                body[index].is_disabled = false;
             });
             let systems = _.union(apiScopes.map((apiScope) => {
                 return apiScope.SYSTEM;
@@ -181,8 +183,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
             rows.forEach((row) => {
                 body.push({
                     scope_id: row.ID,
-                    is_disabled: row.REQUIRE_CHECK,
-                    is_checked: row.REQUIRE_CHECK ? false : true
+                    is_disabled: false,
+                    is_checked: oauthApplicaion.IS_ORIGIN
+                        ? true
+                        : row.REQUIRE_CHECK ? false : true
                 });
             });
 
@@ -200,7 +204,7 @@ class OauthApplicationScope implements IOauthApplicationScope {
             }
 
             let oauthApplicaion = await this._checkOauthApplication(db, oa_id);
-            let _body = await this._getRequiredApiScope(db, body);
+            let _body = await this._getRequiredApiScope(db, body, oauthApplicaion);
 
             let sql = `INSERT INTO OAUTH_SCOPE (${COLUMNS.join(', ')})`;
             await this._registApiScope(db, sql, _body, oa_id, oauthApplicaion);

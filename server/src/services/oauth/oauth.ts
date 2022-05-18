@@ -340,11 +340,13 @@ class Oauth implements IOauth {
      */
     private async _grantToken(
         db: Connection, response_type: TResponseType | 'refresh_token',
-        oa_id: string, oat_id: string, user_id: string,
+        oauthApplication: IOauthApplicationDao, oat_id: string, user_id: string,
         options: TAnyObj & (IJWTCotext | { user: IBasicPassportRes })
     ): Promise<string> {
-        const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
         try {
+            const EXPIRES_TIME = oauthApplication.IS_ORIGIN
+                ? 365 * 24 * 60 * this.SEC_TIME
+                : this.EXPIRES_MIN * this.SEC_TIME;
             let [users] = <[IUserDAO[], FieldPacket[]]> await db.query(`
                 SELECT * FROM USER WHERE ID = ?
             `, [user_id]);
@@ -367,16 +369,16 @@ class Oauth implements IOauth {
                 oa.ID = ?
                 AND oau.USER_ID = ?
             `;
-            let params = [ oa_id, user_id ];
+            let params = [ oauthApplication.ID, user_id ];
             let [baseDatas] = <[IGrantBaseData[], FieldPacket[]]> await db.query(baseSql, params);
             if (baseDatas.length !== 1) {
                 throw new Error('Grant token fail');
             }
             let baseData = baseDatas[0];
-            let scopes = await oauthApplicationScope.dbList(db, oa_id, < TAnyObj & IJWTCotext> options);
+            let scopes = await oauthApplicationScope.dbList(db, oauthApplication.ID, < TAnyObj & IJWTCotext> options);
             let grantTokenBody: IGrantTokenResult = {
                 RESPONSE_TYPE: response_type,
-                OAUTH_APPLICATION_ID: oa_id,
+                OAUTH_APPLICATION_ID: oauthApplication.ID,
                 OAUTH_APPLICATION_USER_ID: baseData.OAUTH_APPLICATION_USER_ID,
                 USER_ID: baseData.USER_ID,
                 USER_EMP_NO: user.EMP_NO || '',
@@ -395,6 +397,27 @@ class Oauth implements IOauth {
     async grantCodeToken(
         database: IMysqlDatabase, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext
     ): Promise<IGrantCodeTokenRes | IAccessTokenRes> {
+        try {
+            let db = await database.getConnection();
+            try {
+                await db.beginTransaction();
+                let result = await this.dbGrantCodeToken(db, body, options);
+                await db.commit();
+
+                return result;
+            } catch (err) {
+                await db.rollback();
+
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbGrantCodeToken(db: Connection, body: IGrantCodeTokenBody, options: TAnyObj & IJWTCotext): Promise<IGrantCodeTokenRes | IAccessTokenRes> {
         const { user: { user_id } } = options;
         const { response_type, client_id, redirect_uri, state /*, scope */ } = body;
         const NOW_DATE = new Date();
@@ -402,99 +425,93 @@ class Oauth implements IOauth {
         let result: IGrantCodeTokenRes | IAccessTokenRes;
         try {
             this._checkGrantTokenBody(body);
-            const db = await database.getConnection();
-            try {
-                await db.beginTransaction();
-                let oauthApplicaion = await this._checkOauthApplication(db, client_id, options);
-                let oauthApplicationAndUser = await this._checkOauthUser(db, {
-                    client_id, user_id
+
+            let oauthApplicaion = await this._checkOauthApplication(db, client_id, options);
+            let oauthApplicationAndUser = await this._checkOauthUser(db, {
+                client_id, user_id
+            }, options);
+            if (oauthApplicationAndUser === undefined) {
+                oauthApplicationAndUser = await this._grantInitOauthUser(db, {
+                    client_id, user_id,
+                    oauth_application_id: oauthApplicaion.ID,
+                    oauth_token_id: ''
                 }, options);
-                if (oauthApplicationAndUser === undefined) {
-                    oauthApplicationAndUser = await this._grantInitOauthUser(db, {
-                        client_id, user_id,
-                        oauth_application_id: oauthApplicaion.ID,
-                        oauth_token_id: ''
-                    }, options);
-                }
-                await this._setTokenExpires(db, client_id, oauthApplicationAndUser.ID, { ...options, NOW_DATE });
-                await this._transTokenToHis(db, oauthApplicationAndUser.ID, options);
-
-                const id = uuid();
-                const code = uuid();
-                switch (response_type) {
-                    case 'code':
-                        result = {
-                            code: code,
-                            redirect_uri: oauthApplicationAndUser.REDIRECT_URI
-                        };
-                        if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
-                            throw new Error('redirect_uri error');
-                        }
-                        !!redirect_uri && (result.redirect_uri = redirect_uri);
-                        !!state && (result.state = state);
-                        await db.query(`
-                            INSERT INTO OAUTH_TOKEN SET ?
-                        `, [{
-                            ID: id,
-                            OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
-                            GRANT_TYPE: response_type,
-                            CODE: code,
-                            EXPIRES_DATE: new Date((+NOW_DATE + EXPIRES_TIME)),
-                            TOKEN_TYPE: this.TOKEN_TYPE,
-                            CREATE_BY: client_id,
-                            STATE: state
-                        }]);
-
-                        break;
-                    case 'token':
-                        let access_token = await this._grantToken(db, 'token', oauthApplicaion.ID, id, user_id, options);
-                        result = {
-                            access_token: access_token, // grant access_token is jwt
-                            token_type: this.TOKEN_TYPE,
-                            expires_in: (EXPIRES_TIME) / 1000,
-                            redirect_uri: oauthApplicationAndUser.REDIRECT_URI
-                        };
-                        if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
-                            throw new Error('redirect_uri error');
-                        }
-                        !!redirect_uri && (result.redirect_uri = redirect_uri);
-                        !!state && (result.state = state);
-                        await db.query(`
-                            INSERT INTO OAUTH_TOKEN SET ?
-                        `, [{
-                            ID: id,
-                            OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
-                            GRANT_TYPE: response_type,
-                            CODE: code,
-                            TOKEN_TYPE: this.TOKEN_TYPE,
-                            ACCESS_TOKEN: access_token,
-                            EXPIRES_DATE: new Date((+NOW_DATE + EXPIRES_TIME)),
-                            USE_LIMIT: this._USE_LIMIT,
-                            CREATE_BY: client_id,
-                            STATE: state
-                        }]);
-
-                        break;
-                    default:
-                        throw new Error(`[${response_type}] Unknown response_type`);
-                }
-                await db.query(`
-                    UPDATE
-                        OAUTH_APPLICATION_USER
-                    SET
-                        OAUTH_TOKEN_ID = ?
-                    WHERE
-                        ID = ?
-                `, [ id, oauthApplicationAndUser.ID ]);
-                await db.commit();
-
-                return result;
-            } catch (err) {
-                await db.rollback();
-                throw err;
-            } finally {
-                await database.end(db);
             }
+            await this._setTokenExpires(db, client_id, oauthApplicationAndUser.ID, { ...options, NOW_DATE });
+            await this._transTokenToHis(db, oauthApplicationAndUser.ID, options);
+
+            const id = uuid();
+            const code = uuid();
+            switch (response_type) {
+                case 'code':
+                    result = {
+                        code: code,
+                        redirect_uri: oauthApplicationAndUser.REDIRECT_URI
+                    };
+                    if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
+                        throw new Error('redirect_uri error');
+                    }
+                    !!redirect_uri && (result.redirect_uri = redirect_uri);
+                    !!state && (result.state = state);
+                    await db.query(`
+                        INSERT INTO OAUTH_TOKEN SET ?
+                    `, [{
+                        ID: id,
+                        OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
+                        GRANT_TYPE: response_type,
+                        CODE: code,
+                        EXPIRES_DATE: new Date((+NOW_DATE + EXPIRES_TIME)),
+                        TOKEN_TYPE: this.TOKEN_TYPE,
+                        CREATE_BY: client_id,
+                        STATE: state
+                    }]);
+
+                    break;
+                case 'token':
+                    let access_token = await this._grantToken(db, 'token', oauthApplicaion, id, user_id, options);
+                    let expiresTime = oauthApplicaion.IS_ORIGIN
+                        ? 365 * 24 * 60 * this.SEC_TIME
+                        : EXPIRES_TIME;
+                    result = {
+                        access_token: access_token, // grant access_token is jwt
+                        token_type: this.TOKEN_TYPE,
+                        expires_in: expiresTime / 1000,
+                        redirect_uri: oauthApplicationAndUser.REDIRECT_URI
+                    };
+                    if (!!redirect_uri && oauthApplicationAndUser.REDIRECT_URI !== redirect_uri) {
+                        throw new Error('redirect_uri error');
+                    }
+                    !!redirect_uri && (result.redirect_uri = redirect_uri);
+                    !!state && (result.state = state);
+                    await db.query(`
+                        INSERT INTO OAUTH_TOKEN SET ?
+                    `, [{
+                        ID: id,
+                        OAUTH_APPLICATION_USER_ID: oauthApplicationAndUser.ID,
+                        GRANT_TYPE: response_type,
+                        CODE: code,
+                        TOKEN_TYPE: this.TOKEN_TYPE,
+                        ACCESS_TOKEN: access_token,
+                        EXPIRES_DATE: new Date((+NOW_DATE + expiresTime)),
+                        USE_LIMIT: this._USE_LIMIT,
+                        CREATE_BY: client_id,
+                        STATE: state
+                    }]);
+
+                    break;
+                default:
+                    throw new Error(`[${response_type}] Unknown response_type`);
+            }
+            await db.query(`
+                UPDATE
+                    OAUTH_APPLICATION_USER
+                SET
+                    OAUTH_TOKEN_ID = ?
+                WHERE
+                    ID = ?
+            `, [ id, oauthApplicationAndUser.ID ]);
+
+            return result;
         } catch (err) {
             throw err;
         }
@@ -612,7 +629,7 @@ class Oauth implements IOauth {
 
     async accessToken(
         database: IMysqlDatabase,
-        body: IAccessTokenBody & { grant_type: 'code' },
+        body: IAccessTokenBody,
         options: TAnyObj & { user: IBasicPassportRes }
     ): Promise<IAccessTokenRes> {
         try {
@@ -630,12 +647,12 @@ class Oauth implements IOauth {
         }
     }
 
-    private async dbAccessToken(
+    async dbAccessToken(
         db: Connection,
-        body: IAccessTokenBody & { grant_type: 'code' },
-        options: TAnyObj & { user: IBasicPassportRes }
+        body: IAccessTokenBody,
+        options: TAnyObj & { user: IBasicPassportRes, tokenType?: 'apiKey' }
     ): Promise<IAccessTokenRes> {
-        const { user: { client_id } } = options;
+        const { user: { client_id }, tokenType } = options;
         const { code, redirect_uri, state } = body;
         const NOW_DATE = new Date();
         const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
@@ -646,14 +663,17 @@ class Oauth implements IOauth {
                 throw new Error('redirect_uri error');
             }
             let oauthTokenData = await this._accessTokenCheck(db, code, NOW_DATE);
-            let accessToken = await this._grantToken(db, 'code', oauthApplicaion.ID, oauthTokenData.ID, oauthTokenData.USER_ID, options);
+            let expiresTime = oauthApplicaion.IS_ORIGIN || tokenType === 'apiKey'
+                ? 365 * 24 * 60 * this.SEC_TIME
+                : EXPIRES_TIME;
+            let accessToken = await this._grantToken(db, 'code', oauthApplicaion, oauthTokenData.ID, oauthTokenData.USER_ID, options);
             let refreshToken = Passport.grantJWTToken({
                 grant_type: 'refresh_token', client_id, user_id: oauthTokenData.USER_ID
             }, { expiresIn: this.REFRESH_EXPIRES_TIME });
             let result: IAccessTokenRes = {
                 access_token: accessToken, // grant access_token is jwt
                 token_type: this.TOKEN_TYPE,
-                expires_in: (EXPIRES_TIME) / 1000,
+                expires_in: (expiresTime) / 1000,
                 refresh_token: refreshToken,
                 redirect_uri: redirect_uri
             };
@@ -667,7 +687,7 @@ class Oauth implements IOauth {
                     ID = ?
             `, [
                 accessToken, refreshToken,
-                new Date((+NOW_DATE + EXPIRES_TIME)),
+                new Date((+NOW_DATE + expiresTime)),
                 client_id,
                 oauthTokenData.ID
             ]);
@@ -769,30 +789,36 @@ class Oauth implements IOauth {
             try {
                 await db.beginTransaction();
                 let oauthApplicaion = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
+                let expiresTime = oauthApplicaion.IS_ORIGIN
+                    ? 365 * 24 * 60 * this.SEC_TIME
+                    : EXPIRES_TIME;
                 let oauthToken = await this._refreshTokenCheck(db, refresh_token);
-                let accessToken = await this._grantToken(db, 'code', oauthApplicaion.ID, oauthToken.ID, user_id, options);
-                let refreshToken = Passport.grantJWTToken({
-                    grant_type: 'refresh_token', client_id
-                }, { expiresIn: this.REFRESH_EXPIRES_TIME });
+                let accessToken = await this._grantToken(db, 'code', oauthApplicaion, oauthToken.ID, user_id, options);
+                // refresh token should not grant new token...
+                // let refreshToken = Passport.grantJWTToken({
+                //     grant_type: 'refresh_token', client_id, user_id
+                // }, { expiresIn: this.REFRESH_EXPIRES_TIME });
                 let result: IAccessTokenRes = {
                     access_token: accessToken, // grant access_token is jwt
                     token_type: this.TOKEN_TYPE,
-                    expires_in: (EXPIRES_TIME) / 1000,
-                    refresh_token: refreshToken
+                    expires_in: (expiresTime) / 1000,
+                    refresh_token: refresh_token
                 };
                 !!state && (result.state = state);
 
                 await db.query(`
                     UPDATE OAUTH_TOKEN SET
-                        ACCESS_TOKEN = ?, REFRESH_TOKEN = ?,
+                        ACCESS_TOKEN = ?,
                         EXPIRES_DATE = ?,
                         REFRESH_COUNT = REFRESH_COUNT + 1,
+                        IS_EXPIRES = ?,
                         UPDATE_BY = ?
                     WHERE
                         ID = ?
                 `, [
-                    accessToken, refreshToken,
-                    new Date((+NOW_DATE + EXPIRES_TIME)),
+                    accessToken,
+                    new Date((+NOW_DATE + expiresTime)),
+                    false,
                     client_id,
                     oauthToken.ID
                 ]);
@@ -888,10 +914,10 @@ class Oauth implements IOauth {
             if ('data' in _err) {
                 await db.query(`
                     UPDATE OAUTH_TOKEN SET
-                        IS_DISABLED = ?, IS_EXPIRES = ?
+                        IS_EXPIRES = ?
                     WHERE
                         ID = ?
-                `, [ true, true, _err.data.ID ]);
+                `, [ true, _err.data.ID ]);
                 await this._transTokenToHis(db, _err.data.OATUH_APPLICATION_USER_ID, this.options);
                 delete _err.data;
             }
@@ -946,8 +972,11 @@ class Oauth implements IOauth {
             } finally {
                 await database.end(db);
             }
-        } catch (err) {
-            throw err;
+        } catch (err: any) {
+            let _err: IError = err;
+            _err.state = 401;
+
+            throw _err;
         }
     }
 

@@ -8,6 +8,7 @@ import { OauthApplication } from './oauth-app';
 import { OauthApplicationScope } from './oauth-app-scope';
 import { BaseRouter } from '../utils';
 import { OauthApplicationUser } from './oauth-app-user';
+import { Oauth } from '../oauth/oauth';
 
 class OauthApplicationRouter extends BaseRouter implements IRouter {
     readonly api: string = '/oauth-app';
@@ -26,6 +27,7 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
         let oauthApplication = OauthApplication.getInstance(this.options);
         let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
         let oauthApplicationUser = OauthApplicationUser.getInstance(this.options);
+        let oauth = Oauth.getInstance(this.options);
 
         let api = super._getRootApi().join('/');
         this.router.get(api, async (ctx: TContext) => {
@@ -75,7 +77,8 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
             try {
                 let result = await oauthApplication.update(this.database, id, body, {
                     ...ctx.state,
-                    oauthApplicationScope
+                    oauthApplicationScope,
+                    oauth
                 });
 
                 ctx.body = {

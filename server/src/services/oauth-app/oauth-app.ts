@@ -15,6 +15,7 @@ import { v4 as uuid } from 'uuid';
 import * as dayjs from 'dayjs';
 import { checkDateTime, checkHttpProtocol, checkRedirectUri } from '../../utils';
 import { IOauthApplicationScope, IRegistBody } from './oauth-app-scope.interface';
+import { IAccessTokenRes, IGrantCodeTokenRes, IOauth } from '../oauth/oauth.interface';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
@@ -266,7 +267,9 @@ class OauthApplication implements IOauthApplication {
             let db = await database.getConnection();
             try {
                 await db.beginTransaction();
-                let result = await this.dbUpdate(db, id, body, options);
+                let result = await this.dbUpdate(db, id, body, {
+                    ...options
+                });
                 await db.commit();
 
                 return result;
@@ -282,7 +285,7 @@ class OauthApplication implements IOauthApplication {
     }
 
     async dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
-        const { user: { user_id }, oauthApplicationScope } = options;
+        const { user: { user_id }, oauthApplicationScope, oauth } = options;
         try {
             const {
                 name, homepage_url, application_description,
@@ -295,7 +298,7 @@ class OauthApplication implements IOauthApplication {
             if (rows.length === 0) {
                 throw new Error(`[${id}] id not find`);
             }
-
+            let row = rows[0];
             let _body = _.map(scope_ids, (scope_id) => {
                 const IS_SCOPE_DISABLED = false;
                 const IS_SCOPE_CHECKED = true;
@@ -308,11 +311,34 @@ class OauthApplication implements IOauthApplication {
             let apiScopes =  await (<IOauthApplicationScope> oauthApplicationScope).dbRegistScope(db, id, _body, options);
             let IS_CHECKED = true;
             for (let apiScope of apiScopes) {
-                if (!!apiScope.REQUIRE_CHECK) {
+                if (!!apiScope.REQUIRE_CHECK && !row.IS_ORIGIN) {
                     IS_CHECKED = false;
 
                     break;
                 }
+            }
+
+            let apiKey = '';
+            try {
+                let { code } = <IGrantCodeTokenRes> await (<IOauth> oauth).dbGrantCodeToken(db, {
+                    response_type: 'code',
+                    client_id: row.CLIENT_ID
+                }, options);
+                let { access_token } = <IAccessTokenRes> await (<IOauth> oauth).dbAccessToken(db, {
+                    grant_type: 'code',
+                    code,
+                    redirect_uri: row.REDIRECT_URI
+                }, {
+                    user: {
+                        user_id: row.USER_ID,
+                        client_id: row.CLIENT_ID,
+                        client_secret: row.CLIENT_SECRET
+                    },
+                    tokenType: 'apiKey'
+                });
+                apiKey = access_token;
+            } catch (err) {
+                // do not thing
             }
 
             let sql = `
@@ -329,6 +355,7 @@ class OauthApplication implements IOauthApplication {
                 IS_DISABLED: is_disabled,
                 IS_EXPIRES: is_expires,
                 IS_CHECKED: IS_CHECKED,
+                API_KEY: apiKey,
                 UPDATE_BY: user_id
             };
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);

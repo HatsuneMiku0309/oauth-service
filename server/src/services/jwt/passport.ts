@@ -208,7 +208,7 @@ class Passport {
                             let row = rows[0];
                             // maybe this function remove...
                             if (row.TOKEN !== token) {
-                                _err.state = 403;
+                                _err.state = 401;
                                 _err.message = 'Authentication Error';
 
                                 throw _err;
