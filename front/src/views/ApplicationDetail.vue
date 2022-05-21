@@ -26,13 +26,17 @@
       </template>
       <template #default>
         <div class="text-sm text-red-600">Please keep this information safe, exposure will cause security problems.</div>
-        <div class="relative flex w-full items-center py-1">
-          <div class="relative flex items-center mr-2 w-36"><span class="absolute right-0">Client ID :</span></div>
-          <label class="flex items-center p-2 select-all bg-gray-700 text-xs">{{ app.CLIENT_ID }}</label>
+        <div class="relative w-full py-1">
+          <div class="relative inline-block float-left w-28"><span class="absolute right-0">Client ID :</span></div>
+          <label class="ml-32 block p-2 select-all bg-gray-700 text-xs">{{ app.CLIENT_ID }}</label>
         </div>
-        <div class="relative flex w-full items-center py-1">
-          <div class="relative flex self-start mr-2 w-36 pt-2"><span class="absolute right-0">Client Secret :</span></div>
-          <label id="secret" class="flex items-center p-2 break-all select-all bg-gray-700 text-xs">{{ app.CLIENT_SECRET }}</label>
+        <div class="relative w-full py-1">
+          <div class="relative inline-block float-left w-28"><span class="absolute right-0">Client Secret :</span></div>
+          <label id="secret" class="ml-32 block p-2 break-all select-all bg-gray-700 text-xs">{{ app.CLIENT_SECRET }}</label>
+        </div>
+        <div class="relative w-full py-1">
+          <div class="relative inline-block float-left w-28"><span class="absolute right-0">API Key :</span></div>
+          <label id="secret" :title="app.API_KEY" class="h-32 overflow-y-auto ml-32 block p-2 break-all select-all bg-gray-700 text-xs">{{ app.API_KEY }}</label>
         </div>
         <div class="relative flex h-14 w-full items-center">
           <div class="absolute right-0 top-4">
