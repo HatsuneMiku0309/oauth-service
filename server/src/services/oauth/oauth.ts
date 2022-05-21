@@ -339,7 +339,7 @@ class Oauth implements IOauth {
      * @returns 
      */
     private async _grantToken(
-        db: Connection, response_type: TResponseType | 'refresh_token',
+        db: Connection, response_type: TResponseType | 'refresh_token' | 'api_key',
         oauthApplication: IOauthApplicationDao, oat_id: string, user_id: string,
         options: TAnyObj & (IJWTCotext | { user: IBasicPassportRes })
     ): Promise<string> {
@@ -666,7 +666,7 @@ class Oauth implements IOauth {
             let expiresTime = oauthApplicaion.IS_ORIGIN || tokenType === 'apiKey'
                 ? 365 * 24 * 60 * this.SEC_TIME
                 : EXPIRES_TIME;
-            let accessToken = await this._grantToken(db, 'code', oauthApplicaion, oauthTokenData.ID, oauthTokenData.USER_ID, options);
+            let accessToken = await this._grantToken(db, tokenType === 'apiKey' ? 'api_key' : 'code', oauthApplicaion, oauthTokenData.ID, oauthTokenData.USER_ID, options);
             let refreshToken = Passport.grantJWTToken({
                 grant_type: 'refresh_token', client_id, user_id: oauthTokenData.USER_ID
             }, { expiresIn: this.REFRESH_EXPIRES_TIME });
@@ -935,7 +935,7 @@ class Oauth implements IOauth {
         try {
             this._checkVerifyTokenBody(body);
             let {
-                exp, iat, USER_ID,
+                exp, iat, USER_ID, RESPONSE_TYPE,
                 USER_EMP_NO, USER_ACCOUNT,
                 OAUTH_APPLICATION_ID,
                 // OAUTH_APPLICATION_USER_ID,
@@ -945,13 +945,16 @@ class Oauth implements IOauth {
             let db = await database.getConnection();
             try {
                 let oauthApplication = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
-                let oauthToken = await this._verifyToken(db, access_token, NOW_DATE);
-                if (oauthApplication.ID !== OAUTH_APPLICATION_ID) {
-                    throw new Error('Verify fail');
-                } else if (oauthToken.ID !== OAUTH_TOKEN_ID) {
-                    throw new Error('Verify fail');
+                // api_key不再驗證其db數據以及其他紀錄。
+                if (RESPONSE_TYPE !== 'api_key') {
+                    let oauthToken = await this._verifyToken(db, access_token, NOW_DATE);
+                    if (oauthApplication.ID !== OAUTH_APPLICATION_ID) {
+                        throw new Error('Verify fail');
+                    } else if (oauthToken.ID !== OAUTH_TOKEN_ID) {
+                        throw new Error('Verify fail');
+                    }
+                    await this. _useTokenModifySome(db, oauthToken.ID, options);
                 }
-                await this. _useTokenModifySome(db, oauthToken.ID, options);
                 let apis = <({ api: string, method: TMethod } & TAnyObj)[]> OAUTH_SCOPES.map((scope) => {
                     return scope.APIS;
                 }).flat(Infinity);

@@ -311,7 +311,7 @@ class OauthApplication implements IOauthApplication {
             let apiScopes =  await (<IOauthApplicationScope> oauthApplicationScope).dbRegistScope(db, id, _body, options);
             let IS_CHECKED = true;
             for (let apiScope of apiScopes) {
-                if (!!apiScope.REQUIRE_CHECK && !row.IS_ORIGIN) {
+                if (!apiScope.IS_CHECKED && !row.IS_ORIGIN) {
                     IS_CHECKED = false;
 
                     break;

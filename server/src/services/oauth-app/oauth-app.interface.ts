@@ -76,14 +76,14 @@ export interface IOauthApplicationDao {
     USER_ID: string; // varchar(100)
     CLIENT_ID: string; // varchar(100)
     CLIENT_SECRET: string; // varchar(255) ID:USER_ID:CLIENT_ID BASE64
-    API_KEY?: string; // text
+    API_KEY?: string; // text // apiKey是使用自身的帳戶即時建立token，並賦予長時間(或永久)的授權
     REDIRECT_URI: string; // varchar(255)
     EXPIRES_DATE?: Date;
     NOT_BEFORE?: Date;
     IS_DISABLED?: boolean; // default: 0
     IS_EXPIRES?: boolean; // default: 0
     IS_CHECKED?: boolean; // default: 1
-    IS_ORIGIN?: boolean; // default: 0
+    IS_ORIGIN?: boolean; // default: 0 // 設為 origin 意謂是受信任的，給予長時間的token... 原因：懶的改現有架構，通過增長時間可以避免refresh的問題。（併發api時的refresh，此參數不應該為true）
     AUDIT_STATE?: string; // varchar(100)
     CREATE_TIME?: Date;
     CREATE_BY: string; // varchar(100)

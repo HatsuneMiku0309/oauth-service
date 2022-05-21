@@ -5,7 +5,7 @@ import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
 import { TAnyObj, IMysqlDatabase, IError } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
-import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeRes, IRegistBody } from './oauth-app-scope.interface';
+import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeRes, IOauthApplicationScopeDao, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
 import { v4 as uuid } from 'uuid';
 import { IApiScopeDao } from '../scope/scope.interface';
@@ -139,6 +139,9 @@ class OauthApplicationScope implements IOauthApplicationScope {
 
     private async _getRequiredApiScope(db: Connection, body: IRegistBody[], oauthApplicaion: IOauthApplicationDao, options: TAnyObj = { }) {
         try {
+            let [oldAuthApplicationScopes] = <[IOauthApplicationScopeDao[], FieldPacket[]]> await db.query(`
+                SELECT * FROM OAUTH_SCOPE WHERE OAUTH_APPLICATION_ID = ?
+            `, [oauthApplicaion.ID]);
             let scope_ids = body.map((data) => data.scope_id);
             let [apiScopes] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
             SELECT
@@ -161,8 +164,13 @@ class OauthApplicationScope implements IOauthApplicationScope {
             }
             apiScopes.forEach((apiScope) => {
                 let index = scope_ids.indexOf(apiScope.ID);
+                let findOldAuthScope = oldAuthApplicationScopes.find((oldAuthApplicationScope) => {
+                    return oldAuthApplicationScope.SCOPE_ID === apiScope.ID;
+                });
                 body[index].is_checked = oauthApplicaion.IS_ORIGIN
                     ? true
+                    : findOldAuthScope
+                    ? findOldAuthScope.IS_CHECKED
                     : apiScope.REQUIRE_CHECK ? false : true;
                 body[index].is_disabled = false;
             });
@@ -181,11 +189,16 @@ class OauthApplicationScope implements IOauthApplicationScope {
             `, [systems, scope_ids]);
 
             rows.forEach((row) => {
+                let findOldAuthScope = oldAuthApplicationScopes.find((oldAuthApplicationScope) => {
+                    return oldAuthApplicationScope.SCOPE_ID === row.ID;
+                });
                 body.push({
                     scope_id: row.ID,
                     is_disabled: false,
                     is_checked: oauthApplicaion.IS_ORIGIN
                         ? true
+                        : findOldAuthScope
+                        ? findOldAuthScope.IS_CHECKED
                         : row.REQUIRE_CHECK ? false : true
                 });
             });

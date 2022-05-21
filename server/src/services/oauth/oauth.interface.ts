@@ -104,7 +104,7 @@ export interface IGrantBaseData {
 }
 
 export interface IGrantTokenResult extends IGrantBaseData {
-    RESPONSE_TYPE: TResponseType | 'refresh_token';
+    RESPONSE_TYPE: TResponseType | 'refresh_token' | 'api_key';
     OAUTH_TOKEN_ID: string;
     OAUTH_SCOPES: IOauthApplicationScopeAndApiScopeRes[];
 }
