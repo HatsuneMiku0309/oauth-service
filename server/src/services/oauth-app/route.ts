@@ -3,7 +3,7 @@ install();
 
 import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { OauthApplication } from './oauth-app';
 import { OauthApplicationScope } from './oauth-app-scope';
 import { BaseRouter } from '../utils';
@@ -14,9 +14,9 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
     readonly api: string = '/oauth-app';
     readonly name: string = 'OauthApp';
     readonly router: Router = new Router();
-    readonly options: TAnyObj;
+    readonly options: TAnyObj & { config: IConfig };
     readonly database: IMysqlDatabase;
-    constructor(database: IMysqlDatabase, options: TAnyObj = { }) {
+    constructor(database: IMysqlDatabase, options: TAnyObj & { config: IConfig }) {
         super();
         this.options = options;
         this.database = database;
@@ -89,6 +89,40 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
             }
         });
 
+        api = super._getRootApi([':id', 'api-key']).join('/');
+        this.router.put(api, async (ctx: TContext) => {
+            const { params: { id } } = ctx;
+            try {
+                let result = await oauthApplication.reloadApiKey(this.database, id, {
+                    ...ctx.state,
+                    oauth
+                });
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
+
+        api = super._getRootApi([':id', 'client-secret']).join('/');
+        this.router.put(api, async (ctx: TContext) => {
+            const { params: { id } } = ctx;
+            try {
+                let result = await oauthApplication.reloadClientSecret(this.database, id, {
+                    ...ctx.state,
+                    oauth
+                });
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err) {
+                throw err;
+            }
+        });
+
         api = super._getRootApi(':id').join('/');
         this.router.delete(api, async (ctx: TContext) => {
             const { id } = ctx.params;
@@ -149,11 +183,12 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
             }
         });
 
-        api = super._getRootApi([':oa_id', 'oauth_application_user', ':id']).join('/');
+        api = super._getRootApi([':oa_id', 'oauth_application_user']).join('/');
         this.router.delete(api, async (ctx: TContext) => {
-            const { oa_id, id } = ctx.params;
+            const { oa_id } = ctx.params;
+            const { body } = ctx.request;
             try {
-                let result = await oauthApplicationUser.removeUser(this.database, oa_id, id, ctx.state);
+                let result = await oauthApplicationUser.removeUsers(this.database, oa_id, body, ctx.state);
 
                 ctx.body = {
                     data: result

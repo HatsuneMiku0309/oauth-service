@@ -17,7 +17,7 @@ import { MysqlDatabase } from './mysql-db';
     let middleware = new Middleware(app, database, config);
     await middleware.registerMiddleware();
     // @ts-ignore
-    let services = new Service(app, database);
+    let services = new Service(app, database, { config: config });
     let server = new Server(app, config.getServerConfig());
     server.serve();
 })();

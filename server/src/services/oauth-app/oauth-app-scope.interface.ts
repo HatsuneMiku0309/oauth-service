@@ -1,5 +1,5 @@
 import { Connection } from "mysql2/promise";
-import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IAPIs } from "../scope/scope.interface";
 import { IJWTCotext } from "../utils.interface";
 
@@ -28,7 +28,7 @@ export interface IOauthApplicationScopeAndApiScopeRes {
 }
 
 export interface IOauthApplicationScope {
-    options: TAnyObj;
+    options: TAnyObj & { config: IConfig };
     list(database: IMysqlDatabase, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]>;
     dbList(db: Connection, oa_id: string, options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]>;
     registScope(database: IMysqlDatabase, oa_id: string, body: IRegistBody[],  options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]>;

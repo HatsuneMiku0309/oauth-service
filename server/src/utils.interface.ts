@@ -23,17 +23,21 @@ export interface IBasicConfig {
     }
 }
 
-// { "web" | "installed" : { "client_id": "449095306728-hlj32gotq6n5cjpslll0hvohjlnf2iv3.apps.googleusercontent.com", "project_id": "quickstart-1594032425347", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_secret": "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", "redirect_uris": ["https://localhost/callback"], "javascript_origins": ["https://localhost"] } }
-
-
 export interface IError extends Error {
     state?: number | string;
     datas?: any[];
     data?: any;
 }
 
+export interface IOptionConfig extends TAnyObj {
+    EMAIL_IP: string;
+    EMAIL_PORT: string | number;
+    EMAIL_CALLER_NOTIFY: string[];
+    EMAIL_SYSTEM: string;
+}
+
 export interface IMainConfig {
-    optionConfig: TAnyObj;
+    optionConfig: IOptionConfig;
     serverConfig: IServerConfig;
     jwtConfig: IJWTConfig;
     databaseConfig: IDatabaseConfig;
@@ -67,7 +71,7 @@ export interface IServerConfig {
 export interface IConfig {
     readonly config: IMainConfig;
     getServerConfig(): IServerConfig;
-    getOptionConfig<T extends TAnyObj>(): TAnyObj;    
+    getOptionConfig<T extends IOptionConfig>(): IOptionConfig;    
     getJWTConfig(): IJWTConfig;
     getDatabaseConfig(): IDatabaseConfig;
 }

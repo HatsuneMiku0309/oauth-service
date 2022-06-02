@@ -1,5 +1,5 @@
 import { Connection } from "mysql2/promise";
-import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IJWTCotext, TContext } from "../utils.interface";
 
 export interface ILoginBody {
@@ -18,6 +18,7 @@ export interface IRegistBody {
 export interface ILoginRes {
     ID: string;
     ACCOUNT: string;
+    EMP_NO: string;
     EMAIL: string;
     PHONE: string;
     SOURCE: TSource;
@@ -25,7 +26,7 @@ export interface ILoginRes {
 }
 
 export interface ILogin {
-    options: TAnyObj;
+    options: TAnyObj & { config: IConfig };
     login(ctx: TContext, database: IMysqlDatabase, options?: TAnyObj): Promise<ILoginRes>;
     tokenLogin(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<ILoginRes>; 
     regist(database: IMysqlDatabase, body: IRegistBody, options?: TAnyObj): Promise<{ ID: string }>;

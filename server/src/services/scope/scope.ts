@@ -4,7 +4,7 @@ install();
 import * as Q from 'q';
 import { v4 as uuid } from 'uuid';
 import { Connection, FieldPacket } from 'mysql2/promise';
-import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase, IConfig } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { ICreateBody, IListQuery, IRegistBody, IScope, IApiScopeDao, IUpdateBody, IUpdatesBody, IListRes } from './scope.interface';
 import * as _ from 'lodash';
@@ -13,12 +13,12 @@ import { IUserDAO } from '../login/login.interface';
 class Scope implements IScope {
     static instance: IScope;
     private readonly _METHODS = ['GET', 'POST', 'PUT', 'DELETE'];
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): IScope {
+    static getInstance(options: TAnyObj & { config: IConfig }): IScope {
         if (!Scope.instance) {
             Scope.instance = new Scope(options);
         }

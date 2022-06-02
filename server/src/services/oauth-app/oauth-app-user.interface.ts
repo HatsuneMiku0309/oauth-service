@@ -1,5 +1,5 @@
 import { Connection } from "mysql2/promise";
-import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export interface IListQuery {
@@ -10,7 +10,7 @@ export interface IListQuery {
 
 
 export interface IListRes {
-    datas: IOauthApplicationUserDao[],
+    datas: (IOauthApplicationUserDao & { ACCOUNT: string })[],
     offset: number;
     count: number;
     totalPage: number;
@@ -21,11 +21,11 @@ export interface IRemoveUserRes {
 }
 
 export interface IOauthApplicationUser {
-    options: TAnyObj;
+    options: TAnyObj & { config: IConfig };
     list(database: IMysqlDatabase, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     dbList(db: Connection, oa_id: string, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
-    removeUser(database: IMysqlDatabase, oa_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
-    dbRemoveUser(db: Connection, oa_id: string, id: string, options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
+    removeUsers(database: IMysqlDatabase, oa_id: string, body: string[], options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
+    dbRemoveUsers(db: Connection, oa_id: string, body: string[], options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes>;
 }
 
 // ---------- DAO -----------

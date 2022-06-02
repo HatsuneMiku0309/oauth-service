@@ -3,7 +3,7 @@ install();
 
 import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Oauth } from './oauth';
 import { BaseRouter } from '../utils';
 import { Passport } from '../jwt/passport';
@@ -12,9 +12,9 @@ class OauthRouter extends BaseRouter implements IRouter {
     readonly api: string = '/oauth';
     readonly name: string = 'Oauth';
     readonly router: Router = new Router();
-    readonly options: TAnyObj;
+    readonly options: TAnyObj & { config: IConfig };
     readonly database: IMysqlDatabase;
-    constructor(database: IMysqlDatabase, options: TAnyObj = { }) {
+    constructor(database: IMysqlDatabase, options: TAnyObj & { config: IConfig }) {
         super();
         this.options = options;
         this.database = database;

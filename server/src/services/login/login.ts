@@ -1,7 +1,7 @@
 import { install } from 'source-map-support';
 install();
 
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { IJWTCotext, TContext } from '../utils.interface';
 import * as ldap from 'ldapjs';
 import { IRegistBody, ILogin, ILoginBody, IUserDAO, ILdapUserDao, TSource, ILoginRes, TUSER_TYPE } from './login.interface';
@@ -14,12 +14,12 @@ import { ISignupBody } from '../jwt/passport.interface';
 
 class Login implements ILogin {
     private static instance: ILogin;
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): ILogin {
+    static getInstance(options: TAnyObj & { config: IConfig }): ILogin {
         if (!Login.instance) {
             Login.instance = new Login(options);
         }
@@ -198,6 +198,7 @@ class Login implements ILogin {
                     return {
                         ID,
                         ACCOUNT: account,
+                        EMP_NO: res.emp_no,
                         EMAIL: res.email,
                         PHONE: res.phone,
                         SOURCE: 'COMPAL',
@@ -217,6 +218,7 @@ class Login implements ILogin {
                     return {
                         ID: row.ID,
                         ACCOUNT: row.ACCOUNT,
+                        EMP_NO: row.EMP_NO || '',
                         EMAIL: row.EMAIL,
                         PHONE: <string> row.PHONE,
                         SOURCE: <TSource> row.SOURCE,
@@ -287,6 +289,7 @@ class Login implements ILogin {
             return {
                 ID: row.ID,
                 ACCOUNT: row.ACCOUNT,
+                EMP_NO: row.EMP_NO || '',
                 EMAIL: row.EMAIL,
                 PHONE: row.PHONE || '',
                 SOURCE: <TSource> row.SOURCE,
@@ -317,6 +320,7 @@ class Login implements ILogin {
                 return {
                     ID: row.ID,
                     ACCOUNT: row.ACCOUNT,
+                    EMP_NO: row.EMP_NO || '',
                     EMAIL: row.EMAIL,
                     PHONE: row.PHONE || '',
                     SOURCE: <TSource> row.SOURCE,

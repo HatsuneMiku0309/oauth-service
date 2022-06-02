@@ -3,7 +3,7 @@ install();
 
 import { Connection } from 'mysql2/promise';
 import { FieldPacket } from 'mysql2';
-import { TAnyObj, IMysqlDatabase, IError } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase, IError, IConfig } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import { IOauthApplicationScope, IOauthApplicationScopeAndApiScopeRes, IOauthApplicationScopeDao, IRegistBody } from './oauth-app-scope.interface';
 import { IOauthApplicationDao } from './oauth-app.interface';
@@ -13,12 +13,12 @@ import * as _ from 'lodash';
 
 class OauthApplicationScope implements IOauthApplicationScope {
     static instance: IOauthApplicationScope;
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): IOauthApplicationScope {
+    static getInstance(options: TAnyObj & { config: IConfig }): IOauthApplicationScope {
         if (!OauthApplicationScope.instance) {
             OauthApplicationScope.instance = new OauthApplicationScope(options);
         }
@@ -144,12 +144,12 @@ class OauthApplicationScope implements IOauthApplicationScope {
             `, [oauthApplicaion.ID]);
             let scope_ids = body.map((data) => data.scope_id);
             let [apiScopes] = <[IApiScopeDao[], FieldPacket[]]> await db.query(`
-            SELECT
-                *
-            FROM
-                API_SCOPE
-            WHERE
-                ID IN (?)
+                SELECT
+                    *
+                FROM
+                    API_SCOPE
+                WHERE
+                    ID IN (?)
             `, [scope_ids]);
             if (apiScopes.length !== scope_ids.length) {
                 let err: IError = new Error();
@@ -208,6 +208,50 @@ class OauthApplicationScope implements IOauthApplicationScope {
             throw err;
         }
     }
+
+    /**
+     * todo-cosmo: Waitting, check spec~
+     * @param db 
+     * @param oa_id 
+     * @param body 
+     * @param options 
+     */
+    // private async _removeOauthToken(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<void> {
+    //     try {
+    //         let sql = `
+    //             SELECT
+    //                 SCOPE_ID
+    //             FROM
+    //                 OAUTH_SCOPE
+    //             WHERE
+    //                 OAUTH_APPLICATION_ID = ?
+    //         `;
+    //         let [oauthScopes] = <[{ SCOPE_ID: string }[], FieldPacket[]]> await db.query(sql, [oa_id]);
+    //         let oauthScopeIds = oauthScopes.map((data) => data.SCOPE_ID);
+    //         let scopeIds = body.map((data) => data.scope_id);
+    //         let oauthScopeDiff = _.difference(oauthScopeIds, scopeIds);
+    //         let bodyScopeDiff = _.difference(scopeIds, oauthScopeIds);
+
+    //         // If oauthScope diff by bodyScopeDiff or bodyScopeDiff diff by oauthScope
+    //         if (
+    //             oauthScopeDiff.length !== 0 ||
+    //             bodyScopeDiff.length !== 0
+    //         ) {
+    //             await db.query(`
+    //                 DELETE
+    //                     OT
+    //                 FROM
+    //                     OAUTH_APPLICATION_USER OAU,
+    //                     OAUTH_TOKEN OT
+    //                 WHERE
+    //                     OAU.OAUTH_TOKEN_ID = OT.ID
+    //                     AND OAUTH_APPLICATION_ID = ?
+    //             `, [oa_id]);
+    //         }
+    //     } catch (err) {
+    //         throw err;
+    //     }
+    // }
 
     async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         const COLUMNS = ['ID', 'OAUTH_APPLICATION_ID', 'SCOPE_ID', 'IS_DISABLED', 'IS_CHECKED', 'CREATE_BY'];

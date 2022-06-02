@@ -1,5 +1,5 @@
 import { Connection } from "mysql2/promise";
-import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export type TMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -54,7 +54,7 @@ export interface IRegistBody {
 }
 
 export interface IScope {
-    options: TAnyObj;
+    options: TAnyObj & { config: IConfig };
     list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     create(database: IMysqlDatabase, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;

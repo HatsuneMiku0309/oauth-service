@@ -1,10 +1,9 @@
 import { install } from 'source-map-support';
 install();
 
-import { Next } from 'koa';
 import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Login } from './login';
 import { BaseRouter } from '../utils';
 
@@ -12,9 +11,9 @@ class LoginRouter extends BaseRouter implements IRouter {
     readonly api: string = '/login';
     readonly name: string = 'Login';
     readonly router: Router = new Router();
-    readonly options: TAnyObj;
+    readonly options: TAnyObj & { config: IConfig };
     readonly database: IMysqlDatabase;
-    constructor(database: IMysqlDatabase, options: TAnyObj = { }) {
+    constructor(database: IMysqlDatabase, options: TAnyObj & { config: IConfig }) {
         super();
         this.database = database;
         this.options = options;
@@ -24,7 +23,7 @@ class LoginRouter extends BaseRouter implements IRouter {
     registerAPIs(): void {
         let login = Login.getInstance(this.options);
         let api = super._getRootApi().join('/');
-        this.router.get(api, async (ctx: TContext, next: Next) => {
+        this.router.get(api, async (ctx: TContext) => {
             try {
                 ctx.redirect('https://www.google.com.tw/');
             } catch (err: any) {
@@ -32,7 +31,7 @@ class LoginRouter extends BaseRouter implements IRouter {
             }
         });
 
-        this.router.post(api, async (ctx: TContext, next: Next) => {
+        this.router.post(api, async (ctx: TContext) => {
             try {
                 let result = await login.login(ctx, this.database);
                 ctx.body = {
@@ -44,7 +43,7 @@ class LoginRouter extends BaseRouter implements IRouter {
         });
 
         api = super._getRootApi('token').join('/');
-        this.router.get(api, async (ctx: TContext, next: Next) => {
+        this.router.get(api, async (ctx: TContext) => {
             try {
                 let result = await login.tokenLogin(this.database, ctx.state);
                 // ctx.cookies.set('location', '/', {
@@ -62,7 +61,7 @@ class LoginRouter extends BaseRouter implements IRouter {
             }
         });
 
-        this.router.post('/register', async (ctx: TContext, next: Next) => {
+        this.router.post('/register', async (ctx: TContext) => {
             const { body } = ctx.request;
             try {
                 let result = await login.regist(this.database, body, this.options);

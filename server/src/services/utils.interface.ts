@@ -1,7 +1,7 @@
 import { JwtPayload } from 'jsonwebtoken';
 import { Next, ParameterizedContext } from 'koa';
 import * as Router from 'koa-router';
-import { IMysqlDatabase, TAnyObj } from '../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../utils.interface';
 import { ISignupBody } from './jwt/passport.interface';
 
 export interface IJWTData extends JwtPayload, ISignupBody {
@@ -30,7 +30,7 @@ export interface IBaseRouter {
     readonly api: string;
     readonly name: string;
     readonly router: Router;
-    readonly options: TAnyObj;
+    readonly options: TAnyObj & { config: IConfig };
 }
 
 export interface IRouter extends IBaseRouter {

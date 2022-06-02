@@ -3,7 +3,7 @@ install();
 
 import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Profile } from './profile';
 import { BaseRouter } from '../utils';
 
@@ -11,9 +11,9 @@ class ProfileRouter extends BaseRouter implements IRouter {
     readonly api: string = '/profile';
     readonly name: string = 'Profile';
     readonly router: Router = new Router();
-    readonly options: TAnyObj;
+    readonly options: TAnyObj & { config: IConfig };
     readonly database: IMysqlDatabase;
-    constructor(database: IMysqlDatabase, options: TAnyObj = { }) {
+    constructor(database: IMysqlDatabase, options: TAnyObj & { config: IConfig }) {
         super();
         this.options = options;
         this.database = database;

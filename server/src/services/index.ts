@@ -11,13 +11,14 @@ import { LoginRouter } from './login/route';
 import { OauthRouter } from './oauth/route';
 import { OauthApplicationRouter } from './oauth-app/route';
 import { ScopeRouter } from './scope/route';
+import { AuthorizationAppRouter } from './authorization-app/route';
 
 class Service implements IService {
     private _app: Koa;
     private _router: Router = new Router();
     private _database: IMysqlDatabase;
-    private _options: TAnyObj;
-    constructor(app: Koa, database: IMysqlDatabase, options: TAnyObj & { config?: IConfig } = { }) {
+    private _options: TAnyObj & { config: IConfig };
+    constructor(app: Koa, database: IMysqlDatabase, options: TAnyObj & { config: IConfig }) {
         this._app = app;
         this._database = database;
         this._options = options;
@@ -30,7 +31,8 @@ class Service implements IService {
             new LoginRouter(this._database, this._options),
             new OauthRouter(this._database, this._options),
             new OauthApplicationRouter(this._database, this._options),
-            new ScopeRouter(this._database, this._options)
+            new ScopeRouter(this._database, this._options),
+            new AuthorizationAppRouter(this._database, this._options)
         ];
         this._router.get('/api', (ctx) => { ctx.body = { aa: 123 }; });
         routers.forEach((router) => {

@@ -5,7 +5,7 @@ install();
 import * as fs from 'fs';
 import * as process from 'process';
 import * as path from 'path';
-import { IConfig, IDatabaseConfig, IJWTConfig, IMainConfig, IServerConfig, TAnyObj, TExpiresType } from './utils.interface';
+import { IConfig, IDatabaseConfig, IJWTConfig, IMainConfig, IOptionConfig, IServerConfig, TExpiresType } from './utils.interface';
 import { Algorithm } from 'jsonwebtoken';
 
 
@@ -38,7 +38,12 @@ class Config implements IConfig {
     readonly config: IMainConfig;
     constructor() {
         this.config = {
-            optionConfig: { },
+            optionConfig: {
+                EMAIL_IP: 'http://10.129.137.37',
+                EMAIL_PORT: '9999',
+                EMAIL_CALLER_NOTIFY: ['cosmo_dai@compal.com'],
+                EMAIL_SYSTEM: 'AC'
+            },
             jwtConfig: {
                 PRIVATE_KEY: JWT_PRIVATE,
                 PUBLIC_KEY: JWT_PUBLIC,
@@ -95,7 +100,7 @@ class Config implements IConfig {
         return this.config.jwtConfig;
     }
 
-    getOptionConfig<T extends TAnyObj>(): TAnyObj {
+    getOptionConfig<T extends IOptionConfig>(): IOptionConfig {
         let config: T = <T> this.config.optionConfig;
 
         return config;

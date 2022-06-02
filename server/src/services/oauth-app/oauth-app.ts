@@ -3,12 +3,12 @@ install();
 
 import { Connection } from 'mysql2/promise';
 import { FieldPacket, ResultSetHeader } from 'mysql2';
-import { TAnyObj, IMysqlDatabase } from '../../utils.interface';
+import { TAnyObj, IMysqlDatabase, IConfig } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import {
     ICreateBody, IListQuery, IListRes,
     IOauthApplication, IOauthApplicationDao,
-    IUpdateBody, ICommonRes, IListData
+    IUpdateBody, ICommonRes, IListData, IReloadApiKeyRes, IReloadSecretRes
 } from './oauth-app.interface';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
@@ -16,15 +16,16 @@ import * as dayjs from 'dayjs';
 import { checkDateTime, checkHttpProtocol, checkRedirectUri } from '../../utils';
 import { IOauthApplicationScope, IRegistBody } from './oauth-app-scope.interface';
 import { IAccessTokenRes, IGrantCodeTokenRes, IOauth } from '../oauth/oauth.interface';
+import { IUserDAO } from '../login/login.interface';
 
 class OauthApplication implements IOauthApplication {
     static instance: IOauthApplication;
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): IOauthApplication {
+    static getInstance(options: TAnyObj & { config: IConfig }): IOauthApplication {
         if (!OauthApplication.instance) {
             OauthApplication.instance = new OauthApplication(options);
         }
@@ -235,7 +236,8 @@ class OauthApplication implements IOauthApplication {
 
             let id = uuid();
             let clientId = uuid();
-            let secretParams = [id, user_id, clientId];
+            let salt = uuid();
+            let secretParams = [id, user_id, clientId, salt];
             let clientSecret = Buffer.from(secretParams.join(':')).toString('base64');
             let params = <IOauthApplicationDao> {
                 ID: id,
@@ -285,7 +287,7 @@ class OauthApplication implements IOauthApplication {
     }
 
     async dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<ICommonRes> {
-        const { user: { user_id }, oauthApplicationScope, oauth } = options;
+        const { user: { user_id }, oauthApplicationScope } = options;
         try {
             const {
                 name, homepage_url, application_description,
@@ -318,29 +320,6 @@ class OauthApplication implements IOauthApplication {
                 }
             }
 
-            let apiKey = '';
-            try {
-                let { code } = <IGrantCodeTokenRes> await (<IOauth> oauth).dbGrantCodeToken(db, {
-                    response_type: 'code',
-                    client_id: row.CLIENT_ID
-                }, options);
-                let { access_token } = <IAccessTokenRes> await (<IOauth> oauth).dbAccessToken(db, {
-                    grant_type: 'code',
-                    code,
-                    redirect_uri: row.REDIRECT_URI
-                }, {
-                    user: {
-                        user_id: row.USER_ID,
-                        client_id: row.CLIENT_ID,
-                        client_secret: row.CLIENT_SECRET
-                    },
-                    tokenType: 'apiKey'
-                });
-                apiKey = access_token;
-            } catch (err) {
-                // do not thing
-            }
-
             let sql = `
                 UPDATE OAUTH_APPLICATION SET
                     ?
@@ -355,7 +334,6 @@ class OauthApplication implements IOauthApplication {
                 IS_DISABLED: is_disabled,
                 IS_EXPIRES: is_expires,
                 IS_CHECKED: IS_CHECKED,
-                API_KEY: apiKey,
                 UPDATE_BY: user_id
             };
             !!application_description && (params.APPLICATION_DESCRIPTION = application_description);
@@ -366,6 +344,113 @@ class OauthApplication implements IOauthApplication {
 
             return {
                 ID: id
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async reloadApiKey(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<IReloadApiKeyRes> {
+        try {
+            let db = await database.getConnection();
+            try {
+                let result = await this.dbReloadApiKey(db, id, options);
+                await db.commit();
+
+                return result;
+            } catch (err) {
+                await db.rollback();
+
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbReloadApiKey(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<IReloadApiKeyRes> {
+        const { user: { user_id }, oauth } = options;
+        try {
+            let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ?', [ id ]);
+            if (rows.length === 0) {
+                throw new Error(`[${id}] Not find App`);
+            }
+            let row = rows[0];
+
+            let [users] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ID = ?', [ user_id ]);
+            if (users.length === 0) {
+                throw new Error('Not find user');
+            }
+            let user = users[0];
+            if (!user.EMP_NO) {
+                throw new Error('Neet mantain [EMP_NO]');
+            }
+
+            let { code } = <IGrantCodeTokenRes> await (<IOauth> oauth).dbGrantCodeToken(db, {
+                response_type: 'code',
+                client_id: row.CLIENT_ID
+            }, options);
+            let { access_token } = <IAccessTokenRes> await (<IOauth> oauth).dbAccessToken(db, {
+                grant_type: 'code',
+                code,
+                redirect_uri: row.REDIRECT_URI
+            }, {
+                user: {
+                    user_id: row.USER_ID,
+                    client_id: row.CLIENT_ID,
+                    client_secret: row.CLIENT_SECRET
+                },
+                tokenType: 'apiKey'
+            });
+            let apiKey = access_token;
+
+            return {
+                API_KEY: apiKey
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async reloadClientSecret(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<IReloadSecretRes> {
+        try {
+            let db = await database.getConnection();
+            try {
+                let result = await this.dbReloadClientSecret(db, id, options);
+                await db.commit();
+
+                return result;
+            } catch (err) {
+                await db.rollback();
+
+                throw err;
+            } finally {
+                await database.end(db);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbReloadClientSecret(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<IReloadSecretRes> {
+        try {
+            let sql = 'SELECT * FROM OAUTH_APPLICATION WHERE ID = ?';
+            let [oauthApplicaions] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(sql, [id]);
+            if (oauthApplicaions.length === 0) {
+                throw new Error(`[${id}] Not find App`);
+            }
+            let { ID, USER_ID, CLIENT_ID } = oauthApplicaions[0];
+            let salt = uuid();
+            let secretParams = [ID, USER_ID, CLIENT_ID, salt];
+            let clientSecret = Buffer.from(secretParams.join(':')).toString('base64');
+            await db.query(`
+                UPDATE OAUTH_APPLICATION SET ? WHERE ID = ?
+            `, [{ CLIENT_SECRET: clientSecret }, id]);
+
+            return {
+                CLIENT_SECRET: clientSecret
             };
         } catch (err) {
             throw err;

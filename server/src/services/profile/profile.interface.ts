@@ -1,11 +1,12 @@
 import { Connection } from "mysql2/promise";
-import { IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { ILoginRes } from "../login/login.interface";
 import { IJWTCotext, TContext } from "../utils.interface";
 
 export interface IGetProfileRes {
     ID: string;
     ACCOUNT: string;
+    EMP_NO: string;
     EMAIL: string;
     PHONE: string;
 }
@@ -23,7 +24,7 @@ export interface IUpdateBody {
 }
 
 export interface IProfile {
-    options: TAnyObj;
+    options: TAnyObj & { config: IConfig };
     getProfile(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<IGetProfileRes>;
     dbGetProfile(db: Connection, options: TAnyObj & IJWTCotext): Promise<IGetProfileRes>;
     update(ctx: TContext, database: IMysqlDatabase, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<ILoginRes & { reload: boolean; }>;

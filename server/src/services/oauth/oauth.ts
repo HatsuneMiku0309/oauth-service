@@ -3,7 +3,7 @@ install();
 
 import { v4 as uuid } from 'uuid';
 import * as _ from 'lodash';
-import { IError, IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IError, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import {
     IOauth, IGrantCodeTokenBody, IAccessTokenBody, IGrantCodeTokenRes, IAccessTokenRes,
     IRefreshTokenBody, IOauthApplicationAndUserDao, TTokenType, IOauthTokenDao, IVerifyTokenRes,
@@ -28,12 +28,12 @@ class Oauth implements IOauth {
     readonly EXPIRES_MIN = 15;
     readonly  REFRESH_EXPIRES_TIME = 365 * 24 * 60 * this.SEC_TIME;
     readonly TOKEN_TYPE: TTokenType = 'Bearer';
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): IOauth {
+    static getInstance(options: TAnyObj & { config: IConfig }): IOauth {
         if (!Oauth.instance) {
             Oauth.instance = new Oauth(options);
         }

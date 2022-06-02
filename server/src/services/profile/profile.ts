@@ -3,7 +3,7 @@ install();
 
 import * as _ from 'lodash';
 import { Connection, FieldPacket } from 'mysql2/promise';
-import { IMysqlDatabase, TAnyObj } from '../../utils.interface';
+import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { ILoginRes, IUserDAO, TUSER_TYPE } from '../login/login.interface';
 import { IJWTCotext, TContext } from '../utils.interface';
 import { IGetProfileRes, IProfile, IUpdateBody, IUserAppsRes } from './profile.interface';
@@ -11,12 +11,12 @@ import { IGetProfileRes, IProfile, IUpdateBody, IUserAppsRes } from './profile.i
 
 class Profile implements IProfile {
     static instance: IProfile;
-    options: TAnyObj;
-    private constructor(options: TAnyObj = { }) {
+    options: TAnyObj & { config: IConfig };
+    private constructor(options: TAnyObj & { config: IConfig }) {
         this.options = options;
     }
 
-    static getInstance(options: TAnyObj = { }): IProfile {
+    static getInstance(options: TAnyObj & { config: IConfig }): IProfile {
         if (!Profile.instance) {
             Profile.instance = new Profile(options);
         }
@@ -44,7 +44,7 @@ class Profile implements IProfile {
     async dbGetProfile(db: Connection, options: TAnyObj & IJWTCotext): Promise<IGetProfileRes> {
         const { user: { user_id } } = options;
         try {
-            let sql = 'SELECT ID, SOURCE, ACCOUNT, EMAIL, PHONE FROM USER WHERE ID = ?';
+            let sql = 'SELECT ID, SOURCE, ACCOUNT, EMP_NO, EMAIL, PHONE FROM USER WHERE ID = ?';
             let params = [user_id];
             let [rows] = <[
                 IGetProfileRes[],
@@ -114,6 +114,7 @@ class Profile implements IProfile {
                 reload: false,
                 ID: id,
                 ACCOUNT: account,
+                EMP_NO: row.EMP_NO || '',
                 EMAIL: email,
                 PHONE: phone || '',
                 SOURCE: row.SOURCE,
