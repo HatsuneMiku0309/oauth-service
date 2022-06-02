@@ -75,8 +75,7 @@
 					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">CHECKED</div>
 					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">DISABLED</div>
 					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">EXPIRES</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-32 border-r-2 border-gray-700">UPDATE_TIME</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28">UPDATE_BY</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-32 border-gray-700">UPDATE_TIME</div>
 				</div>
 				<div :class="['flex', 'flex-row', 'items-cente', 'w-full', 'h-16', 'hover:bg-gray-800 hover:bg-opacity-60', {'bg-gray-600': index % 2 === 0, 'bg-gray-700 bg-opacity-80': index %2 !== 0}]" v-for="(app, index) in apps" :key="index">
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-20', 'border-r-2', 'border-gray-500']">
@@ -96,8 +95,7 @@
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-28', 'border-r-2', 'border-gray-500']"><span>{{ app.IS_CHECKED }}</span></div>
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-28', 'border-r-2', 'border-gray-500']"><span>{{ app.IS_DISABLED }}</span></div>
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-28', 'border-r-2', 'border-gray-500']"><span>{{ app.IS_EXPIRES }}</span></div>
-					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-32', 'border-r-2', 'border-gray-500']"><span>{{ app.UPDATE_TIME }}</span></div>
-					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'w-28', 'border-gray-500']"><span>{{ app.UPDATE_BY }}</span></div>
+					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-32', 'border-gray-500']"><span>{{ app.UPDATE_TIME }}</span></div>
 				</div>
 			</div>
 		</div>
@@ -226,6 +224,7 @@ export default defineComponent({
   align-items: center;
   background-size: cover;
   background-repeat: no-repeat;
+	flex-shrink: 0;
 }
 
 .oauth-icon.search::before {

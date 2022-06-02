@@ -12,6 +12,10 @@
               <common-input v-model.trim="profile.ACCOUNT" type="text" required readonly/>
             </div>
             <div class="relative flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="absolute right-0">EmpNo :</span></div>
+              <common-input v-model.trim="profile.EMP_NO" type="text" readonly/>
+            </div>
+            <div class="relative flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-24"><span class="absolute right-0">Password :</span></div>
               <common-input v-model.trim="profile.PASSWORD" type="password" autocomplete="off"/>
             </div>
@@ -161,6 +165,7 @@ export default defineComponent({
             window.localStorage.setItem('user-data', encodeBase64(JSON.stringify({
               ID: updateRes.ID,
               ACCOUNT: updateRes.ACCOUNT,
+              EMP_NO: updateRes.EMP_NO,
               EMAIL: updateRes.EMAIL,
               PHONE: updateRes.PHONE
             })));
@@ -227,6 +232,7 @@ export default defineComponent({
   align-items: center;
   background-size: cover;
   background-repeat: no-repeat;
+  flex-shrink: 0;
 }
 
 .oauth-icon.setting::before {

@@ -6,6 +6,8 @@ import Dashboard from '../views/Dashboard.vue';
 import Application from '../views/Application.vue';
 import ApplicationDetail from '../views/ApplicationDetail.vue';
 import Authorization from '../views/Authorization.vue';
+import AuthorizationApp from '../views/AuthorizationApp.vue';
+import AuthorizationAppDetail from '../views/AuthorizationAppDetail.vue';
 import { decodeBase64, encodeBase64 } from '@/utils';
 import { get } from '@/apis/utils';
 import Err404 from '../views/Err404.vue';
@@ -44,7 +46,22 @@ const routes: RouteRecordRaw[] = [
           parentPageName: ['Application'],
           authentication: true,
         },
-      },
+      }, {
+        path: 'authorization-app',
+        name: 'AuthorizationApp',
+        component: AuthorizationApp,
+        meta: {
+          authentication: true,
+        },
+      }, {
+        path: 'authorization-app/:id',
+        name: 'AuthorizationAppDetail',
+        component: AuthorizationAppDetail,
+        meta: {
+          parentPageName: ['AuthorizationApp'],
+          authentication: true,
+        }
+      }
     ],
   }, {
     path: '/oauth/authorization',

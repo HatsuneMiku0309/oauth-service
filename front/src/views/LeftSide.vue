@@ -2,10 +2,13 @@
   <div class="flex flex-col w-48 h-full flex-grow-0 flex-shrink-0 bg-gray-600 overflow-y-hidden p-2">
     <div class="flex flex-col flex-grow overflow-y-auto">
       <router-link class="flex p-3 hover:underline" to="/dashboard">
-        <i class="flex oauth-icon dashboard before:w-6 before:h-6"><span class="ml-2">Dashboard</span></i>
+        <i class="flex items-center oauth-icon dashboard before:w-6 before:h-6"><span class="ml-2">Dashboard</span></i>
       </router-link>
       <router-link class="flex p-3 hover:underline" to="/application">
-        <i class="flex oauth-icon applications before:w-6 before:h-6"><span class="ml-2">Application</span></i>
+        <i class="flex items-center oauth-icon applications before:w-6 before:h-6"><span class="ml-2">Application</span></i>
+      </router-link>
+      <router-link class="flex p-3 hover:underline" to="/authorization-app">
+        <i class="flex items-center oauth-icon laugh before:w-6 before:h-6"><span class="ml-2">Authorization App</span></i>
       </router-link>
     </div>
     <div class="relative flex flex-col mt-4 border-t border-gray-500" name="version">
@@ -44,6 +47,7 @@ export default defineComponent({
   align-items: center;
   background-size: cover;
   background-repeat: no-repeat;
+  flex-shrink: 0;
 }
 
 .oauth-icon.dashboard::before {
@@ -52,6 +56,10 @@ export default defineComponent({
 
 .oauth-icon.applications::before {
   background-image: url("@/assets/images/svg/fi-rr-grid.svg");
+}
+
+.oauth-icon.laugh::before {
+  background-image: url("@/assets/images/svg/fi-rr-laugh.svg");
 }
 
 ::-webkit-scrollbar {

@@ -162,6 +162,7 @@ export default defineComponent({
   align-items: center;
   background-size: cover;
   background-repeat: no-repeat;
+  flex-shrink: 0;
 }
 
 .oauth-icon.search::before {

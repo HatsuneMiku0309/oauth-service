@@ -14,7 +14,8 @@
 import { reactive, readonly } from 'vue';
 import { RouteLocationNormalizedLoaded } from 'vue-router';
 
-const state: { navigation: Array<{ path: string, name: string, parents: string[] }> } = reactive({
+const state: {navigation: Array<{ path: string, name: string, parents: string[] }>
+} = reactive({
   navigation: [],
 });
 

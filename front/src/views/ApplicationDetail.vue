@@ -1,7 +1,6 @@
 <template>
   <cat v-if="isShowLoad" class="w-full h-full opacity-75 z-50" />
   <transition name="message-popup">
-    <!-- <message-popup v-if="isShowPopup" @update:isShowPopup="newValue => isShowPopup = newValue"> -->
     <message-popup v-if="isShowUpdateCheckPopup" v-model="isShowUpdateCheckPopup">
       <template v-slot:title>
         <span class="text-3xl mt-0">Update Check</span>
@@ -19,13 +18,12 @@
     </message-popup>
   </transition>
   <transition name="message-popup">
-    <!-- <message-popup v-if="isShowPopup" @update:isShowPopup="newValue => isShowPopup = newValue"> -->
-    <message-popup v-if="isShowPopup" v-model="isShowPopup">
+    <message-popup v-if="isShowClientPopup" v-model="isShowClientPopup">
       <template v-slot:title>
         <span class="text-3xl mt-0">Application Secret</span>
       </template>
       <template #default>
-        <div class="text-sm text-red-600">Please keep this information safe, exposure will cause security problems.</div>
+        <div class="text-sm text-red-600 font-bold mb-4">Please keep this information safe, exposure will cause security problems.</div>
         <div class="relative w-full py-1">
           <div class="relative inline-block float-left w-28"><span class="absolute right-0">Client ID :</span></div>
           <label class="ml-32 block p-2 select-all bg-gray-700 text-xs">{{ app.CLIENT_ID }}</label>
@@ -35,12 +33,14 @@
           <label id="secret" class="ml-32 block p-2 break-all select-all bg-gray-700 text-xs">{{ app.CLIENT_SECRET }}</label>
         </div>
         <div class="relative w-full py-1">
-          <div class="relative inline-block float-left w-28"><span class="absolute right-0">API Key :</span></div>
-          <label id="secret" :title="app.API_KEY" class="h-32 overflow-y-auto ml-32 block p-2 break-all select-all bg-gray-700 text-xs">{{ app.API_KEY }}</label>
+          <div class="relative inline-block float-left w-28"><span class="absolute right-0 text-right" :class="{'oauth-icon remind': loginUser.EMP_NO && app.API_KEY.length !== 0}">API Key :</span></div>
+          <label v-if="loginUser.EMP_NO" class="overflow-y-auto ml-32 block p-2 break-all select-all bg-gray-700 text-xs" :class="[{ 'text-red-600 font-bold': app.API_KEY.length === 0 }]" style="max-height: 8rem">{{ app.API_KEY || 'Empty, You should update app' }}</label>
+          <label v-else class="overflow-y-auto ml-32 block p-2 break-all cursor-auto bg-gray-700 text-xs font-bold text-red-600" style="max-height: 8rem">Should mantain EMP_NO</label>
         </div>
         <div class="relative flex h-14 w-full items-center">
           <div class="absolute right-0 top-4">
-            <common-button class="p-2" type="button" :modelValue="'Reload'" @click="reloadSecret"/>
+            <common-button class="p-2" type="button" :modelValue="'Reload Key'" @click="reloadApiKey"/>
+            <common-button class="p-2 ml-3" type="button" :modelValue="'Reload Secret'" @click="reloadSecret"/>
             <common-button id="download-config" class="p-2 ml-3 mr-3" type="button" :modelValue="'Download'" @click="downloadConfig"/>
             <a id="downloadEE" style="display:none"></a>
           </div>
@@ -68,19 +68,35 @@
       </template>
     </message-popup>
   </transition>
+  <transition name="message-popup">
+    <message-popup v-if="isShowUserPopup" v-model="isShowUserPopup">
+      <template v-slot:title>
+        <span class="text-3xl mt-0">App Users</span>
+      </template>
+      <template #default>
+        <div class="mb-4"><common-button class="p-2 text-red-600 hover:text-red-600" @click="removeUsers" type="button" :modelValue="'Remove'" /></div>
+        <ul>
+          <li class="p-2" v-for="(user, index) in users" :key="index">
+            <span><input class="w-4 h-4" type="checkbox" :value="user.ID" v-model="userIds"/></span>
+            <span class="ml-3">{{user.ACCOUNT}}</span>
+          </li>
+        </ul>
+      </template>
+    </message-popup>
+  </transition>
   <div class=" w-full h-full overflow-x-hidden overflow-y-auto">
     <div class="w-full h-14 flex items-center relative">
       <div class="absolute left-10">
         <button class="border rounded-xl border-gray-700 p-1 text-red-600 hover:bg-gray-700" @click="isShowRemovePopup = true">Remove</button>
       </div>
       <div class="absolute right-10">
-        <button class="border rounded-xl border-gray-700 p-1 hover:bg-gray-700 hover:text-white" @click="isShowPopup = true">Get Client</button>
+        <button class="border rounded-xl border-gray-700 p-1 hover:bg-gray-700 hover:text-white" @click="showClientPopup">Get Client</button>
       </div>
     </div>
     <div class="flex w-full h-auto overflow-y-hidden overflow-x-auto">
       <div class="flex flex-col flex-shrink-0 w-1/2 h-full overflow-hidden" style="min-width: 450px;">
       <div class="w-full h-14 flex items-center relative">
-        <div class="ml-10">User Count: {{users.length}}</div>
+        <div class="ml-10"><label class="hover:cursor-pointer hover:underline" @click="showUserPopup">User Count:</label><label>{{' ' + users.length}}</label></div>
       </div>
         <div class="flex flex-col w-auto mb-12 mx-10 overflow-hidden">
           <form @submit.prevent="checkForm">
@@ -148,10 +164,13 @@ import { get, put, del } from '../apis/utils';
 import dayjs from 'dayjs';
 import CommonInput from '../components/common/CommonInput.vue';
 import CommonButton from '../components/common/CommonButton.vue';
+import { decodeBase64 } from '@/utils';
 
 export default defineComponent({
   components: { Cat, MessagePopup, ApplicationScope, CommonInput, CommonButton },
   setup() {
+    let loginUser = ref({ });
+    const userIds = ref([]);
     const users = ref([]);
     const app = ref({ });
     const route = useRoute();
@@ -161,9 +180,10 @@ export default defineComponent({
 
     const router = useRouter();
     const tempRemoveID = ref();
+    const isShowUserPopup = ref(false);
     const isShowUpdateCheckPopup = ref(false);
     const isShowLoad = ref(true);
-    const isShowPopup = ref(false);
+    const isShowClientPopup = ref(false);
     const isShowRemovePopup = ref(false);
 
     onBeforeMount(async () => {
@@ -247,8 +267,20 @@ export default defineComponent({
       }
     };
 
-    const reloadSecret = () => {
-      alert('Not yet implemented');
+    const reloadApiKey = async () => {
+      try {
+        const _app: any = app.value;
+        let result = await put('/oauth-app/' + _app.ID + '/api-key');
+        (<any> app.value).API_KEY = result.data.data.API_KEY;
+      } catch (err: any) {
+        alert(err.response.data.errMsg);
+      }
+    }
+
+    const reloadSecret = async () => {
+      const _app: any = app.value;
+        let result = await put('/oauth-app/' + _app.ID + '/client-secret');
+        (<any> app.value).CLIENT_SECRET = result.data.data.CLIENT_SECRET;
     }
 
     const downloadConfig = () => {
@@ -268,20 +300,53 @@ export default defineComponent({
       downloadElem?.setAttribute("href", dataStr);
       downloadElem?.setAttribute("download", "client_secret" + _app.CLIENT_ID + ".json");
       downloadElem?.click();
+    };
+
+    const showClientPopup = () => {
+      const userData = window.localStorage.getItem('user-data');
+      loginUser.value = JSON.parse(decodeBase64(userData || ''));
+      isShowClientPopup.value = true;
+    };
+
+    const showUserPopup = () => {
+      userIds.value = [];
+      isShowUserPopup.value = true;
+    };
+
+    const removeUsers = async () => {
+      try {
+        console.log(userIds.value);
+        const _userIds: string[] = userIds.value;
+        const _app: any = app.value;
+        await del('/oauth-app/' + _app.ID + '/oauth_application_user', _userIds);
+        const result = await get('/oauth-app/' + route.params.id + '/oauth_application_user');
+        users.value = result.data.data.datas;
+      } catch (err: any) {
+        alert(err.response.data.errMsg);
+      } finally {
+        isShowUserPopup.value = false;
+      }
     }
 
     return {
+      reloadApiKey,
       checkForm,
       checkUpdate,
       remove,
       syncOauthScope,
       reloadSecret,
       downloadConfig,
+      showClientPopup,
+      showUserPopup,
+      removeUsers,
+      isShowUserPopup,
+      loginUser,
       isShowUpdateCheckPopup,
       isShowLoad,
-      isShowPopup,
+      isShowClientPopup,
       isShowRemovePopup,
       tempRemoveID,
+      userIds,
       app,
       users
     };
@@ -290,6 +355,14 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.oauth-icon.remind:after {
+  content: "This key represents your identify, please do not expose!!";
+  display: block;
+  font-size: 0.8rem;
+  color: red;
+  font-weight: bold;
+}
+
 .required:before {
   content: "*";
   display: inline-flex;
