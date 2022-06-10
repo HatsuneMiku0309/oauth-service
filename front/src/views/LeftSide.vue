@@ -13,7 +13,7 @@
     </div>
     <div class="relative flex flex-col mt-4 border-t border-gray-500" name="version">
       <div class="text-right text-sm">Version: 1.0.0</div>
-      <div class="text-right text-sm">Copyright © {{ fullYear }} Cosmo</div>
+      <div class="text-right text-sm">Copyright © {{ fullYear }} <label class="text-blue-300 underline" title="Phone: 21790">Cosmo</label></div>
     </div>
   </div>
 </template>

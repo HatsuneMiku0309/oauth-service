@@ -22,6 +22,11 @@ function errorHandle(err: any) {
             throw err;
         } else if ([301, 302].includes(err.response.status)) {
             window.location.href = err.response.location;
+        } else if ([429].includes(err.response.status)) {
+            // tslint:disable-next-line: variable-name
+            const _err = err;
+            _err.response.data = { errMsg: 'Too Many Requests' };
+            throw _err;
         } else {
             throw err;
         }
@@ -185,6 +190,7 @@ export async function put<T = any>(
     const { headers = { } } = options;
     try {
         const res: T = await instance.put(api, data, {
+            ...options,
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
         });
 

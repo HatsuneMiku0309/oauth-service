@@ -133,10 +133,13 @@ const checkToken = async () => {
         localStorage.setItem('user-data', encodeBase64(JSON.stringify(userDataRes)));
         user = JSON.parse(decodeBase64(userData));
       } catch (err: any) {
-        localStorage.removeItem('user-data');
-        localStorage.removeItem('token');
-        alert(err.response.data.errMsg);
-        return true;
+        if (err.response.status === 401) {
+          localStorage.removeItem('user-data');
+          localStorage.removeItem('token');
+          alert(err.response.data.errMsg);
+          return true;
+        }
+        return false;
       }
     }
 

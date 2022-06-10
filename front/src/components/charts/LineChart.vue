@@ -1,0 +1,110 @@
+<template>
+  <div>
+    <canvas id="myChart"></canvas>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent, onMounted } from 'vue';
+// import Chart from 'chart.js/auto';
+import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, ChartConfiguration, Legend, Filler, Tooltip } from 'chart.js';
+
+export default defineComponent({
+  name: 'LineChart',
+  props: [],
+  setup() {
+      const labels = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+      ];
+      const data = {
+        labels: labels,
+        datasets: [{
+          label: 'My First dataset',
+          backgroundColor: 'rgb(255, 00, 132)',
+          borderColor: 'rgb(255, 00, 132)',
+          data: [0, 10, 5, 8, 20, 30],
+          tension: 0.5,
+          pointStyle: 'circle',
+          pointRadius: 10,
+          pointHoverRadius: 15
+        }, {
+          label: 'Dataset 2',
+          data: [5, 15, 20, null, 23, 38],
+          borderColor: 'blue',
+          backgroundColor: 'blue',
+          fill: true
+        }]
+      };
+
+      const config: ChartConfiguration = {
+        type: 'line',
+        data: data,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              display: true,
+              labels: {
+                  color: 'rgb(255, 99, 132)'
+              }
+            },
+            title: {
+              display: true,
+              text: 'Chart.js Line Chart',
+              color: 'red'
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#FF00FF'
+              }
+            },
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Value'
+              },
+              ticks: {
+                color: 'yellow'
+              },
+              // suggestedMin: 0,
+              // suggestedMax: 80
+            }
+          }
+        }
+      };
+
+      onMounted(() => {
+        let canvas = <HTMLCanvasElement> document.getElementById('myChart');
+        if (canvas) {
+          Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip);
+          const myChart = new Chart(
+            canvas,
+            config
+          );
+          
+          setTimeout(() => {
+            (<any> myChart.data.labels).push('aaa');
+            myChart.data.datasets.forEach((dataset) => {
+              dataset.data.push(80);
+            });
+            myChart.reset();
+            myChart.update();
+          }, 500);
+        }
+      });
+  },
+});
+</script>
+
+<style scoped>
+
+</style>

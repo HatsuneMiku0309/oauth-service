@@ -68,7 +68,7 @@
       </div>
     </div>
     <div class="flex flex-grow justify-end">
-      <div class="w-20">{{user.ACCOUNT}}</div>
+      <div class="mr-2">{{user.ACCOUNT}}</div>
       <i class="oauth-icon setting before:w-6 before:h-6 mr-2 cursor-pointer" title="Setting" @click.self="showSetting = !showSetting">
         <transition name="setting">
           <div v-if="showSetting" class="absolute top-11 right-6 z-40">
