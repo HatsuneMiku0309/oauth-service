@@ -56,7 +56,7 @@ class AuthorizationAppRouter extends BaseRouter implements IRouter {
             try {
                 let result = await authorizationApp.rejectApp(this.database, oa_id, body, ctx.state);
 
-                return {
+                ctx.body = {
                     data: result
                 };
             } catch (err: any) {

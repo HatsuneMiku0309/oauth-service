@@ -161,6 +161,7 @@ class AuthorizationApp implements IAuthorizationApp {
                     API_SCOPE AS2
                 WHERE
                     OS.SCOPE_ID = AS2.ID
+                    AND OS.IS_CHECKED = FALSE
                     AND OS.OAUTH_APPLICATION_ID = ?
                     AND AS2.CREATE_BY = ?
             `;
@@ -223,7 +224,7 @@ class AuthorizationApp implements IAuthorizationApp {
                     system: EMAIL_SYSTEM,
                     callerNotify: EMAIL_CALLER_NOTIFY,
                     to: [EMAIL],
-                    subject: `The <${NAME}> App you audit was ${type}`,
+                    subject: `The App<${NAME}> you audit was ${type}`,
                     html: `<div>Dear ${ACCOUNT}:</div>
                     <br />
     <div>The <a href="https://localhost/application/${oa_id}">app</a> you audit was ${type}.</div>
