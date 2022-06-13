@@ -7,12 +7,14 @@
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue';
 // import Chart from 'chart.js/auto';
-import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, ChartConfiguration, Legend, Filler, Tooltip } from 'chart.js';
+import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, ChartConfiguration, Legend, Filler, Tooltip, ChartData } from 'chart.js';
 
 export default defineComponent({
   name: 'LineChart',
   props: [],
   setup() {
+      const skipped = (ctx: any, value: any) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
+      const down = (ctx: any, value: any) => ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined;
       const labels = [
         'January',
         'February',
@@ -21,17 +23,23 @@ export default defineComponent({
         'May',
         'June',
       ];
-      const data = {
+      const data = <ChartData> {
         labels: labels,
         datasets: [{
           label: 'My First dataset',
           backgroundColor: 'rgb(255, 00, 132)',
           borderColor: 'rgb(255, 00, 132)',
-          data: [0, 10, 5, 8, 20, 30],
+          data: [0, 10, 5, null, 20, 30],
           tension: 0.5,
           pointStyle: 'circle',
           pointRadius: 10,
-          pointHoverRadius: 15
+          pointHoverRadius: 15,
+          spanGaps: true,
+          stepped: true,
+          segment: {
+            borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)') || down(ctx, 'rgb(192,75,75)'),
+            borderDash: ctx => skipped(ctx, [6, 6])
+          },
         }, {
           label: 'Dataset 2',
           data: [5, 15, 20, null, 23, 38],
