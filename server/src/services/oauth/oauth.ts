@@ -926,6 +926,48 @@ class Oauth implements IOauth {
         }
     }
 
+    async _recodeTokenUseRate(
+        db: Connection,
+        body: {
+            OAUTH_APPLICATION_USER_ID: string,
+            OAUTH_APPLICATION_ID: string,
+            GRANT_TYPE: TResponseType,
+            TOKEN_TYPE: TTokenType,
+            ACCESS_TOKEN: string
+        },
+        options: TAnyObj & { user: IBasicPassportRes }
+    ) {
+        const { user: { client_id } } = options;
+        const {
+            OAUTH_APPLICATION_USER_ID,
+            OAUTH_APPLICATION_ID,
+            GRANT_TYPE,
+            TOKEN_TYPE,
+            ACCESS_TOKEN
+        } = body;
+        try {
+            let sql = `
+                INSERT INTO OAUTH_TOKEN_USED_RATE (
+                    OAUTH_APPLICATION_USER_ID,
+                    OAUTH_APPLICATION_ID,
+                    GRANT_TYPE,
+                    TOKEN_TYPE,
+                    ACCESS_TOKEN,
+                    CREATE_BY
+                ) VALUES (?)
+            `;
+            let params = [
+                OAUTH_APPLICATION_USER_ID, OAUTH_APPLICATION_ID,
+                GRANT_TYPE, TOKEN_TYPE,
+                ACCESS_TOKEN, client_id
+            ];
+
+            await db.query(sql, [params]);
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async verifyToken(
         database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }
     ): Promise<IVerifyTokenRes> {
@@ -938,7 +980,7 @@ class Oauth implements IOauth {
                 exp, iat, USER_ID, RESPONSE_TYPE,
                 USER_EMP_NO, USER_ACCOUNT,
                 OAUTH_APPLICATION_ID,
-                // OAUTH_APPLICATION_USER_ID,
+                OAUTH_APPLICATION_USER_ID,
                 OAUTH_TOKEN_ID,
                 OAUTH_SCOPES
             } = Passport.decodeJWTPayload<IGrantTokenResult & JwtPayload>(access_token);
@@ -954,6 +996,15 @@ class Oauth implements IOauth {
                         throw new Error('Verify fail');
                     }
                     await this. _useTokenModifySome(db, oauthToken.ID, options);
+                    // insert OAUTH_TOKEN_USE_RATE
+                    await this._recodeTokenUseRate(db, {
+                        OAUTH_APPLICATION_USER_ID: OAUTH_APPLICATION_USER_ID,
+                        OAUTH_APPLICATION_ID: OAUTH_APPLICATION_ID,
+                        GRANT_TYPE: oauthToken.GRANT_TYPE,
+                        TOKEN_TYPE: oauthToken.TOKEN_TYPE,
+                        ACCESS_TOKEN: access_token
+                    }, options);
+
                 }
                 let apis = <({ api: string, method: TMethod } & TAnyObj)[]> OAUTH_SCOPES.map((scope) => {
                     return scope.APIS;
