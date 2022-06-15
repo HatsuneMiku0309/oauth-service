@@ -20,13 +20,13 @@ export default defineComponent({
         {
           label: 'Dataset 1',
           data: [10, 20, 30, 40, 50],
-          backgroundColor: ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey'],
+          backgroundColor: ['rgb(255, 99, 132, 0.5)', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey'],
         }
       ]
     };
     
     const config: ChartConfiguration = {
-      type: 'pie',
+      type: 'doughnut',
       data: <any> data,
       options: {
         responsive: false,
