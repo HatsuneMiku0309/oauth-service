@@ -6,7 +6,8 @@ import { IJWTCotext } from "../utils.interface";
 export type TDateType = 'min' | 'hour' | '6hour' | '12hour' | 'day';
 
 export interface IGetUserdRateQuery {
-    DATE_TYPE: TDateType;
+    date_type: TDateType;
+    count: number;
 }
 
 export interface IGetApplicationUsersRes {
@@ -14,16 +15,31 @@ export interface IGetApplicationUsersRes {
     USER_COUNT: number;
 };
 
-export interface IGetUserdRateRes {
+export interface IGetUsedRateRes {
     DATE_TIME: Date;
     USED_COUNT: number;
 };
 
+export interface IGetApplicationUserdRateQuery {
+    date_type: TDateType;
+}
+
+export interface IApplicationUsedRate {
+    NAME: string;
+    USED_COUNT: number;
+}
+
+export interface IGetApplicationUsedRateRes extends IGetUsedRateRes {
+    APPLICATION: IApplicationUsedRate[]
+}
+
 
 export interface IDashboard {
     options: TAnyObj & { config: IConfig };
-    getUsedRate(database: IMysqlDatabase, query: IGetUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetUserdRateRes>;
-    dbGetUsedRate(db: Connection, query: IGetUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetUserdRateRes>;
+    getUsedRate(database: IMysqlDatabase, query: IGetUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetUsedRateRes[]>;
+    dbGetUsedRate(db: Connection, query: IGetUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetUsedRateRes[]>;
+    getApplicationUesdRate(database: IMysqlDatabase, query: IGetApplicationUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetApplicationUsedRateRes[]>;
+    dbGetApplicationUesdRate(db: Connection, query: IGetApplicationUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetApplicationUsedRateRes[]>;
     getApplicationUsers(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<IGetApplicationUsersRes[]>;
     dbGetApplicationUsers(db: Connection, options: TAnyObj & IJWTCotext): Promise<IGetApplicationUsersRes[]>;
 }

@@ -12,6 +12,7 @@ import { OauthRouter } from './oauth/route';
 import { OauthApplicationRouter } from './oauth-app/route';
 import { ScopeRouter } from './scope/route';
 import { AuthorizationAppRouter } from './authorization-app/route';
+import { DashboardRouter } from './dashboard/route';
 
 class Service implements IService {
     private _app: Koa;
@@ -32,7 +33,8 @@ class Service implements IService {
             new OauthRouter(this._database, this._options),
             new OauthApplicationRouter(this._database, this._options),
             new ScopeRouter(this._database, this._options),
-            new AuthorizationAppRouter(this._database, this._options)
+            new AuthorizationAppRouter(this._database, this._options),
+            new DashboardRouter(this._database, this._options)
         ];
         this._router.get('/api', (ctx) => { ctx.body = { aa: 123 }; });
         routers.forEach((router) => {
