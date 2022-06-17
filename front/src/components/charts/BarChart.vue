@@ -1,6 +1,6 @@
 <template>
   <div>
-    <canvas id="myChart"></canvas>
+    <canvas :id="id"></canvas>
   </div>
 </template>
 
@@ -10,9 +10,9 @@ import { Chart, LineController, LineElement, BarController, BarElement, PointEle
 
 export default defineComponent({
   name: 'BarChart',
-  setup() {
-    const DATA_COUNT = 7;
-    
+  props: ['id'],
+  setup(props) {
+    const { id } = props;    
     const labels = [
       'January',
       'February',
@@ -86,15 +86,19 @@ export default defineComponent({
     };
 
     onMounted(() => {
-        let canvas = <HTMLCanvasElement> document.getElementById('myChart');
-        if (canvas) {
-          Chart.register(BarController, BarElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip, LineController, LineElement);
-          const myChart = new Chart(
-            canvas,
-            config
-          );
-        }
-      });
+      let canvas = <HTMLCanvasElement> document.getElementById(id);
+      if (canvas) {
+        Chart.register(BarController, BarElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip, LineController, LineElement);
+        const myChart = new Chart(
+          canvas,
+          config
+        );
+      }
+    });
+
+    return {
+      id
+    };
   },
 })
 </script>

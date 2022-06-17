@@ -5,7 +5,7 @@
       <input class="bg-transparent border border-gray-700 rounded-xl p-1 focus:outline-none focus:border-2 focus:border-gray-700 focus:shadow-md" type="text" @keyup.exact.enter="search(true)" v-model="query.q" placeholder="Search" />
       <i class="relative right-6 oauth-icon search before:w-4 before:h-4 cursor-pointer" @click="search(true)"></i>
     </div>
-    <div class="relative w-full px-4 pb-4 mb-4 border border-t-0 border-gray-700 rounded-2xl rounded-t-none overflow-x-hidden overflow-y-auto shadow-md" style="height: 700px">
+    <div class="relative w-full px-4 pb-4 mb-4 border border-t-0 border-gray-700 rounded-2xl rounded-t-none overflow-x-hidden overflow-y-auto shadow-md" style="height: 670px">
       <cat v-if="isShowLoad" class="w-full h-full top-0 left-0 opacity-75 z-10" />
       <ul class="table-cell w-screen">
         <li class="flex pb-4 px-2 h-14 w-full sticky top-0 bg-gray-700 shadow-lg">

@@ -1,114 +1,125 @@
 <template>
   <div>
-    <canvas id="myChart"></canvas>
+    <div class="float-right">
+      <slot name="header"></slot>
+    </div>
+    <div>
+      <canvas :id="id"></canvas>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue';
 // import Chart from 'chart.js/auto';
-import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, ChartConfiguration, Legend, Filler, Tooltip, ChartData } from 'chart.js';
+import { Chart, LineController, LineElement, TimeScale, PointElement, LinearScale, Title, CategoryScale, ChartConfiguration, Legend, Filler, Tooltip, ChartData } from 'chart.js';
 
 export default defineComponent({
   name: 'LineChart',
-  props: [],
-  setup() {
-      const skipped = (ctx: any, value: any) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
-      const down = (ctx: any, value: any) => ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined;
-      const labels = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-      ];
-      const data = <ChartData> {
-        labels: labels,
-        datasets: [{
-          label: 'My First dataset',
-          backgroundColor: 'rgb(255, 00, 132)',
-          borderColor: 'rgb(255, 00, 132)',
-          data: [0, 10, 5, null, 20, 30],
-          tension: 0.5,
-          pointStyle: 'circle',
-          pointRadius: 10,
-          pointHoverRadius: 15,
-          spanGaps: true,
-          stepped: true,
-          segment: {
-            borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)') || down(ctx, 'rgb(192,75,75)'),
-            borderDash: ctx => skipped(ctx, [6, 6])
-          },
-        }, {
-          label: 'Dataset 2',
-          data: [5, 15, 20, null, 23, 38],
-          borderColor: 'blue',
-          backgroundColor: 'blue',
-          fill: true
-        }]
-      };
+  props: ['id', 'datas', 'title'],
+  setup(props) {
+    const { id, datas, title } = props;
+    const data = <ChartData> {
+      // labels: labels,
+      datasets: [{
+        label: 'Used Rate',
+        backgroundColor: 'rgb(255, 00, 132)',
+        borderColor: 'rgb(255, 00, 132)',
+        // data: [0, 10, 5, 50, 20, 30],
+        data: datas,
+        tension: 0.4,
+        pointStyle: 'circle',
+        pointRadius: 5,
+        pointHoverRadius: 10
+      }]
+    };
 
-      const config: ChartConfiguration = {
-        type: 'line',
-        data: data,
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              display: true,
-              labels: {
-                  color: 'rgb(255, 99, 132)'
+    const config: ChartConfiguration = {
+      type: 'line',
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+            display: true,
+            labels: {
+                color: 'rgb(255, 99, 132)'
+            }
+          },
+          title: {
+            display: true,
+            text: title,
+            color: 'red'
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'gray'
+            },
+            ticks: {
+              color: '#FFF',
+              callback: function (val, index) {
+                return (this.getLabelForValue(<number> val)).substring(10, 16)
               }
             },
+          },
+          y: {
+            display: true,
             title: {
               display: true,
-              text: 'Chart.js Line Chart',
-              color: 'red'
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: '#FF00FF'
-              }
+              text: 'Value'
             },
-            y: {
-              display: true,
-              title: {
-                display: true,
-                text: 'Value'
-              },
-              ticks: {
-                color: 'yellow'
-              },
-              // suggestedMin: 0,
-              // suggestedMax: 80
-            }
+            grid: {
+              color: 'gray'
+            },
+            ticks: {
+              color: '#FFF'
+            },
+            suggestedMin: 0,
+            min: 0
+            // suggestedMax: 80
           }
         }
-      };
+      }
+    };
 
-      onMounted(() => {
-        let canvas = <HTMLCanvasElement> document.getElementById('myChart');
-        if (canvas) {
-          Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip);
-          const myChart = new Chart(
-            canvas,
-            config
-          );
-          
-          setTimeout(() => {
-            (<any> myChart.data.labels).push('aaa');
-            myChart.data.datasets.forEach((dataset) => {
-              dataset.data.push(80);
-            });
-            myChart.reset();
-            myChart.update();
-          }, 500);
-        }
-      });
+    let myChart: Chart;
+    const updateChart = (datas: any[]) => {
+      if (myChart) {
+        myChart.data.datasets.forEach((dataset) => {
+          dataset.data = datas
+        });
+        myChart.reset();
+        myChart.update();
+      }
+    };
+
+    onMounted(() => {
+      let canvas = <HTMLCanvasElement> document.getElementById(id);
+      if (canvas) {
+        Chart.register(LineController, LineElement, TimeScale, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip);
+        myChart = new Chart(
+          canvas,
+          config
+        );
+
+        // setTimeout(() => {
+        //   (<any> myChart.data.labels).push('aaa');
+        //   myChart.data.datasets.forEach((dataset) => {
+        //     dataset.data.push(80);
+        //   });
+        //   myChart.reset();
+        //   myChart.update();
+        // }, 500);
+      }
+    });
+
+    return {
+      id,
+      updateChart
+    }
   },
 });
 </script>

@@ -95,10 +95,10 @@
     </div>
     <div class="flex w-full h-auto overflow-y-hidden overflow-x-auto">
       <div class="flex flex-col flex-shrink-0 w-1/2 h-full overflow-hidden" style="min-width: 450px;">
-      <div class="w-full h-14 flex items-center relative">
-        <div class="ml-10"><label class="hover:cursor-pointer hover:underline" @click="showUserPopup">User Count:</label><label>{{' ' + users.length}}</label></div>
-      </div>
-        <div class="flex flex-col w-auto mb-12 mx-10 overflow-hidden">
+        <div class="w-full h-14 flex items-center relative">
+          <div class="ml-10"><label class="hover:cursor-pointer hover:underline" @click="showUserPopup">User Count:</label><label>{{' ' + users.length}}</label></div>
+        </div>
+        <div class="flex flex-col w-auto mx-10 overflow-hidden">
           <form @submit.prevent="checkForm">
             <div class="flex h-14 items-center my-2">
               <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Application Name :</span></div>

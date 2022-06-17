@@ -1,6 +1,6 @@
 <template>
   <div class="h-full">
-    <canvas id="myChart" width="800" height="800"></canvas>
+    <canvas :id="id" width="800" height="800"></canvas>
   </div>
 </template>
 
@@ -10,7 +10,9 @@ import { Chart, PieController, ArcElement, PointElement, LinearScale, Title, Cat
 
 export default defineComponent({
   name: 'PieChart',
-  setup() {
+  props: ['id'],
+  setup(props) {
+    const { id } = props
     const DATA_COUNT = 5;
     const NUMBER_CFG = {count: DATA_COUNT, min: 0, max: 100};
 
@@ -51,7 +53,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      let canvas = <HTMLCanvasElement> document.getElementById('myChart');
+      let canvas = <HTMLCanvasElement> document.getElementById(id);
       if (canvas) {
         Chart.register(PieController, ArcElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip);
         const myChart = new Chart(
@@ -61,6 +63,9 @@ export default defineComponent({
       }
     });
 
+    return {
+      id
+    };
   },
 })
 </script>
