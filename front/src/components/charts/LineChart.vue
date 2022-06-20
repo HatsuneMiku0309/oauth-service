@@ -38,6 +38,10 @@ export default defineComponent({
       type: 'line',
       data: data,
       options: {
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
         responsive: true,
         plugins: {
           legend: {
@@ -60,9 +64,9 @@ export default defineComponent({
             },
             ticks: {
               color: '#FFF',
-              callback: function (val, index) {
-                return (this.getLabelForValue(<number> val)).substring(10, 16)
-              }
+              // callback: function (val, index) {
+              //   return (this.getLabelForValue(<number> val)).substring(10, 16)
+              // }
             },
           },
           y: {

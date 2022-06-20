@@ -1,18 +1,18 @@
 <template>
   <div class="relative flex flex-col w-full py-5 px-10 overflow-x-hidden">
-    <button @click="getUsedRate">abc</button>
+    <!-- <button @click="getUsedRate">abc</button> -->
     <div class="grid grid-cols-2">
       <div>
         <line-chart v-if="datas.length !== 0" :id="'test'" ref="test" :datas="datas" :title="'Used Rate'">
           <template #header>
-            <select class="p-1 bg-gray-500 rounded-md focus:outline-none mx-2" v-model="dateType">
+            <select @change="getUsedRate" class="p-1 bg-gray-500 rounded-md focus:outline-none mx-2" v-model="dateType">
               <option>min</option>
               <option>hour</option>
               <option>6hour</option>
               <option>12hour</option>
               <option>day</option>
             </select>
-            <select class="p-1 bg-gray-500 rounded-md focus:outline-none mx-2" v-model="count" lazy>
+            <select @change="getUsedRate" class="p-1 bg-gray-500 rounded-md focus:outline-none mx-2" v-model="dateCount" lazy>
               <option v-for="countData in countDatas" :key="countData.value">
                 {{countData.text}}
               </option>
@@ -42,7 +42,7 @@ export default defineComponent({
     const datas = ref([]);
     const dateType = ref('min');
     const MAX_COUNT = 100;
-    const count = ref(12);
+    const dateCount = ref(12);
     const countDatas = [];
     for(let i = 1 ; i <= MAX_COUNT ; i++) {
       countDatas.push({
@@ -66,14 +66,14 @@ export default defineComponent({
     const getUsedRate = async () => {
       try {
         let result = await get('/dashboard/used-rate', {
-          date_type: 'min',
-          count: 12
+          date_type: dateType.value,
+          count: dateCount.value
         });
         datas.value = result.data.data.map((data: any) => {
           return {
             x: dayjs(data.DATE_TIME).format('YYYY-MM-DD HH:mm'),
             y: data.USED_COUNT
-          };
+          }
         });
 
         !!test.value && test.value.updateChart(datas.value);
@@ -99,7 +99,7 @@ export default defineComponent({
       getUsedRate,
       datas,
       dateType,
-      count,
+      dateCount,
       countDatas,
       test
     }
