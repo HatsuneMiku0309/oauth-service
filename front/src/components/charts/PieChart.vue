@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full">
-    <canvas id="myChart" width="800" height="800"></canvas>
+  <div>
+    <canvas class="w-1/2" :id="id"></canvas>
   </div>
 </template>
 
@@ -10,7 +10,9 @@ import { Chart, PieController, ArcElement, PointElement, LinearScale, Title, Cat
 
 export default defineComponent({
   name: 'PieChart',
-  setup() {
+  props: ['id', 'datasets', 'title'],
+  setup(props) {
+    const { id, datasets, title } = props;
     const DATA_COUNT = 5;
     const NUMBER_CFG = {count: DATA_COUNT, min: 0, max: 100};
 
@@ -19,8 +21,8 @@ export default defineComponent({
       datasets: [
         {
           label: 'Dataset 1',
-          data: [10, 20, 30, 40, 50],
-          backgroundColor: ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey'],
+          data: [100],
+          backgroundColor: ['red'],
         }
       ]
     };
@@ -29,11 +31,11 @@ export default defineComponent({
       type: 'pie',
       data: <any> data,
       options: {
-        responsive: false,
+        responsive: true,
         plugins: {
           legend: {
             position: 'top',
-            align: 'start',
+            align: 'center',
             labels: {
               color: 'rgb(255, 99, 132)'
             }
@@ -51,7 +53,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      let canvas = <HTMLCanvasElement> document.getElementById('myChart');
+      let canvas = <HTMLCanvasElement> document.getElementById(id);
       if (canvas) {
         Chart.register(PieController, ArcElement, PointElement, LinearScale, Title, CategoryScale, Legend, Filler, Tooltip);
         const myChart = new Chart(
@@ -61,6 +63,9 @@ export default defineComponent({
       }
     });
 
+    return {
+      id
+    }
   },
 })
 </script>

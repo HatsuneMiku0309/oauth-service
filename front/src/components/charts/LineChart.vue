@@ -4,7 +4,7 @@
       <slot name="header"></slot>
     </div>
     <div>
-      <canvas :id="id"></canvas>
+      <canvas class="w-full" :id="id"></canvas>
     </div>
   </div>
 </template>
@@ -16,22 +16,22 @@ import { Chart, LineController, LineElement, TimeScale, PointElement, LinearScal
 
 export default defineComponent({
   name: 'LineChart',
-  props: ['id', 'datas', 'title'],
+  props: ['id', 'datasets', 'title'],
   setup(props) {
-    const { id, datas, title } = props;
+    const { id, datasets, title } = props;
     const data = <ChartData> {
       // labels: labels,
-      datasets: [{
-        label: 'Used Rate',
-        backgroundColor: 'rgb(255, 00, 132)',
-        borderColor: 'rgb(255, 00, 132)',
-        // data: [0, 10, 5, 50, 20, 30],
-        data: datas,
-        tension: 0.4,
-        pointStyle: 'circle',
-        pointRadius: 5,
-        pointHoverRadius: 10
-      }]
+      datasets: datasets
+      // [{
+      //   label: 'Used Rate',
+      //   backgroundColor: 'rgb(255, 00, 132)',
+      //   borderColor: 'rgb(255, 00, 132)',
+      //   // data: [0, 10, 5, 50, 20, 30],
+      //   tension: 0.4,
+      //   pointStyle: 'circle',
+      //   pointRadius: 5,
+      //   pointHoverRadius: 10
+      // }]
     };
 
     const config: ChartConfiguration = {
@@ -48,25 +48,32 @@ export default defineComponent({
             position: 'top',
             display: true,
             labels: {
-                color: 'rgb(255, 99, 132)'
+                color: 'white'
             }
           },
           title: {
             display: true,
             text: title,
-            color: 'red'
+            color: 'white'
           }
         },
         scales: {
           x: {
             grid: {
-              color: 'gray'
+              color: (context) => {
+                if (context.index === 0) {
+                  return 'white';
+                }
+
+                return 'gray';
+              }
             },
             ticks: {
               color: '#FFF',
-              // callback: function (val, index) {
-              //   return (this.getLabelForValue(<number> val)).substring(10, 16)
-              // }
+              callback: function (val, index) {
+                let datetime = (this.getLabelForValue(<number> val));
+                return datetime.substring(10, 16);
+              }
             },
           },
           y: {
@@ -76,7 +83,13 @@ export default defineComponent({
               text: 'Value'
             },
             grid: {
-              color: 'gray'
+              color: (context) => {
+                if (context.index === 0) {
+                  return 'white';
+                }
+
+                return 'gray';
+              }
             },
             ticks: {
               color: '#FFF'
@@ -90,12 +103,9 @@ export default defineComponent({
     };
 
     let myChart: Chart;
-    const updateChart = (datas: any[]) => {
+    const updateChart = (datasets: any[]) => {
       if (myChart) {
-        myChart.data.datasets.forEach((dataset) => {
-          dataset.data = datas
-        });
-        myChart.reset();
+        myChart.data.datasets = datasets;
         myChart.update();
       }
     };
@@ -110,13 +120,14 @@ export default defineComponent({
         );
 
         // setTimeout(() => {
-        //   (<any> myChart.data.labels).push('aaa');
+        //   console.log('test');
         //   myChart.data.datasets.forEach((dataset) => {
-        //     dataset.data.push(80);
+        //     dataset.data.push({ x: '2022-06-21 15:58', y: 10 });
         //   });
+
         //   myChart.reset();
         //   myChart.update();
-        // }, 500);
+        // }, 1000);
       }
     });
 
