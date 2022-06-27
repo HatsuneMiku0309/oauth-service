@@ -101,9 +101,10 @@ const routes: RouteRecordRaw[] = [
   },
 ];
 
+// (import.meta as any).env.VITE_BASE_URL
 const router = createRouter({
   // tslint:disable-next-line: whitespace
-  history: createWebHistory((import.meta as any).env.VITE_BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 

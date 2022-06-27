@@ -1,6 +1,9 @@
 <template>
   <div id="content" class="relative flex flex-col w-full py-5 px-10 overflow-hidden">
     <!-- <button @click="getUsedRate">abc</button> -->
+    <div class="flex justify-end mb-4">
+      <common-button type="button" class="p-1 mr-2" @click="refresh" :modelValue="'Refresh'"/>
+    </div>
     <div class="grid grid-cols-2 min-w-max">
       <div>
         <line-chart :id="'usedRate'" ref="usedRate" :datasets="[]" :title="'Used Rate'">
@@ -49,11 +52,12 @@ import LineChart from '../components/charts/LineChart.vue';
 import dayjs from 'dayjs';
 // import BarChart from '../components/charts/BarChart.vue';
 import PieChart from '../components/charts/PieChart.vue';
+import CommonButton from '@/components/common/CommonButton.vue';
 // import DoughnutChart from '../components/charts/DoughnutChart.vue';
 
 export default defineComponent({
   name: 'DashBoard',
-  components: { LineChart, PieChart },
+  components: { LineChart, PieChart, CommonButton },
   setup() {
     const usedRate = ref<InstanceType<typeof LineChart>>();
     const appUsedRate = ref<InstanceType<typeof PieChart>>();
@@ -177,9 +181,15 @@ export default defineComponent({
       }
     };
 
+    const refresh = async () => {
+      getUsedRate();
+      getApplicationUsedRate();
+    }
+
     return {
       getUsedRate,
       getApplicationUsedRate,
+      refresh,
       dateType,
       pieDataType,
       dateCount,
