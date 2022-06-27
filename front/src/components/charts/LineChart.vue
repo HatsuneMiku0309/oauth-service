@@ -42,7 +42,7 @@ export default defineComponent({
           intersect: false,
           mode: 'index',
         },
-        responsive: true,
+        responsive: false,
         plugins: {
           legend: {
             position: 'top',
@@ -103,6 +103,12 @@ export default defineComponent({
     };
 
     let myChart: Chart;
+    const resize = (width: number, height: number) => {
+      if (myChart) {
+        myChart.resize(width, height);
+      }
+    };
+
     const updateChart = (datasets: any[]) => {
       if (myChart) {
         myChart.data.datasets = datasets;
@@ -133,7 +139,8 @@ export default defineComponent({
 
     return {
       id,
-      updateChart
+      updateChart,
+      resize
     }
   },
 });

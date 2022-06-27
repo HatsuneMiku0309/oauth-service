@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex flex-col w-full py-5 px-10 overflow-x-auto">
+  <div id="content" class="relative flex flex-col w-full py-5 px-10 overflow-hidden">
     <!-- <button @click="getUsedRate">abc</button> -->
     <div class="grid grid-cols-2 min-w-max">
       <div>
@@ -25,7 +25,17 @@
         </line-chart>
       </div>
       <div>
-        <pie-chart :id="'appUsedRate'" ref="appUsedRate" class="flex justify-center" />
+        <pie-chart :id="'appUsedRate'" ref="appUsedRate" :datasets="[]" :title="'Application Used Rate'">
+          <template #header>
+            <select @change="getApplicationUsedRate" class="p-1 bg-gray-500 rounded-md w-24 focus:outline-none mx-2 focus:shadow-md" v-model="pieDataType">
+              <option>min</option>
+              <option>hour</option>
+              <option>6hour</option>
+              <option>12hour</option>
+              <option>day</option>
+            </select>
+          </template>
+        </pie-chart>
       </div>
     </div>
   </div>
@@ -46,11 +56,13 @@ export default defineComponent({
   components: { LineChart, PieChart },
   setup() {
     const usedRate = ref<InstanceType<typeof LineChart>>();
-    const appUsedRate = ref<InstanceType<typeof LineChart>>();
-    let datasets = [];
-    const dateType = ref('min');
+    const appUsedRate = ref<InstanceType<typeof PieChart>>();
+    let datasets: any[] = [];
+    let pieDataSets: any[] = [];
+    const dateType = ref('day');
+    const pieDataType = ref('day');
     const MAX_COUNT = 100;
-    const dateCount = ref(12);
+    const dateCount = ref(10);
     const countDatas = [];
     for(let i = 1 ; i <= MAX_COUNT ; i++) {
       countDatas.push({
@@ -66,27 +78,26 @@ export default defineComponent({
     onMounted(async () => {
       try {
         await getUsedRate();
+        await getApplicationUsedRate();
         await nextTick();
-        // const USED_RATE_CHART = document.getElementById('usedRate');
-        // const APP_USED_RATE_CHART = document.getElementById('appUsedRate');
-        // // console.log(usedRate.value?.$el.offsetHeight)
-        // (!!APP_USED_RATE_CHART && !!USED_RATE_CHART) 
-        // && (APP_USED_RATE_CHART.style.height = usedRate.value?.$el.offsetHeight + 'px')
-        // && (APP_USED_RATE_CHART.style.width = usedRate.value?.$el.offsetHeight + 'px');
-        // window.addEventListener('resize', () => {
-        //   console.log('resize');
-        //   if (!!USED_RATE_CHART && !!APP_USED_RATE_CHART) {
-        //     let usedRateHight = usedRate.value?.$el.offsetHeight;
-        //     APP_USED_RATE_CHART.style.height = usedRateHight + 'px';
-        //     APP_USED_RATE_CHART.style.width = usedRateHight + 'px';
-        //   }
-          
-        //   // console.log('resize');
-        // }, {
-        //   passive: true
-        // });
-        // console.log(usedRate.value?.$el.childNodes);
-        // console.log(usedRate.value?.$el.children[1].children[0].style.height);
+        const USED_RATE_CHART = document.getElementById('usedRate');
+        const APP_USED_RATE_CHART = document.getElementById('appUsedRate');
+        const CONTENT = document.getElementById('content');
+        window.addEventListener('resize', () => {
+          if (!!APP_USED_RATE_CHART && !!USED_RATE_CHART && CONTENT) {
+            let contentWidth = CONTENT.offsetWidth - 80;
+            let half = contentWidth / 2;
+            USED_RATE_CHART.style.height = half + 'px';
+            USED_RATE_CHART.style.width = half + 'px';
+            APP_USED_RATE_CHART.style.height = half / 2 + 'px';
+            APP_USED_RATE_CHART.style.width = half / 2 + 'px';
+            
+            usedRate.value?.resize(USED_RATE_CHART.offsetWidth, USED_RATE_CHART.offsetHeight);
+            appUsedRate.value?.resize(APP_USED_RATE_CHART.offsetWidth, APP_USED_RATE_CHART.offsetHeight);
+          }
+        }, {
+          passive: true
+        });
       } catch (err: any) {
         alert(err.response.data.errMsg);
       }
@@ -96,6 +107,7 @@ export default defineComponent({
       try {
         if (!!Number(dateCount.value)) {
           datasets = [];
+          dateType.value === 'day' && (dateCount.value = 10);
           let result = await get('/dashboard/used-rate', {
             date_type: dateType.value,
             count: dateCount.value
@@ -134,9 +146,42 @@ export default defineComponent({
       }
     };
 
+    const getApplicationUsedRate = async () => {
+      try {
+        pieDataSets = [];
+        let result = await get('/dashboard/application-used-rate', {
+          date_type: pieDataType.value
+        });
+        let maxVal = 0xFFFFFF; // 16777215
+        let dataColors: string[] = [];
+        let datas: number[] = result.data.data[0].APPLICATION.map((data: any) => {
+          let randomNumber = Math.random() * maxVal;
+          randomNumber = Math.floor(randomNumber);
+          dataColors.push(`#${randomNumber.toString(16).padStart(6, '0')}`);
+          return data.USED_COUNT;
+        });
+        let labels: string[] = result.data.data[0].APPLICATION.map((data: any) => {
+          return data.NAME;
+        });
+        labels.length === 0 && (labels = ['N/A']);
+        datas.length === 0 && (datas = [1]);
+        dataColors.length === 0 && (dataColors = ['black']);
+        pieDataSets.push({
+          data: datas,
+          backgroundColor: dataColors,
+        });
+
+        !!appUsedRate.value && appUsedRate.value.updateChart(labels, pieDataSets);
+      } catch (err: any) {
+        alert(err.response.data.errMsg);
+      }
+    };
+
     return {
       getUsedRate,
+      getApplicationUsedRate,
       dateType,
+      pieDataType,
       dateCount,
       countDatas,
       usedRate,

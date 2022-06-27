@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts">
-import { post } from '@/apis/utils';
+// import { post } from '@/apis/utils';
 import { defineComponent, onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Cat from '../components/Loaders/Cat.vue';
