@@ -155,7 +155,7 @@ class Dashboard implements IDashboard {
 
             let sql = `
             SELECT
-                OTUR.*
+                OTUR.CREATE_TIME
             FROM
                 OAUTH_TOKEN_USED_RATE OTUR,
                 OAUTH_APPLICATION OA
@@ -246,12 +246,7 @@ class Dashboard implements IDashboard {
 
             let sql = `
             SELECT
-                OTUR.OAUTH_APPLICATION_USER_ID,
-                OTUR.OAUTH_APPLICATION_ID,
                 OA.NAME OAUTH_APPLICATION_NAME,
-                OTUR.GRANT_TYPE,
-                OTUR.TOKEN_TYPE,
-                OTUR.ACCESS_TOKEN,
                 OTUR.CREATE_TIME
             FROM
                 OAUTH_TOKEN_USED_RATE OTUR,
