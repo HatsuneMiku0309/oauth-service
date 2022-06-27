@@ -36,10 +36,24 @@ class Dashboard implements IDashboard {
         return Dashboard.instance;
     }
 
+    private async _removeExpiredDatas(db: Connection, options: TAnyObj & IJWTCotext): Promise<any> {
+        try {
+            let sql = `
+                DELETE FROM OAUTH_TOKEN_USED_RATE WHERE CREATE_TIME <= DATE_SUB(CURRENT_DATE() , INTERVAL 10 DAY)
+            `;
+            let result = await db.query(sql);
+
+            return result;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async getUsedRate(database: IMysqlDatabase, query: IGetUserdRateQuery, options: TAnyObj & IJWTCotext): Promise<IGetUsedRateRes[]> {
         try {
             let db = await database.getConnection();
             try {
+                await this._removeExpiredDatas(db, options);
                 let result = await this.dbGetUsedRate(db, query, options);
 
                 return result;
@@ -74,13 +88,13 @@ class Dashboard implements IDashboard {
                 : date_type.indexOf('hour') !== -1
                 ? 'YYYY-MM-DD HH:00:00'
                 : 'YYYY-MM-DD 00:00:00';
-            let startDate = dayjs(nowDate).subtract(dateParam * (count - 1), dateP).format(dateFormat);
+            let startDate = dayjs(nowDate).subtract(dateParam * count, dateP).format(dateFormat);
             dateFormat = date_type === 'min'
                 ? 'YYYY-MM-DD HH:mm:00'
                 : date_type.indexOf('hour') !== -1
                 ? `YYYY-MM-DD ${hour * dateParam}:00:00`
                 : 'YYYY-MM-DD 00:00:00';
-            for (let i = 0 ; i < count ; i++) {
+            for (let i = 1 ; i <= count ; i++) {
                 let _startDate: string;
                 if (date_type.indexOf('hour') !== -1) {
                     let _hour = Number(Math.floor(dayjs(startDate).add(dateParam * i, dateP).toDate().getHours() / dateParam));
@@ -130,6 +144,13 @@ class Dashboard implements IDashboard {
                 throw new Error('[count] grant than 100');
             } else if (count <= 0) {
                 throw new Error('[count] less equal than 0');
+            }
+            if (date_type === 'day' && count > 10) {
+                throw new Error(`[${date_type}]-[${count}] ${date_type} max count is 10`);
+            } else if (date_type === '12hour' && count > 20) {
+                throw new Error(`[${date_type}]-[${count}] ${date_type} max count is 20`);
+            } else if (date_type === '6hour' && count > 40) {
+                throw new Error(`[${date_type}]-[${count}] ${date_type} max count is 40`);
             }
 
             let sql = `
@@ -191,6 +212,7 @@ class Dashboard implements IDashboard {
         try {
             let db = await database.getConnection();
             try {
+                await this._removeExpiredDatas(db, options);
                 let result = await this.dbGetApplicationUesdRate(db, query, options);
 
                 return result;
