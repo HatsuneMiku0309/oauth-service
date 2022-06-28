@@ -76,6 +76,7 @@ class OauthApplication implements IOauthApplication {
                     NAME: row.NAME,
                     HOMEPAGE_URL: row.HOMEPAGE_URL,
                     APPLICATION_DESCRIPTION: row.APPLICATION_DESCRIPTION || '',
+                    COLOR: row.COLOR || 'FFFFFF',
                     IS_CHECKED: row.IS_CHECKED ? 'Y' : 'N',
                     IS_DISABLED: row.IS_DISABLED ? 'Y' : 'N',
                     IS_EXPIRES: row.IS_EXPIRES ? 'Y' : 'N',
@@ -160,11 +161,11 @@ class OauthApplication implements IOauthApplication {
         }
     }
 
-    private _checkCreateUpdateBody(body: IUpdateBody): IUpdateBody {
+    private _checkCreateUpdateBody<T>(body: T): T {
         const {
             name, homepage_url, application_description,
             redirect_uri, expires_date, not_before,
-            is_disabled, is_expires, scope_ids } = body;
+            is_disabled, is_expires, scope_ids } = <any> body;
         try {
             if (!name) {
                 throw new Error('name is required');
@@ -290,9 +291,9 @@ class OauthApplication implements IOauthApplication {
         const { user: { user_id }, oauthApplicationScope } = options;
         try {
             const {
-                name, homepage_url, application_description,
+                homepage_url, application_description,
                 redirect_uri, expires_date, not_before,
-                is_disabled = false, is_expires = false, scope_ids
+                is_disabled = false, is_expires = false, scope_ids, color = 'FFFFFF'
             } = this._checkCreateUpdateBody(body);
             let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
                 SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND CREATE_BY = ?
@@ -328,7 +329,7 @@ class OauthApplication implements IOauthApplication {
             `;
             let params = <IOauthApplicationDao> {
                 ID: id,
-                NAME: name,
+                COLOR: color,
                 HOMEPAGE_URL: homepage_url,
                 REDIRECT_URI: redirect_uri,
                 IS_DISABLED: is_disabled,

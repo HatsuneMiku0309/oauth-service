@@ -26,6 +26,7 @@ export interface IGetApplicationUserdRateQuery {
 
 export interface IApplicationUsedRate {
     NAME: string;
+    COLOR: string;
     USED_COUNT: number;
 }
 

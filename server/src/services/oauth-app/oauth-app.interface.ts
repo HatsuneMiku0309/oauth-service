@@ -41,6 +41,7 @@ export interface ICreateBody {
 }
 
 export interface IUpdateBody extends ICreateBody {
+    color: string;
     scope_ids?: string[];
 }
 
@@ -86,6 +87,7 @@ export interface IOauthApplicationDao {
     HOMEPAGE_URL: string; // varchar(255)
     APPLICATION_DESCRIPTION?: string; // text
     USER_ID: string; // varchar(100)
+    COLOR?: string; // varchar(10) default: FFFFFF
     CLIENT_ID: string; // varchar(100)
     CLIENT_SECRET: string; // varchar(255) ID:USER_ID:CLIENT_ID:salt BASE64
     API_KEY?: string; // text // apiKey是使用自身的帳戶即時建立token，並賦予長時間(或永久)的授權

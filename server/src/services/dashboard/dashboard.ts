@@ -8,7 +8,7 @@ import { IJWTCotext } from '../utils.interface';
 import {
     IDashboard, IGetApplicationUsersRes, IGetUserdRateQuery,
     IGetUsedRateRes, IOauthTokenUsedRateDao, IGetApplicationUsedRateRes,
-    IApplicationUsedRate, IGetApplicationUserdRateQuery
+    IGetApplicationUserdRateQuery
 } from './dashboard.interface';
 import * as dayjs from 'dayjs';
 import * as _ from 'lodash';
@@ -110,15 +110,6 @@ class Dashboard implements IDashboard {
                     DATE_TIME: new Date(_startDate),
                     USED_COUNT: usedCount
                 };
-                if (filterDatas.length !== 0) {
-                    'OAUTH_APPLICATION_NAME' in filterDatas[0] &&
-                    ((<(IGetUsedRateRes & { APPLICATION: IApplicationUsedRate[] })> obj).APPLICATION = (<(IGetUsedRateRes & { OAUTH_APPLICATION_NAME: string })[]> filterDatas).map((filterData) => {
-                        return {
-                            NAME: filterData.OAUTH_APPLICATION_NAME,
-                            USED_COUNT: filterData.USED_COUNT
-                        };
-                    }));
-                }
 
                 result.push(obj);
             }
@@ -247,6 +238,7 @@ class Dashboard implements IDashboard {
             let sql = `
             SELECT
                 OA.NAME OAUTH_APPLICATION_NAME,
+                OA.COLOR,
                 OTUR.CREATE_TIME
             FROM
                 OAUTH_TOKEN_USED_RATE OTUR,
@@ -269,8 +261,8 @@ class Dashboard implements IDashboard {
                 : date_type.indexOf('hour') !== -1
                 ? 'YYYY-MM-DD HH:00:00'
                 : 'YYYY-MM-DD 00:00:00';
-            let params = [user_id, dayjs(nowDate).subtract(dateParam * count, dateP).format(dateFormat)];
-            let [rows] = <[(IOauthTokenUsedRateDao & { OAUTH_APPLICATION_NAME: string })[], FieldPacket[]]> await db.query(sql, params);
+            let params = [user_id, dayjs(nowDate).subtract(dateParam * count, dateP).format('YYYY-MM-DD HH:mm:ss')];
+            let [rows] = <[(IOauthTokenUsedRateDao & { OAUTH_APPLICATION_NAME: string, COLOR: string })[], FieldPacket[]]> await db.query(sql, params);
 
             let groupRows = _.groupBy(rows, (row) => {
                 let result = new Date(dayjs(row.CREATE_TIME).format(dateFormat));
@@ -289,26 +281,23 @@ class Dashboard implements IDashboard {
                 _r.push({
                     OAUTH_APPLICATION_NAME: NAME,
                     DATE_TIME: new Date(DATE_TIME),
-                    USED_COUNT: _rows.length
+                    USED_COUNT: _rows.length,
+                    COLOR: _rows[0].COLOR
                 });
 
                 return _r;
-            }, <(IGetUsedRateRes & { OAUTH_APPLICATION_NAME: string })[]> []);
-            let appDatas = <IGetApplicationUsedRateRes[]> this._loopDate({ ...query, count }, datas, { ...options, nowDate });
-            // let groupByDatas = _.groupBy(datas, 'DATE_TIME');
-            let result = _.map(appDatas, (data) => {
-
-                return {
-                    DATE_TIME: data.DATE_TIME,
-                    USED_COUNT: data.USED_COUNT,
-                    APPLICATION: _.map(data.APPLICATION, (app) => {
-                        return {
-                            NAME: app.NAME,
-                            USED_COUNT: app.USED_COUNT
-                        };
-                    })
-                };
-            });
+            }, <(IGetUsedRateRes & { OAUTH_APPLICATION_NAME: string, COLOR: string })[]> []);
+            let result = [{
+                DATE_TIME: new Date(dayjs(nowDate).subtract(dateParam * count, dateP).format('YYYY-MM-DD HH:mm:ss')),
+                USED_COUNT: 0,
+                APPLICATION: _.map(datas, (data) => {
+                    return {
+                        NAME: data.OAUTH_APPLICATION_NAME,
+                        USED_COUNT: data.USED_COUNT,
+                        COLOR: data.COLOR
+                    };
+                })
+            }];
 
             return result;
         } catch (err) {
