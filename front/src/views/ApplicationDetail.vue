@@ -101,7 +101,11 @@
         <div class="flex flex-col w-auto mx-10 overflow-hidden">
           <form @submit.prevent="checkForm">
             <div class="flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Application Name :</span></div>
+              <!-- <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Application Color :</span></div> -->
+              <common-input class="w-12 h-12 p-1" v-model.trim="app.COLOR" type="color" maxlength="6" />
+            </div>
+            <div class="flex h-14 items-center my-2">
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="required absolute right-0">Name :</span></div>
               <common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
@@ -117,27 +121,27 @@
               <common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https?://.+" maxlengh="255" required />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Expires :</span></div>
               <common-input v-model="app.EXPIRES_DATE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">NOT BEFORE :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Not Before :</span></div>
               <common-input v-model="app.NOT_BEFORE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">DISABLED :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Disabled :</span></div>
               <common-input v-model="app.IS_DISABLED" type="checkbox" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">EXPIRES :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Expires :</span></div>
               <common-input v-model="app.IS_EXPIRES" type="checkbox" />
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">CHECKED :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Checked :</span></div>
               <common-input :modelValue="app.IS_CHECKED" type="checkbox" onclick="return false;"/>
             </div>
             <div class="relative flex h-14 items-center my-2">
-              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">UPDATE TIME :</span></div>
+              <div class="relative flex flex-shrink-0 items-center mr-2 w-40"><span class="absolute right-0">Update Time :</span></div>
               <common-input v-model="app.UPDATE_TIME" type="text" readonly />
             </div>
             <div class="relative flex justify-center mt-8">
@@ -202,6 +206,7 @@ export default defineComponent({
     });
 
     const convertDate = (data: any) => {
+      data.COLOR = `#${data.COLOR}`;
       data.EXPIRES_DATE = data.EXPIRES_DATE
         ? dayjs(data.EXPIRES_DATE).format('YYYY-MM-DD HH:mm:ss')
         : undefined;
@@ -228,6 +233,7 @@ export default defineComponent({
         isShowLoad.value = true;
         const putData = <any> app.value;
         let result = await put('/oauth-app/' + route.params.id, {
+          color: putData.COLOR.replace('#', ''),
           name: putData.NAME,
           homepage_url: putData.HOMEPAGE_URL,
           application_description: putData.APPLICATION_DESCRIPTION,

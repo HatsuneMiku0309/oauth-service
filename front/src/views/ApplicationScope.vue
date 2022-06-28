@@ -10,9 +10,9 @@
       <ul class="table-cell w-screen">
         <li class="flex pb-4 px-2 h-14 w-full sticky top-0 bg-gray-700 shadow-lg">
           <div class="flex items-center flex-grow-0 flex-shrink-0 w-10 px-2"><input class="w-4 h-4" type="checkbox" @change="selectAll" v-model="selectedAll"/></div>
-          <div class="flex items-center flex-grow-0 flex-shrink-0 w-24 px-2">SYSTEM</div>
-          <div class="flex items-center flex-grow-0 flex-shrink-0 w-28 px-2">NAME</div>
-          <div class="flex items-center flex-grow px-2">APIS</div>
+          <div class="flex items-center flex-grow-0 flex-shrink-0 w-24 px-2">System</div>
+          <div class="flex items-center flex-grow-0 flex-shrink-0 w-28 px-2">Name</div>
+          <div class="flex items-center flex-grow px-2">Apis</div>
         </li>
         <li :class="['flex', 'p-2', 'border-t', 'w-full', { 'border-b-0': index === scopes.length - 1 }]" v-for="(scope, index) in scopes" :key="index">
           <div class="flex items-center flex-grow-0 flex-shrink-0 w-10 px-2"><input class="w-4 h-4" type="checkbox" :value="scope.ID" @change="$emit('update:oauth-scope', selectApiScopes)" v-model="selectApiScopes"/></div>

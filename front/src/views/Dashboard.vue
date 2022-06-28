@@ -156,12 +156,9 @@ export default defineComponent({
         let result = await get('/dashboard/application-used-rate', {
           date_type: pieDataType.value
         });
-        let maxVal = 0xFFFFFF; // 16777215
         let dataColors: string[] = [];
         let datas: number[] = result.data.data[0].APPLICATION.map((data: any) => {
-          let randomNumber = Math.random() * maxVal;
-          randomNumber = Math.floor(randomNumber);
-          dataColors.push(`#${randomNumber.toString(16).padStart(6, '0')}`);
+          dataColors.push(`#${data.COLOR}`);
           return data.USED_COUNT;
         });
         let labels: string[] = result.data.data[0].APPLICATION.map((data: any) => {

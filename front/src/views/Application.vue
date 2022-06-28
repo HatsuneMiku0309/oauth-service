@@ -9,7 +9,7 @@
 				<div class="flex flex-col w-full overflow-y-auto max-h-96">
 				<form class="p-2" @submit.prevent="checkForm">
 					<div class="flex = h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-52"><span class="required absolute right-0">Application Name :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="required absolute right-0">Name :</span></div>
 						<common-input v-model.trim="app.NAME" type="text" maxlength="100" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
@@ -25,19 +25,19 @@
 						<common-input v-model.trim="app.REDIRECT_URI" type="url" maxlength="100" pattern="https?://.+" maxlengh="255" required />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">EXPIRES :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">Expires :</span></div>
 						<common-input v-model="app.EXPIRES_DATE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">NOT BEFORE :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">Not Before :</span></div>
 						<common-input v-model="app.NOT_BEFORE" type="text" placeholder="YYYY-MM-DD HH:mm:ss" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">DISABLED :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">Disabled :</span></div>
 						<common-input v-model="app.IS_DISABLED" type="checkbox" />
 					</div>
 					<div class="relative flex h-14 items-center my-2">
-						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">EXPIRES :</span></div>
+						<div class="relative flex items-center mr-2 w-52"><span class="absolute right-0">Expires :</span></div>
 						<common-input v-model="app.IS_EXPIRES" type="checkbox" />
 					</div>
 					<div class="relative flex mt-8">
@@ -69,20 +69,20 @@
 		<div class="table-cell border-2 rounded-lg bg-gray-600 border-gray-700 w-full my-4 overflow-auto shadow-lg">
 			<div class="table-cell w-screen">
 				<div class="sticky top-0 flex flex-row border-gray-700">
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-20 border-r-2 border-gray-700">INDEX</div>
-					<div class="bg-gray-800 flex flex-shrink-0 p-2 w-44 border-r-2 border-gray-700">NAME</div>
-					<div style="min-width: 10rem" class="bg-gray-800 flex flex-grow p-2 border-r-2 border-gray-700 overflow-x-hidden">HOMEPAGE_URL</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">CHECKED</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">DISABLED</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">EXPIRES</div>
-					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-32 border-gray-700">UPDATE_TIME</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-20 border-r-2 border-gray-700">Index</div>
+					<div class="bg-gray-800 flex flex-shrink-0 p-2 w-44 border-r-2 border-gray-700">Name</div>
+					<div style="min-width: 10rem" class="bg-gray-800 flex flex-grow p-2 border-r-2 border-gray-700 overflow-x-hidden">Homepage URL</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">Checked</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">Disabled</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-28 border-r-2 border-gray-700">Expires</div>
+					<div class="bg-gray-800 flex flex-shrink-0 justify-center p-2 w-32 border-gray-700">Update Time</div>
 				</div>
 				<div :class="['flex', 'flex-row', 'items-cente', 'w-full', 'h-16', 'hover:bg-gray-800 hover:bg-opacity-60', {'bg-gray-600': index % 2 === 0, 'bg-gray-700 bg-opacity-80': index %2 !== 0}]" v-for="(app, index) in apps" :key="index">
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'justify-center', 'p-2', 'w-20', 'border-r-2', 'border-gray-500']">
 						<router-link class="flex items-center justify-center hover:underline w-full h-full" :to="{ name: 'ApplicationDetail', params: { id: app.ID } }"><span class="p-4">{{ index + 1 + (10 * query.offset) }}</span></router-link>
 					</div>
 					<div :class="['flex', 'flex-shrink-0', 'items-center', 'p-2', 'w-44', 'border-r-2', 'border-gray-500']">
-						<router-link class="flex items-center hover:underline w-full h-full" :to="{ name: 'ApplicationDetail', params: { id: app.ID } }"><span>{{ app.NAME }}</span></router-link>
+						<router-link class="flex items-center hover:underline w-full h-full" :to="{ name: 'ApplicationDetail', params: { id: app.ID } }"><span class="flex items-center"><div class="w-2 h-2 mr-2" :style="{ 'background-color': '#' + app.COLOR }"></div>{{ app.NAME }}</span></router-link>
 					</div>
 					<div style="min-width: 10rem" :class="[
 						'flex', 'items-center', 'flex-grow', 'p-2', 'border-r-2',
