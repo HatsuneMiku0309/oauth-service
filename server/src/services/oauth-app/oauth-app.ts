@@ -406,6 +406,7 @@ class OauthApplication implements IOauthApplication {
                 tokenType: 'apiKey'
             });
             let apiKey = access_token;
+            await db.query('UPDATE OAUTH_APPLICATION SET API_KEY = ? WHERE ID = ?', [apiKey, id]);
 
             return {
                 API_KEY: apiKey

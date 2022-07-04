@@ -206,13 +206,6 @@ class Passport {
                                 throw _err;
                             }
                             let row = rows[0];
-                            // maybe this function remove...
-                            if (row.TOKEN !== token) {
-                                _err.state = 401;
-                                _err.message = 'Authentication Error';
-
-                                throw _err;
-                            }
 
                             /**
                              * need AC jwt token oper, viewer can't call not `GET` method

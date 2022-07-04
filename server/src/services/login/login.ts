@@ -206,8 +206,14 @@ class Login implements ILogin {
                     };
                 } else { // find use, check password and go!
                     let row = rows[0];
+                    // base data update.
                     if (row.PASSWORD !== Buffer.from(_password).toString('base64')) {
-                        throw new Error('[LADP] password in [AC] fail');
+                        await db.query(`
+                            UPDATE USER SET PASSWORD = ? WHERE ID = ?
+                        `, [Buffer.from(_password).toString('base64'), row.ID]);
+                        let [_rows] = <[IUserDAO[], FieldPacket[]]> await db.query('SELECT * FROM USER WHERE ACCOUNT = ? AND SOURCE = ?', [account, 'COMPAL']);
+                        rows = _rows;
+                        row = rows[0];
                     }
                     let token = await this._grantLoginToken(db, {
                         user_id: row.ID, account: row.ACCOUNT,
@@ -301,7 +307,7 @@ class Login implements ILogin {
     }
 
     async tokenLogin(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<ILoginRes> {
-        const { user: { user_id }, jwt } = options;
+        const { user: { user_id } } = options;
         try {
             let db = await database.getConnection();
             await db.beginTransaction();
@@ -312,9 +318,9 @@ class Login implements ILogin {
                     throw new Error('token check fail');
                 }
                 let row = rows[0];
-                if (row.TOKEN !== jwt) {
-                    throw new Error('token check fail');
-                }
+                // if (row.TOKEN !== jwt) {
+                //     throw new Error('token check fail');
+                // }
                 await db.commit();
 
                 return {

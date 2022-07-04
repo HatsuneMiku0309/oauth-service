@@ -239,7 +239,7 @@ class Dashboard implements IDashboard {
             SELECT
                 OA.NAME OAUTH_APPLICATION_NAME,
                 OA.COLOR,
-                OTUR.CREATE_TIME
+                COUNT(1) \`COUNT\`
             FROM
                 OAUTH_TOKEN_USED_RATE OTUR,
                 OAUTH_APPLICATION OA
@@ -247,8 +247,8 @@ class Dashboard implements IDashboard {
                 OA.ID = OTUR.OAUTH_APPLICATION_ID
                 AND OA.USER_ID = ?
                 AND OTUR.CREATE_TIME >= ?
-            ORDER BY
-                OTUR.CREATE_TIME ASC
+            GROUP BY
+                OA.NAME, OA.COLOR
             `;
             let dateP = DATE_CONVERT[date_type];
             let dateParam = date_type === '6hour'
@@ -256,37 +256,19 @@ class Dashboard implements IDashboard {
                 : date_type === '12hour'
                 ? 12
                 : 1;
-            let dateFormat = date_type === 'min'
-                ? 'YYYY-MM-DD HH:mm:00'
-                : date_type.indexOf('hour') !== -1
-                ? 'YYYY-MM-DD HH:00:00'
-                : 'YYYY-MM-DD 00:00:00';
             let params = [user_id, dayjs(nowDate).subtract(dateParam * count, dateP).format('YYYY-MM-DD HH:mm:ss')];
-            let [rows] = <[(IOauthTokenUsedRateDao & { OAUTH_APPLICATION_NAME: string, COLOR: string })[], FieldPacket[]]> await db.query(sql, params);
+            let [rows] = <[(IOauthTokenUsedRateDao & { OAUTH_APPLICATION_NAME: string, COLOR: string, COUNT: number })[], FieldPacket[]]> await db.query(sql, params);
 
-            let groupRows = _.groupBy(rows, (row) => {
-                let result = new Date(dayjs(row.CREATE_TIME).format(dateFormat));
-                let date = new Date(<Date> row.CREATE_TIME);
-                let hour = 0;
-                if (date_type.indexOf('hour') !== -1) {
-                    hour = Number(Math.floor(date.getHours() / dateParam));
-                    result = new Date(dayjs(date).format(`YYYY-MM-DD ${hour * dateParam}:00:00`));
-                }
-
-                return `${row.OAUTH_APPLICATION_NAME};;${result}`;
-            });
-
-            let datas = _.reduce(groupRows, (_r, _rows, keys) => {
-                const [NAME, DATE_TIME] = keys.split(';;');
+            let datas = _.reduce(rows, (_r, row) => {
                 _r.push({
-                    OAUTH_APPLICATION_NAME: NAME,
-                    DATE_TIME: new Date(DATE_TIME),
-                    USED_COUNT: _rows.length,
-                    COLOR: _rows[0].COLOR
+                    OAUTH_APPLICATION_NAME: row.OAUTH_APPLICATION_NAME,
+                    DATE_TIME: new Date(dayjs(nowDate).subtract(dateParam * count, dateP).format('YYYY-MM-DD HH:mm:ss')),
+                    USED_COUNT: row.COUNT,
+                    COLOR: row.COLOR
                 });
 
                 return _r;
-            }, <(IGetUsedRateRes & { OAUTH_APPLICATION_NAME: string, COLOR: string })[]> []);
+            }, <(IGetUsedRateRes & { OAUTH_APPLICATION_NAME: string, COLOR: string, USED_COUNT: number })[]> []);
             let result = [{
                 DATE_TIME: new Date(dayjs(nowDate).subtract(dateParam * count, dateP).format('YYYY-MM-DD HH:mm:ss')),
                 USED_COUNT: 0,
