@@ -71,11 +71,12 @@ function cookieGet(name: string) {
 export async function get<T = any>(
     api: string, params?: { [key: string]: any }, options: AxiosRequestConfig = { },
 ): Promise<T> {
-    const { headers = { } } = options;
+    const { headers = { }, timeout = 1000 } = options;
     try {
         const res: T = await instance.get(api, {
             params,
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+            timeout,
         });
 
         return res;
@@ -87,7 +88,7 @@ export async function get<T = any>(
 export async function post<T = any>(
     api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
 ): Promise<T> {
-    const { headers = { } } = options;
+    const { headers = { }, timeout = 1000 } = options;
     try {
         const res: T = await instance.post(api, data, {
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
@@ -187,11 +188,12 @@ export async function postFetch<T = any>(
 export async function put<T = any>(
     api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
 ): Promise<T> {
-    const { headers = { } } = options;
+    const { headers = { }, timeout = 1000 } = options;
     try {
         const res: T = await instance.put(api, data, {
             ...options,
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+            timeout,
         });
 
         return res;
@@ -204,11 +206,12 @@ export async function put<T = any>(
 export async function del<T = any>(
     api: string, data?: { [key: string]: any }, options: AxiosRequestConfig = { },
 ): Promise<T> {
-    const { headers = { } } = options;
+    const { headers = { }, timeout = 1000 } = options;
     try {
         const res: T = await instance.delete(api, {
             data,
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+            timeout,
         });
 
         return res;

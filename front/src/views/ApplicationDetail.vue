@@ -33,8 +33,8 @@
           <label id="secret" class="ml-32 block p-2 break-all select-all bg-gray-700 text-xs">{{ app.CLIENT_SECRET }}</label>
         </div>
         <div class="relative w-full py-1">
-          <div class="relative inline-block float-left w-28"><span class="absolute right-0 text-right" :class="{'oauth-icon remind': loginUser.EMP_NO && app.API_KEY.length !== 0}">API Key :</span></div>
-          <label v-if="loginUser.EMP_NO" class="overflow-y-auto ml-32 block p-2 break-all select-all bg-gray-700 text-xs" :class="[{ 'text-red-600 font-bold': app.API_KEY.length === 0 }]" style="max-height: 8rem">{{ app.API_KEY || 'Empty, You should update app' }}</label>
+          <div class="relative inline-block float-left w-28"><span class="absolute right-0 text-right" :class="{'oauth-icon remind': loginUser.EMP_NO && app.API_KEY !== null && app.API_KEY.length !== 0}">API Key :</span></div>
+          <label v-if="loginUser.EMP_NO" class="overflow-y-auto ml-32 block p-2 break-all select-all bg-gray-700 text-xs" :class="[{ 'text-red-600 font-bold': app.API_KEY === null || app.API_KEY.length === 0 }]" style="max-height: 8rem">{{ app.API_KEY || 'Empty, You should reload key' }}</label>
           <label v-else class="overflow-y-auto ml-32 block p-2 break-all cursor-auto bg-gray-700 text-xs font-bold text-red-600" style="max-height: 8rem">Should mantain EMP_NO</label>
         </div>
         <div class="relative flex h-14 w-full items-center">

@@ -115,6 +115,8 @@ export default defineComponent({
           let result = await get('/dashboard/used-rate', {
             date_type: dateType.value,
             count: dateCount.value
+          }, {
+            timeout: 10000
           });
           let datas = result.data.data.map((data: any) => {
             return {
@@ -145,7 +147,7 @@ export default defineComponent({
           pointStyle: 'circle',
           ointRadius: 5,
           pointHoverRadius: 10
-        }]
+        }];
         alert(err.response.data.errMsg);
       }
     };
@@ -155,6 +157,8 @@ export default defineComponent({
         pieDataSets = [];
         let result = await get('/dashboard/application-used-rate', {
           date_type: pieDataType.value
+        }, {
+          timeout: 10000
         });
         let dataColors: string[] = [];
         let datas: number[] = result.data.data[0].APPLICATION.map((data: any) => {
