@@ -5,6 +5,7 @@ import * as Router from 'koa-router';
 import { IRouter, TContext } from '../utils.interface';
 import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Oauth } from './oauth';
+import { Profile } from '../profile/profile';
 import { BaseRouter } from '../utils';
 import { Passport } from '../jwt/passport';
 
@@ -23,6 +24,8 @@ class OauthRouter extends BaseRouter implements IRouter {
 
     registerAPIs(): void {
         let oauth = Oauth.getInstance(this.options);
+        let profile = Profile.getInstance(this.options);
+
         let api = super._getRootApi('grant-code-token').join('/');
         this.router.post(api, async (ctx: TContext) => {
             const { body } = ctx.request;
@@ -75,7 +78,7 @@ class OauthRouter extends BaseRouter implements IRouter {
             const { body } = ctx.request;
             try {
                 let basicObj = await Passport.basicPassport(this.database, ctx);
-                let result = await oauth.verifyToken(this.database, body, { user: basicObj });
+                let result = await oauth.verifyToken(this.database, body, { user: basicObj, profile });
 
                 ctx.set('Cache-Control', 'no-store');
                 ctx.body = {

@@ -20,6 +20,7 @@ import { OauthApplicationScope } from '../oauth-app/oauth-app-scope';
 import { IUserDAO } from '../login/login.interface';
 import { JwtPayload } from 'jsonwebtoken';
 import { TMethod } from '../scope/scope.interface';
+import { IProfile } from '../profile/profile.interface';
 
 class Oauth implements IOauth {
     static instance: IOauth;
@@ -172,13 +173,13 @@ class Oauth implements IOauth {
         db: Connection,
         body: {
             client_id: string;
-            user_id: string;
             oauth_application_id: string;
             oauth_token_id: string;
         },
-        options: TAnyObj = { }
+        options: TAnyObj & IJWTCotext
     ): Promise<IOauthApplicationAndUserDao> {
-        const { client_id, user_id, oauth_application_id, oauth_token_id } = body;
+        const { user: { user_id } } = options;
+        const { client_id, oauth_application_id, oauth_token_id } = body;
         try {
             let sql = `
             SELECT
@@ -208,7 +209,7 @@ class Oauth implements IOauth {
                 USER_ID: user_id,
                 OAUTH_APPLICATION_ID: oauth_application_id,
                 OAUTH_TOKEN_ID: oauth_token_id,
-                CREATE_BY: user_id
+                CREATE_BY: client_id
             }]);
             let [rows] = <[IOauthApplicationAndUserDao[], FieldPacket[]]> await db.query(sql, params);
             let oauthApplicationAndUsers = rows;
@@ -432,7 +433,7 @@ class Oauth implements IOauth {
             }, options);
             if (oauthApplicationAndUser === undefined) {
                 oauthApplicationAndUser = await this._grantInitOauthUser(db, {
-                    client_id, user_id,
+                    client_id,
                     oauth_application_id: oauthApplicaion.ID,
                     oauth_token_id: ''
                 }, options);
@@ -506,10 +507,10 @@ class Oauth implements IOauth {
                 UPDATE
                     OAUTH_APPLICATION_USER
                 SET
-                    OAUTH_TOKEN_ID = ?
+                    OAUTH_TOKEN_ID = ?, UPDATE_BY = ?
                 WHERE
                     ID = ?
-            `, [ id, oauthApplicationAndUser.ID ]);
+            `, [ id, client_id, oauthApplicationAndUser.ID ]);
 
             return result;
         } catch (err) {
@@ -931,9 +932,9 @@ class Oauth implements IOauth {
         body: {
             OAUTH_APPLICATION_USER_ID: string,
             OAUTH_APPLICATION_ID: string,
+            OAUTH_TOKEN_ID: string,
             GRANT_TYPE: TResponseType,
-            TOKEN_TYPE: TTokenType,
-            ACCESS_TOKEN: string
+            TOKEN_TYPE: TTokenType
         },
         options: TAnyObj & { user: IBasicPassportRes }
     ) {
@@ -941,25 +942,25 @@ class Oauth implements IOauth {
         const {
             OAUTH_APPLICATION_USER_ID,
             OAUTH_APPLICATION_ID,
+            OAUTH_TOKEN_ID,
             GRANT_TYPE,
-            TOKEN_TYPE,
-            ACCESS_TOKEN
+            TOKEN_TYPE
         } = body;
         try {
             let sql = `
                 INSERT INTO OAUTH_TOKEN_USED_RATE (
                     OAUTH_APPLICATION_USER_ID,
                     OAUTH_APPLICATION_ID,
+                    OAUTH_TOKEN_ID,
                     GRANT_TYPE,
                     TOKEN_TYPE,
-                    ACCESS_TOKEN,
                     CREATE_BY
                 ) VALUES (?)
             `;
             let params = [
-                OAUTH_APPLICATION_USER_ID, OAUTH_APPLICATION_ID,
+                OAUTH_APPLICATION_USER_ID, OAUTH_APPLICATION_ID, OAUTH_TOKEN_ID,
                 GRANT_TYPE, TOKEN_TYPE,
-                ACCESS_TOKEN, client_id
+                client_id
             ];
 
             await db.query(sql, [params]);
@@ -969,9 +970,9 @@ class Oauth implements IOauth {
     }
 
     async verifyToken(
-        database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }
+        database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes, profile: IProfile }
     ): Promise<IVerifyTokenRes> {
-        const { user: { client_id } } = options;
+        const { user: { client_id }, profile } = options;
         const { access_token } = body;
         const NOW_DATE = new Date();
         try {
@@ -987,6 +988,11 @@ class Oauth implements IOauth {
             let db = await database.getConnection();
             try {
                 let oauthApplication = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
+                // check user exist, `source` and `user_type` any
+                await profile.dbGetProfile(db, {
+                    user: { user_id: USER_ID, account: USER_ACCOUNT, source: 'COMPAL', user_type: 'VIEWER' },
+                    jwt: access_token
+                });
                 // api_key不再驗證其db數據以及其他紀錄。
                 if (RESPONSE_TYPE !== 'api_key') {
                     let oauthToken = await this._verifyToken(db, access_token, NOW_DATE);
@@ -1000,11 +1006,20 @@ class Oauth implements IOauth {
                     await this._recodeTokenUseRate(db, {
                         OAUTH_APPLICATION_USER_ID: OAUTH_APPLICATION_USER_ID,
                         OAUTH_APPLICATION_ID: OAUTH_APPLICATION_ID,
+                        OAUTH_TOKEN_ID: oauthToken.ID,
                         GRANT_TYPE: oauthToken.GRANT_TYPE,
-                        TOKEN_TYPE: oauthToken.TOKEN_TYPE,
-                        ACCESS_TOKEN: access_token
+                        TOKEN_TYPE: oauthToken.TOKEN_TYPE
                     }, options);
 
+                } else {
+                    // api_key insert OAUTH_TOKEN_USE_RATE
+                    await this._recodeTokenUseRate(db, {
+                        OAUTH_APPLICATION_USER_ID: OAUTH_APPLICATION_USER_ID,
+                        OAUTH_APPLICATION_ID: OAUTH_APPLICATION_ID,
+                        OAUTH_TOKEN_ID: '',
+                        GRANT_TYPE: 'api_key',
+                        TOKEN_TYPE: 'Bearer'
+                    }, options);
                 }
                 let apis = <({ api: string, method: TMethod } & TAnyObj)[]> OAUTH_SCOPES.map((scope) => {
                     return scope.APIS;

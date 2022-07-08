@@ -4,6 +4,7 @@ import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
 import { IBasicPassportRes } from "../jwt/passport.interface";
 import { IOauthApplicationScopeAndApiScopeRes } from "../oauth-app/oauth-app-scope.interface";
 import { IOauthApplicationDao } from "../oauth-app/oauth-app.interface";
+import { IProfile } from "../profile/profile.interface";
 import { TMethod } from "../scope/scope.interface";
 import { IJWTCotext } from "../utils.interface";
 
@@ -12,7 +13,7 @@ import { IJWTCotext } from "../utils.interface";
  * 
  * token: Access Token
  */
-export type TResponseType = 'code' | 'token';
+export type TResponseType = 'code' | 'token' | 'api_key';
 export type TTokenType = 'Bearer' | 'Basic';
 
 export interface IErrorRes {
@@ -122,7 +123,7 @@ export interface IOauth {
     accessToken(database: IMysqlDatabase, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     dbAccessToken(db: Connection, body: IAccessTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
     refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes>;
-    verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IVerifyTokenRes>;
+    verifyToken(database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes, profile: IProfile }): Promise<IVerifyTokenRes>;
 }
 
 // ---------- DAO -----------

@@ -58,7 +58,8 @@ class Config implements IConfig {
                     '^\/api\/oauth\/verify-token$'
                 ],
                 VIEWER_WHITE_LIST: [
-                    '^\/api\/oauth\/grant-code-token$'
+                    '^\/api\/oauth\/grant-code-token$',
+                    '^\/api\/profile\/oauth_application_user\/[a-zA-Z0-9\-]{36}$'
                 ]
             },
             databaseConfig: {

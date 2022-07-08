@@ -6,6 +6,7 @@ import { FieldPacket } from 'mysql2';
 import { TAnyObj, IMysqlDatabase, IConfig } from '../../utils.interface';
 import { IJWTCotext } from '../utils.interface';
 import {
+    IOauthApplicationDao,
     IRemoveUserRes
 } from './oauth-app.interface';
 import * as _ from 'lodash';
@@ -51,6 +52,12 @@ class OauthApplicationUser implements IOauthApplicationUser {
                 throw new Error('[offset, count] type error');
             }
 
+            let [oauthApplications] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND USER_ID = ?', [oa_id, user_id]);
+            if (oauthApplications.length === 0) {
+                throw new Error('Not find app');
+            }
+            let oauthApplication = oauthApplications[0];
+
             let sql = `
                 SELECT
                     U.ACCOUNT,
@@ -64,7 +71,7 @@ class OauthApplicationUser implements IOauthApplicationUser {
                     AND OAU.CREATE_BY = ?
             `;
             let whereSql = ['OAU.USER_ID LIKE ?'];
-            let params: any[] = [oa_id, user_id];
+            let params: any[] = [oa_id, oauthApplication.CLIENT_ID];
             let pageParams: any[] = [Number(count), Number(offset * count)];
             !!q && params.push(`%${q}%`);
             !!q && (sql += ` AND (${whereSql.join(' OR ')})`);
@@ -112,17 +119,22 @@ class OauthApplicationUser implements IOauthApplicationUser {
     async dbRemoveUsers(db: Connection, oa_id: string, body: string[], options: TAnyObj & IJWTCotext): Promise<IRemoveUserRes> {
         const { user: { user_id } } = options;
         try {
+            let [oauthApplications] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query('SELECT * FROM OAUTH_APPLICATION WHERE ID = ? AND USER_ID = ?', [oa_id, user_id]);
+            if (oauthApplications.length === 0) {
+                throw new Error('Not find app');
+            }
+            let oauthApplication = oauthApplications[0];
 
             let sql = `
                 DELETE FROM OAUTH_APPLICATION_USER WHERE OAUTH_APPLICATION_ID = ? AND ID IN (?) AND CREATE_BY = ?
             `;
-            let params = [ oa_id, body, user_id ];
+            let params = [ oa_id, body, oauthApplication.CLIENT_ID ];
             await db.query(sql, params);
 
             sql = `
                 DELETE FROM OAUTH_TOKEN WHERE OAUTH_APPLICATION_USER_ID IN (?) AND CREATE_BY = ?
             `;
-            await db.query(sql, [body, user_id]);
+            await db.query(sql, [body, oauthApplication.CLIENT_ID]);
 
             return {
                 ID: oa_id,

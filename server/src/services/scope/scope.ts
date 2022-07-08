@@ -58,22 +58,22 @@ class Scope implements IScope {
     // }
 
     async dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes> {
-        // const { user: { user_id } } = options;
+        const { user: { user_id } } = options;
         const { q, count = 10, offset = 0 } = query;
         try {
             let sql = 'SELECT * FROM API_SCOPE';
 
-            let whereSql = [];
-            let params = [];
+            let whereSql = ['IS_PUBLIC = ? AND CREATE_BY = ?', 'IS_PUBLIC = ?'];
+            let params = ['PRIVATE', user_id, 'PUBLIC'];
             let pageParams: any[] = [Number(count), Number(offset * count)];
             !!q && whereSql.push('NAME LIKE ?') && whereSql.push('`SYSTEM` LIKE ?') && params.push(`%${q}%`) && params.push(`%${q}%`);
-            !!q && (sql += ` WHERE (${whereSql.join(' OR ')})`);
+            sql += ` WHERE (${whereSql.join(' OR ')})`;
             sql += ' ORDER BY `SYSTEM`, CREATE_TIME';
             sql += ' LIMIT ? OFFSET ?';
             let [rows] = <[IApiScopeDao[], FieldPacket[]]> await db.query(sql, [...params, ...pageParams]);
 
             let totalSql = 'SELECT COUNT(1) TOTAL_PAGE FROM API_SCOPE';
-            !!q && (totalSql += ` WHERE (${whereSql.join(' OR ')})`);
+            totalSql += ` WHERE (${whereSql.join(' OR ')})`;
 
             let [totalCounts] = <[{ TOTAL_PAGE: number }[], FieldPacket[]]> await db.query(totalSql, params);
             let totalCount = totalCounts[0].TOTAL_PAGE;
