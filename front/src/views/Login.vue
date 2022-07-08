@@ -11,7 +11,7 @@
       <form class="mx-16 mt-6 p-4" @submit.prevent="checkForm" autocomplete="off">
         <div class="flex flex-col items-center px-12 pb-12">
           <div class="flex flex-col my-2 items-center w-full">
-            <span class="required w-full text-left mb-1">Acoount</span>
+            <span class="required w-full text-left mb-1">Account</span>
             <common-input type="text" v-model="account" required placeholder="Account:" autocomplete="off" />
           </div>
           <div class="flex flex-col my-2 items-center w-full">
