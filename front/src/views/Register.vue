@@ -5,7 +5,7 @@
     <div class="flex flex-col w-5/12 self-center bg-gray-600 mt-28 rounded-3xl min-w-min">
       <div class="flex flex-col mt-12 items-center w-full">
         <router-link class="flex flex-col items-center" to="/login">
-          <img class="w-32" alt="Vue logo" src="@/../public/images/logo.png">
+          <img class="w-32" alt="Vue logo" src="@/../public/images/ac.png">
           <div class="flex justify-center w-32 mt-3">Authorize Center</div>
         </router-link>
       </div>

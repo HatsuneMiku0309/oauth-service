@@ -92,6 +92,7 @@ export async function post<T = any>(
     try {
         const res: T = await instance.post(api, data, {
             headers: Object.assign(PARAMS.headers, { Authorization: localStorage.getItem('token') }),
+            timeout,
         });
 
         return res;

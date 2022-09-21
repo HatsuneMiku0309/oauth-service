@@ -5,7 +5,10 @@
       <div v-if="oauthObj.APP" class="flex flex-col items-center w-full">
         <div class="oauth-icon relative flex flex-row items-center mt-12 justify-between w-96">
           <div class="flex items-center left-0 rounded-full z-10 bg-gray-700">
-            <img class="w-32 rounded-full" alt="Vue logo" src="@/../public/images/logo.png">
+            <div class="flex w-32 h-32 rounded-full items-center justify-center">
+              <label class="text-9xl">{{oauthObj.APP.NAME.split('')[0]}}</label>
+            </div>
+            <!-- <img class="w-32 rounded-full" alt="Vue logo" src="@/../public/images/ac.png"> -->
           </div>
           <div class="flex justify-center items-center left-0 z-10 h-8 w-8 bg-green-600 rounded-full">
             <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="fill-current text-white">
@@ -13,7 +16,7 @@
             </svg>
           </div>
           <div class="flex items-center left-0 rounded-full z-10 bg-gray-700">
-            <img class="w-32 rounded-full" alt="Vue logo" src="@/../public/images/logo.png">
+            <img class="w-32 rounded-full" alt="Vue logo" src="@/../public/images/ac.png">
           </div>
         </div>
         <div class="flex items-center justify-center h-16 text-2xl whitespace-pre-wrap">
@@ -23,7 +26,9 @@
       <div class="mx-auto my-0">
         <div v-if="oauthObj.APP" class="flex flex-col p-6 self-center bg-black border border-gray-700 border-b-0 mt-5 rounded-t-lg min-w-min overflow-y-auto overflow-x-hidden" style="max-height: 300px;">
           <div class="mb-4">
-            <img class="w-8 bg-white rounded-full inline-block float-left mt-1 mr-3" alt="Vue logo" src="@/../public/images/logo.png">
+            <div class="w-8 h-8 rounded-full bg-white inline-block float-left mt-1 mr-3">
+              <label class="flex items-center justify-center text-3xl text-gray-400">{{oauthObj.APP.NAME.split('')[0]}}</label>
+            </div>
             <div class="ml-11">
               <span class="block">
                 <label class="font-semibold">{{oauthObj.APP.NAME}}</label> by 
@@ -93,7 +98,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeMount, reactive, ref, toRefs } from 'vue';
+import { defineComponent, onBeforeMount, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Cat from '../components/Loaders/Cat.vue';
 import { get, post } from '../apis/utils';

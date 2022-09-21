@@ -8,6 +8,8 @@ import ApplicationDetail from '../views/ApplicationDetail.vue';
 import Authorization from '../views/Authorization.vue';
 import AuthorizationApp from '../views/AuthorizationApp.vue';
 import AuthorizationAppDetail from '../views/AuthorizationAppDetail.vue';
+import Forget from '../views/Forget.vue';
+import ResetPassword from '../views/ResetPassword.vue';
 import { decodeBase64, encodeBase64 } from '@/utils';
 import { get } from '@/apis/utils';
 import Err404 from '../views/Err404.vue';
@@ -77,6 +79,20 @@ const routes: RouteRecordRaw[] = [
     meta: {
       authentication: false,
     },
+  }, {
+    path: '/forget',
+    name: 'Forget',
+    component: Forget,
+    meta: {
+      authentication: false,
+    }
+  }, {
+    path: '/reset-password/:resetToken',
+    name: 'ResetPassword',
+    component: ResetPassword,
+    meta: {
+      authentication: false,
+    }
   }, {
     path: '/signup',
     name: 'SignUp',
