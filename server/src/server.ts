@@ -33,7 +33,7 @@ class Server implements IServer {
         }, this.app.callback());
         let port = HTTPS_PORT ? HTTPS_PORT : this.config.HTTPS_PORT;
         this.httpsServer.listen(port, () => {
-            console.log(`Server http port: ${port}`);
+            console.log(`Server https port: ${port}`);
         });
     }
 

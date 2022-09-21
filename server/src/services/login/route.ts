@@ -73,6 +73,36 @@ class LoginRouter extends BaseRouter implements IRouter {
                 throw err;
             }
         });
+
+        this.router.post('/forget', async (ctx: TContext) => {
+            const { body } = ctx.request;
+            try {
+                let result = await login.forget(this.database, body, {
+                    ...this.options,
+                    origin: ctx.request.headers.origin || ''
+                });
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err: any) {
+                throw err;
+            }
+        });
+
+        this.router.put('/reset-password/:reset_token', async (ctx: TContext) => {
+            const { reset_token } = ctx.params;
+            const { body } = ctx.request;
+            try {
+                let result = await login.resetPassword(this.database, reset_token, body, this.options);
+
+                ctx.body = {
+                    data: result
+                };
+            } catch (err: any) {
+                throw err;
+            }
+        });
     }
 }
 

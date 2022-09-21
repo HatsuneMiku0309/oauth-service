@@ -30,7 +30,9 @@ const {
     MYSQL_CONNECTION_LIMIT,
     MYSQL_QUEUE_LIMIT,
     MYSQL_DEBUE,
-    MYSQL_TRACE
+    MYSQL_TRACE,
+    RESET_MAX_LIMIT = 10,
+    REST_TOKEN_LIMIT_TIME = 10
 } = process.env;
 
 
@@ -42,7 +44,9 @@ class Config implements IConfig {
                 EMAIL_IP: 'http://10.129.137.37',
                 EMAIL_PORT: '9999',
                 EMAIL_CALLER_NOTIFY: ['cosmo_dai@compal.com'],
-                EMAIL_SYSTEM: 'AC'
+                EMAIL_SYSTEM: 'AC',
+                RESET_MAX_LIMIT: Number(RESET_MAX_LIMIT),
+                REST_TOKEN_LIMIT_TIME: Number(REST_TOKEN_LIMIT_TIME)
             },
             jwtConfig: {
                 PRIVATE_KEY: JWT_PRIVATE,
@@ -52,7 +56,9 @@ class Config implements IConfig {
                 ALGORITHM: <Algorithm> ALGORITHM,
                 UNLESS: [
                     '^\/api\/login$',
+                    '^\/api\/forget$',
                     '^\/api\/register$',
+                    '^\/api\/reset-password',
                     '^\/api\/oauth\/access-token$',
                     '^\/api\/oauth\/refresh-token$',
                     '^\/api\/oauth\/verify-token$'

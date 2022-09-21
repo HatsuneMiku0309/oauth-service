@@ -1,10 +1,10 @@
 import { JwtPayload } from "jsonwebtoken";
-import { TSource, TUSER_TYPE } from "../login/login.interface";
+import { TSOURCE, TUSER_TYPE } from "../login/login.interface";
 
 export interface ISignupBody extends JwtPayload {
     user_id: string; // uuid
     account: string;
-    source: TSource;
+    source: TSOURCE;
     user_type: TUSER_TYPE;
 }
 

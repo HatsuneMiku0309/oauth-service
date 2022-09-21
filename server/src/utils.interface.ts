@@ -34,6 +34,8 @@ export interface IOptionConfig extends TAnyObj {
     EMAIL_PORT: string | number;
     EMAIL_CALLER_NOTIFY: string[];
     EMAIL_SYSTEM: string;
+    RESET_MAX_LIMIT: number;
+    REST_TOKEN_LIMIT_TIME: number;
 }
 
 export interface IMainConfig {

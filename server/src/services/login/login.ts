@@ -4,13 +4,15 @@ install();
 import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { IJWTCotext, TContext } from '../utils.interface';
 import * as ldap from 'ldapjs';
-import { IRegistBody, ILogin, ILoginBody, IUserDAO, ILdapUserDao, TSource, ILoginRes, TUSER_TYPE } from './login.interface';
+import { IRegistBody, ILogin, ILoginBody, IUserDAO, ILdapUserDao, TSOURCE, ILoginRes, TUSER_TYPE, IForgetBody, IResetPasswordBody } from './login.interface';
 import { Passport } from '../jwt/passport';
 import { FieldPacket } from 'mysql2';
 import * as _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Connection } from 'mysql2/promise';
 import { ISignupBody } from '../jwt/passport.interface';
+import got from 'got';
+import dayjs = require('dayjs');
 
 class Login implements ILogin {
     private static instance: ILogin;
@@ -217,7 +219,7 @@ class Login implements ILogin {
                     }
                     let token = await this._grantLoginToken(db, {
                         user_id: row.ID, account: row.ACCOUNT,
-                        source: <TSource> row.SOURCE, user_type: <TUSER_TYPE> row.USER_TYPE
+                        source: <TSOURCE> row.SOURCE, user_type: <TUSER_TYPE> row.USER_TYPE
                     }, options);
                     ctx.set('Authorization', `${Passport.TOKEN_TYPE} ${token}`);
 
@@ -227,7 +229,7 @@ class Login implements ILogin {
                         EMP_NO: row.EMP_NO || '',
                         EMAIL: row.EMAIL,
                         PHONE: <string> row.PHONE,
-                        SOURCE: <TSource> row.SOURCE,
+                        SOURCE: <TSOURCE> row.SOURCE,
                         USER_TYPE: <TUSER_TYPE> row.USER_TYPE
                     };
                 }
@@ -283,7 +285,7 @@ class Login implements ILogin {
             let token = await this._grantLoginToken(db, {
                 user_id: row.ID,
                 account: account,
-                source: <TSource> row.SOURCE,
+                source: <TSOURCE> row.SOURCE,
                 user_type: <TUSER_TYPE> row.USER_TYPE
                 // iss: 'cosmo_serives',
                 // sub: body.account,
@@ -298,7 +300,7 @@ class Login implements ILogin {
                 EMP_NO: row.EMP_NO || '',
                 EMAIL: row.EMAIL,
                 PHONE: row.PHONE || '',
-                SOURCE: <TSource> row.SOURCE,
+                SOURCE: <TSOURCE> row.SOURCE,
                 USER_TYPE: <TUSER_TYPE> row.USER_TYPE
             };
         } catch (err) {
@@ -329,7 +331,7 @@ class Login implements ILogin {
                     EMP_NO: row.EMP_NO || '',
                     EMAIL: row.EMAIL,
                     PHONE: row.PHONE || '',
-                    SOURCE: <TSource> row.SOURCE,
+                    SOURCE: <TSOURCE> row.SOURCE,
                     USER_TYPE: <TUSER_TYPE> row.USER_TYPE
                 };
             } catch (err) {
@@ -375,7 +377,7 @@ class Login implements ILogin {
         }
     }
 
-    private async _checkDuplicationRegist(db: Connection, body: IRegistBody, options?: TAnyObj & { source?: TSource; }): Promise<void> {
+    private async _checkDuplicationRegist(db: Connection, body: IRegistBody, options?: TAnyObj & { source?: TSOURCE; }): Promise<void> {
         const { account } = body;
         const { source = 'SELF' } = options || { };
         try {
@@ -410,7 +412,7 @@ class Login implements ILogin {
         }
     }
 
-    async dbRegist(db: Connection, body: IRegistBody, options?: TAnyObj & { source?: TSource; }): Promise<{ ID: string; }> {
+    async dbRegist(db: Connection, body: IRegistBody, options?: TAnyObj & { source?: TSOURCE; }): Promise<{ ID: string; }> {
         const { empNo = '', account, password, email, phone } = body;
         const { source = 'SELF' } = options || { };
         try {
@@ -435,6 +437,156 @@ class Login implements ILogin {
 
             return {
                 ID: id
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async forget(database: IMysqlDatabase, body: IForgetBody, options: TAnyObj & { origin: string }): Promise<{ MESSAGE: string; }> {
+        try {
+            let db = await database.getConnection();
+            try {
+                let result = await this.dbForget(db, body, options);
+
+                return result;
+            } catch (err) {
+                throw err;
+            } finally {
+                await db.end();
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbForget(db: Connection, body: IForgetBody, options: TAnyObj & { origin: string }): Promise<{ MESSAGE: string; }> {
+        const { account } = body;
+        const { origin = '' } = options;
+        const { EMAIL_CALLER_NOTIFY = [], EMAIL_SYSTEM = 'AC', EMAIL_IP, EMAIL_PORT, RESET_MAX_LIMIT } = this.options.config.getOptionConfig();
+        try {
+            if (!origin) {
+                throw new Error('Please concat DTD Admin.');
+            }
+            let sql = 'SELECT ID, EMAIL, SOURCE, RESET_TOKEN, RESET_TIME, RESET_TIMES, BLACK FROM USER WHERE ACCOUNT = ?';
+            let [rows] = <[{ ID: string, EMAIL: string, SOURCE: TSOURCE, RESET_TOKEN: string, RESET_TIME: Date, RESET_TIMES: number, BLACK: 'T' | 'F' }[], FieldPacket[]]>
+                await db.query(sql, [ account, 'SELF' ]);
+            if (rows.length !== 1) {
+                throw new Error('Fail');
+            }
+            let row = rows[0];
+            if (row.BLACK === 'T') {
+                throw new Error('Your account already black, Please concat DTD Admin.');
+            }
+            try { // this error add `reset_times`
+                if (row.SOURCE === 'COMPAL') {
+                    throw new Error('The account can\'t reset password!');
+                }
+                if (row.RESET_TIMES >= RESET_MAX_LIMIT) {
+                    await db.query('UPDATE USER SET ? WHERE ID = ?', [{ BLACK: 'T' }, row.ID]);
+                    throw new Error('Please concat DTD Admin.');
+                }
+                if (!!row.RESET_TIME && +new Date() <= +new Date(row.RESET_TIME)) {
+                    throw new Error('Fail');
+                }
+                if (((row.EMAIL).toLowerCase()).indexOf('compal.com') === -1) {
+                    throw new Error('Please concat DTD Admin.');
+                }
+            } catch (err) {
+                await db.query('UPDATE USER SET RESET_TIMES = RESET_TIMES + 1 WHERE ID = ?', [row.ID]);
+                throw err;
+            }
+
+            // start transaction
+            await db.beginTransaction();
+            try {
+                const resetToken = uuid();
+                await db.query(`
+                    UPDATE USER SET ? WHERE ID = ?
+                `, [{ RESET_TOKEN: resetToken, RESET_TIME: dayjs(new Date()).add(10, 'm').toDate() }, row.ID]);
+
+                await got.post(`${EMAIL_IP}:${EMAIL_PORT}/api/mail-agent`, {
+                    json: {
+                        system: EMAIL_SYSTEM,
+                        callerNotify: EMAIL_CALLER_NOTIFY,
+                        to: [row.EMAIL],
+                        subject: 'Reset your account :)',
+                        html: `<div>Dear ${account}:</div>
+                            <br />
+                            <div style="margin-left: 10px">
+                            <div>Please click <a href="${origin}/reset-password/${resetToken}">Reset</a> to reset your password.</div>
+                                <br />
+                                <br />
+                                <br />
+                                <div>
+                                    Your reset token is only valid for 10 min :)
+                                </div>
+                            </div>
+                        `
+                    }
+                });
+                await db.commit();
+
+                return {
+                    MESSAGE: 'Send Repassword uri in your EMAIL.'
+                };
+            } catch (err) {
+                await db.rollback();
+
+                throw err;
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async resetPassword(database: IMysqlDatabase, resetToken: string, body: IResetPasswordBody, options?: TAnyObj | undefined): Promise<{ ID: string; }> {
+        try {
+            let db = await database.getConnection();
+            try {
+                let result = await this.dbResetPassword(db, resetToken, body, options);
+
+                return result;
+            } catch (err) {
+                throw err;
+            } finally {
+                await db.end();
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async dbResetPassword(db: Connection, resetToken: string, body: IResetPasswordBody, options?: TAnyObj | undefined): Promise<{ ID: string; }> {
+        const { password } = body;
+        try {
+            let sql = 'SELECT * FROM USER WHERE RESET_TOKEN = ?';
+            let [rows] = <[IUserDAO[], FieldPacket[]]> await db.query(sql, [resetToken]);
+            if (rows.length !== 1) {
+                throw new Error('Fail');
+            }
+            let row = rows[0];
+            if (row.BLACK === 'T') {
+                throw new Error('Your account already black');
+            }
+            if (row.SOURCE === 'COMPAL') {
+                throw new Error('The account can\'t reset password!');
+            }
+            if (!!row.RESET_TIME && +new Date(row.RESET_TIME) < +new Date()) {
+                throw new Error('Expired reset token');
+            }
+            await db.query('UPDATE USER SET ? WHERE ID = ?', [
+                {
+                    PASSWORD: Buffer.from(password).toString('base64'),
+                    RESET_TOKEN: '',
+                    RESET_TIME: null,
+                    RESET_TIMES: 0
+                },
+                row.ID
+            ]);
+
+            return {
+                ID: row.ID
             };
         } catch (err) {
             throw err;

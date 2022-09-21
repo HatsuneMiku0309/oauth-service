@@ -21,8 +21,16 @@ export interface ILoginRes {
     EMP_NO: string;
     EMAIL: string;
     PHONE: string;
-    SOURCE: TSource;
+    SOURCE: TSOURCE;
     USER_TYPE: TUSER_TYPE;
+}
+
+export interface IForgetBody {
+    account: string;
+}
+
+export interface IResetPasswordBody {
+    password: string;
 }
 
 export interface ILogin {
@@ -31,14 +39,18 @@ export interface ILogin {
     tokenLogin(database: IMysqlDatabase, options: TAnyObj & IJWTCotext): Promise<ILoginRes>; 
     regist(database: IMysqlDatabase, body: IRegistBody, options?: TAnyObj): Promise<{ ID: string }>;
     dbRegist(db: Connection, body: IRegistBody, options?: TAnyObj): Promise<{ ID: string }>;
+    forget(database: IMysqlDatabase, body: IForgetBody, options: TAnyObj & { origin: string }): Promise<{ MESSAGE: string }>;
+    dbForget(db: Connection, body: IForgetBody, options: TAnyObj & { origin: string }): Promise<{ MESSAGE: string }>;
+    resetPassword(database: IMysqlDatabase, resetToken: string, body: IResetPasswordBody, options?: TAnyObj): Promise<{ ID: string }>;
+    dbResetPassword(db: Connection, resetToken: string, body: IResetPasswordBody, options?: TAnyObj): Promise<{ ID: string }>;
 }
 
-export type TSource = 'SELF' | 'COMPAL';
+export type TSOURCE = 'SELF' | 'COMPAL';
 export type TUSER_TYPE = 'VIEWER' | 'DEVELOPER' | 'ADMIN' | 'ROOT';
 
 export interface IUserDAO {
     ID: string; // uuid
-    SOURCE?: TSource; // varchar(100)
+    SOURCE?: TSOURCE; // varchar(100)
     USER_TYPE?: TUSER_TYPE; // varchar(100) default: 'VIEWER'
     EMP_NO?: string; // varchar(100) default: ''
     ACCOUNT: string; // varchar(12)
@@ -50,6 +62,9 @@ export interface IUserDAO {
     CREATE_TIME: Date; // Datetime
     CREATE_BY: string; // varchar(100)
     UPDATE_BY: string; // varchar(100)
+    RESET_TIME?: Date; // Datetime
+    RESET_TIMES: number; // u_int
+    BLACK: 'T' | 'F'; // varchar(10)
 }
 
 export interface ILdapUserDao {
