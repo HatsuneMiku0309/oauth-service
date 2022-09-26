@@ -52,6 +52,13 @@ $ docker run -d --restart=always --name oauth-n --link oauth-f:server_font --lin
 $ docker run -d --restart=always --name oauth-n --link oauth-f:server_font --link oauth-s:server -p 443:443 oauth-n:1.0
 ```
 
+## deploy
+```shell=
+$ docker save -o image.tar image:tag
+$ scp image.tar server:~/path/
+$ docker load -i image.tar
+```
+
 ### link
 
 ### back-end
