@@ -208,6 +208,9 @@ class Login implements ILogin {
                     };
                 } else { // find use, check password and go!
                     let row = rows[0];
+                    if (row.BLACK === 'T') {
+                        throw new Error('Your account already disabled, Please contact DTD Admin.');
+                    }
                     // base data update.
                     if (row.PASSWORD !== Buffer.from(_password).toString('base64')) {
                         await db.query(`
@@ -282,6 +285,9 @@ class Login implements ILogin {
             if (row.PASSWORD !== Buffer.from(password).toString('base64')) {
                 throw new Error('Account or password error');
             }
+            if (row.BLACK === 'T') {
+                throw new Error('Your account already disabled, Please contact DTD Admin.');
+            }
             let token = await this._grantLoginToken(db, {
                 user_id: row.ID,
                 account: account,
@@ -320,6 +326,9 @@ class Login implements ILogin {
                     throw new Error('token check fail');
                 }
                 let row = rows[0];
+                if (row.BLACK === 'T') {
+                    throw new Error('Your account already disabled, Please contact DTD Admin.');
+                }
                 // if (row.TOKEN !== jwt) {
                 //     throw new Error('token check fail');
                 // }
@@ -466,7 +475,7 @@ class Login implements ILogin {
         const { EMAIL_CALLER_NOTIFY = [], EMAIL_SYSTEM = 'AC', EMAIL_IP, EMAIL_PORT, RESET_MAX_LIMIT } = this.options.config.getOptionConfig();
         try {
             if (!origin) {
-                throw new Error('Please concat DTD Admin.');
+                throw new Error('Please contact DTD Admin.');
             }
             let sql = 'SELECT ID, EMAIL, SOURCE, RESET_TOKEN, RESET_TIME, RESET_TIMES, BLACK FROM USER WHERE ACCOUNT = ?';
             let [rows] = <[{ ID: string, EMAIL: string, SOURCE: TSOURCE, RESET_TOKEN: string, RESET_TIME: Date, RESET_TIMES: number, BLACK: 'T' | 'F' }[], FieldPacket[]]>
@@ -476,7 +485,7 @@ class Login implements ILogin {
             }
             let row = rows[0];
             if (row.BLACK === 'T') {
-                throw new Error('Your account already black, Please concat DTD Admin.');
+                throw new Error('Your account already disabled, Please contact DTD Admin.');
             }
             try { // this error add `reset_times`
                 if (row.SOURCE === 'COMPAL') {
@@ -484,13 +493,13 @@ class Login implements ILogin {
                 }
                 if (row.RESET_TIMES >= RESET_MAX_LIMIT) {
                     await db.query('UPDATE USER SET ? WHERE ID = ?', [{ BLACK: 'T' }, row.ID]);
-                    throw new Error('Please concat DTD Admin.');
+                    throw new Error('Please contact DTD Admin.');
                 }
                 if (!!row.RESET_TIME && +new Date() <= +new Date(row.RESET_TIME)) {
                     throw new Error('Fail');
                 }
                 if (((row.EMAIL).toLowerCase()).indexOf('compal.com') === -1) {
-                    throw new Error('Please concat DTD Admin.');
+                    throw new Error('Please contact DTD Admin.');
                 }
             } catch (err) {
                 await db.query('UPDATE USER SET RESET_TIMES = RESET_TIMES + 1 WHERE ID = ?', [row.ID]);
@@ -567,7 +576,7 @@ class Login implements ILogin {
             }
             let row = rows[0];
             if (row.BLACK === 'T') {
-                throw new Error('Your account already black');
+                throw new Error('Your account already disabled, Please contact DTD Admin.');
             }
             if (row.SOURCE === 'COMPAL') {
                 throw new Error('The account can\'t reset password!');

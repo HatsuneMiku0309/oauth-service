@@ -21,7 +21,7 @@
   "homepage": "https://github.com/HatsuneMiku0309/oauth-service#readme",
   "dependencies": {
     "@koa/cors": "^3.3.0",
-    "dayjs": "^1.11.0",
+    "dayjs": "^1.11.5",
     "dotenv": "^16.0.0",
     "got": "~11.8.3",
     "jsonwebtoken": "^8.5.1",

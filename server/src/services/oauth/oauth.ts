@@ -49,12 +49,15 @@ class Oauth implements IOauth {
             let oauthApplicationScope = OauthApplicationScope.getInstance(this.options);
             try {
                 let oauthApplicaion = await this._checkOauthApplication(db, client_id, options);
-                let sql = 'SELECT ACCOUNT FROM USER WHERE ID = ?';
-                let [users] = <[{ ACCOUNT: string }[], FieldPacket[]]> await db.query(sql, [ oauthApplicaion.USER_ID ]);
+                let sql = 'SELECT ACCOUNT, BLACK FROM USER WHERE ID = ?';
+                let [users] = <[{ ACCOUNT: string, BLACK: 'T' | 'F' }[], FieldPacket[]]> await db.query(sql, [ oauthApplicaion.USER_ID ]);
                 if (users.length === 0) {
                     throw new Error(`[${oauthApplicaion.ID}] user not find`);
                 }
                 let user = users[0];
+                if (user.BLACK === 'T') {
+                    throw new Error('Owner disabled');
+                }
                 let oauthScopes = await oauthApplicationScope.dbList(db, oauthApplicaion.ID, options);
                 oauthScopes.forEach((oauthScope) => {
                     if (oauthScope.IS_DISABLED) {
@@ -295,25 +298,28 @@ class Oauth implements IOauth {
         }
     }
 
-    async checkOauthApplication(db: Connection, client_id: string, options: TAnyObj = { }): Promise<IOauthApplicationDao> {
-        try {
-            return await this._checkOauthApplication(db, client_id, options);
-        } catch (err) {
-            throw err;
-        }
-    }
-
     private async _checkOauthApplication(db: Connection, client_id: string, options: TAnyObj = { }): Promise<IOauthApplicationDao> {
         try {
-            let [oauthApplicaions] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
-                SELECT * FROM OAUTH_APPLICATION WHERE CLIENT_ID = ?
+            let [oauthApplicaions] = <[IOauthApplicationDao[] & { BLACK: 'T' | 'F' }[], FieldPacket[]]> await db.query(`
+                SELECT
+                    U.BLACK,
+                    T.*
+                FROM
+                    OAUTH_APPLICATION T,
+                    USER U
+                WHERE
+                    CLIENT_ID = ?
+                    AND T.USER_ID = U.ID
             `, [ client_id ]);
 
-            if (oauthApplicaions.length === 0) {
+            if (oauthApplicaions.length !== 1) {
                 throw new Error(`[${client_id}] Unknowns client_id`);
             }
 
             let oauthApplicaion = oauthApplicaions[0];
+            if (oauthApplicaion.BLACK === 'T') {
+                throw new Error(`[${client_id}] owner disabled`);
+            }
             if (!!oauthApplicaion.IS_DISABLED) {
                 throw new Error(`[${client_id}] client_id disabled`);
             } else if (!oauthApplicaion.IS_CHECKED) {
@@ -341,7 +347,7 @@ class Oauth implements IOauth {
      */
     private async _grantToken(
         db: Connection, response_type: TResponseType | 'refresh_token' | 'api_key',
-        oauthApplication: IOauthApplicationDao, oat_id: string, user_id: string,
+        oauthApplication: { IS_ORIGIN?: boolean, ID: string }, oat_id: string, user_id: string,
         options: TAnyObj & (IJWTCotext | { user: IBasicPassportRes })
     ): Promise<string> {
         try {
@@ -612,22 +618,6 @@ class Oauth implements IOauth {
         }
     }
 
-    private async _checkOauthApplicationByAccessAndRefreshAndVerify(db: Connection, options: TAnyObj & { user: IBasicPassportRes }) {
-        const { user: { user_id, client_id, client_secret } } = options;
-        try {
-            let oauthApplicaion = await this._checkOauthApplication(db, client_id, options);
-            if (oauthApplicaion.CLIENT_SECRET !== client_secret) {
-                throw new Error(`[${client_id}] client_secret error`);
-            } else if (oauthApplicaion.USER_ID !== user_id) {
-                throw new Error(`[${client_id}] user_id error`);
-            }
-
-            return oauthApplicaion;
-        } catch (err) {
-            throw err;
-        }
-    }
-
     async accessToken(
         database: IMysqlDatabase,
         body: IAccessTokenBody,
@@ -653,21 +643,28 @@ class Oauth implements IOauth {
         body: IAccessTokenBody,
         options: TAnyObj & { user: IBasicPassportRes, tokenType?: 'apiKey' }
     ): Promise<IAccessTokenRes> {
-        const { user: { client_id }, tokenType } = options;
+        const { user: { client_id, REDIRECT_URI, IS_ORIGIN, ID }, tokenType } = options;
         const { code, redirect_uri, state } = body;
         const NOW_DATE = new Date();
         const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
         try {
             this._checkAccessTokenBody(body);
-            let oauthApplicaion = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
-            if (redirect_uri !== oauthApplicaion.REDIRECT_URI) {
+            if (redirect_uri !== REDIRECT_URI) {
                 throw new Error('redirect_uri error');
             }
             let oauthTokenData = await this._accessTokenCheck(db, code, NOW_DATE);
-            let expiresTime = oauthApplicaion.IS_ORIGIN || tokenType === 'apiKey'
+            let expiresTime = IS_ORIGIN || tokenType === 'apiKey'
                 ? 365 * 24 * 60 * this.SEC_TIME
                 : EXPIRES_TIME;
-            let accessToken = await this._grantToken(db, tokenType === 'apiKey' ? 'api_key' : 'code', oauthApplicaion, oauthTokenData.ID, oauthTokenData.USER_ID, options);
+            let accessToken = await this._grantToken(
+                db,
+                tokenType === 'apiKey'
+                    ? 'api_key'
+                    : 'code',
+                { IS_ORIGIN, ID },
+                oauthTokenData.ID,
+                oauthTokenData.USER_ID,
+                options);
             let refreshToken = Passport.grantJWTToken({
                 grant_type: 'refresh_token', client_id, user_id: oauthTokenData.USER_ID
             }, { expiresIn: this.REFRESH_EXPIRES_TIME });
@@ -777,7 +774,7 @@ class Oauth implements IOauth {
     }
 
     async refreshToken(database: IMysqlDatabase, body: IRefreshTokenBody, options: TAnyObj & { user: IBasicPassportRes }): Promise<IAccessTokenRes> {
-        const { user: { client_id } } = options;
+        const { user: { client_id, IS_ORIGIN, ID } } = options;
         const { refresh_token /*, scope */, state } = body;
         const NOW_DATE = new Date();
         const EXPIRES_TIME = this.EXPIRES_MIN * this.SEC_TIME;
@@ -789,12 +786,11 @@ class Oauth implements IOauth {
             let db = await database.getConnection();
             try {
                 await db.beginTransaction();
-                let oauthApplicaion = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
-                let expiresTime = oauthApplicaion.IS_ORIGIN
+                let expiresTime = IS_ORIGIN
                     ? 365 * 24 * 60 * this.SEC_TIME
                     : EXPIRES_TIME;
                 let oauthToken = await this._refreshTokenCheck(db, refresh_token);
-                let accessToken = await this._grantToken(db, 'code', oauthApplicaion, oauthToken.ID, user_id, options);
+                let accessToken = await this._grantToken(db, 'code', { IS_ORIGIN, ID }, oauthToken.ID, user_id, options);
                 // refresh token should not grant new token...
                 // let refreshToken = Passport.grantJWTToken({
                 //     grant_type: 'refresh_token', client_id, user_id
@@ -972,7 +968,7 @@ class Oauth implements IOauth {
     async verifyToken(
         database: IMysqlDatabase, body: IVerifyTokenBody, options: TAnyObj & { user: IBasicPassportRes, profile: IProfile }
     ): Promise<IVerifyTokenRes> {
-        const { user: { client_id }, profile } = options;
+        const { user: { client_id, ID, IS_ORIGIN }, profile } = options;
         const { access_token } = body;
         const NOW_DATE = new Date();
         try {
@@ -987,16 +983,18 @@ class Oauth implements IOauth {
             } = Passport.decodeJWTPayload<IGrantTokenResult & JwtPayload>(access_token);
             let db = await database.getConnection();
             try {
-                let oauthApplication = await this._checkOauthApplicationByAccessAndRefreshAndVerify(db, options);
                 // check user exist, `source` and `user_type` any
-                await profile.dbGetProfile(db, {
+                let user = await profile.dbGetProfile(db, {
                     user: { user_id: USER_ID, account: USER_ACCOUNT, source: 'COMPAL', user_type: 'VIEWER' },
                     jwt: access_token
                 });
+                if (user.BLACK === 'T') {
+                    throw new Error('Your account already disabled, Please contact DTD Admin.');
+                }
                 // api_key不再驗證其db數據以及其他紀錄。
                 if (RESPONSE_TYPE !== 'api_key') {
                     let oauthToken = await this._verifyToken(db, access_token, NOW_DATE);
-                    if (oauthApplication.ID !== OAUTH_APPLICATION_ID) {
+                    if (ID !== OAUTH_APPLICATION_ID) {
                         throw new Error('Verify fail');
                     } else if (oauthToken.ID !== OAUTH_TOKEN_ID) {
                         throw new Error('Verify fail');
@@ -1028,6 +1026,7 @@ class Oauth implements IOauth {
                 return {
                     ACTIVE: true,
                     CLIENT_ID: client_id,
+                    IS_ORIGIN,
                     USER_ID,
                     USER_EMP_NO,
                     USER_ACCOUNT,

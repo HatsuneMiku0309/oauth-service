@@ -86,8 +86,17 @@ class Passport {
             let _err: IError = new Error();
             const db = await database.getConnection();
             try {
-                let [rows] = <[IOauthApplicationDao[], FieldPacket[]]> await db.query(`
-                    SELECT * FROM OAUTH_APPLICATION WHERE CLIENT_ID = ? AND CLIENT_SECRET = ?
+                let [rows] = <[IOauthApplicationDao[] & { BLACK: 'F' | 'T' }[], FieldPacket[]]> await db.query(`
+                    SELECT
+                        U.BLACK,
+                        T.*
+                    FROM
+                        OAUTH_APPLICATION T,
+                        USER U
+                    WHERE
+                        CLIENT_ID = ?
+                        AND CLIENT_SECRET = ?
+                        AND T.USER_ID = U.ID
                 `, [
                     result.client_id, result.client_secret
                 ]);
@@ -98,6 +107,12 @@ class Passport {
                     throw _err;
                 }
                 let row = rows[0];
+                if (row.BLACK === 'T') {
+                    _err.state = 401;
+                    _err.message = 'Authorization Error. owner disabled';
+
+                    throw _err;
+                }
                 if (!row.IS_CHECKED) {
                     _err.state = 401;
                     _err.message = 'Authorization Error. not check';
@@ -120,6 +135,10 @@ class Passport {
                     throw _err;
                 }
                 result.user_id = row.USER_ID;
+                result = {
+                    ...result,
+                    ...row
+                };
             } catch (err) {
                 throw err;
             } finally {
@@ -207,6 +226,12 @@ class Passport {
                             }
                             let row = rows[0];
 
+                            if (row.BLACK === 'T') {
+                                _err.state = 401;
+                                _err.message = 'Your account already disabled, Please contact DTD Admin.';
+
+                                throw _err;
+                            }
                             /**
                              * need AC jwt token oper, viewer can't call not `GET` method
                              * but white_list except

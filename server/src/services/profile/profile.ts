@@ -44,7 +44,7 @@ class Profile implements IProfile {
     async dbGetProfile(db: Connection, options: TAnyObj & IJWTCotext): Promise<IGetProfileRes> {
         const { user: { user_id } } = options;
         try {
-            let sql = 'SELECT ID, SOURCE, ACCOUNT, EMP_NO, EMAIL, PHONE FROM USER WHERE ID = ?';
+            let sql = 'SELECT ID, SOURCE, ACCOUNT, EMP_NO, EMAIL, PHONE, BLACK FROM USER WHERE ID = ?';
             let params = [user_id];
             let [rows] = <[
                 IGetProfileRes[],

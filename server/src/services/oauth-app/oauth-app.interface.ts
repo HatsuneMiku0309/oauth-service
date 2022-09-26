@@ -97,7 +97,7 @@ export interface IOauthApplicationDao {
     IS_DISABLED?: boolean; // default: 0
     IS_EXPIRES?: boolean; // default: 0
     IS_CHECKED?: boolean; // default: 1
-    IS_ORIGIN?: boolean; // default: 0 // 設為 origin 意謂是受信任的，給予長時間的token... 原因：懶的改現有架構，通過增長時間可以避免refresh的問題。（併發api時的refresh，此參數不應該為true）
+    IS_ORIGIN: boolean; // default: 0 // 設為 origin 意謂是受信任的，給予長時間的token... 原因：懶的改現有架構，通過增長時間可以避免refresh的問題。（併發api時的refresh，此參數不應該為true）
     AUDIT_STATE?: string; // varchar(100)
     CREATE_TIME?: Date;
     CREATE_BY: string; // varchar(100)

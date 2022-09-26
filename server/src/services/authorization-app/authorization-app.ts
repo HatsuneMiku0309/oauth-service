@@ -55,14 +55,14 @@ class AuthorizationApp implements IAuthorizationApp {
             let sql = `
                 SELECT
                     DISTINCT
-                        OS.OAUTH_APPLICATION_ID
+                        OA.ID
                 FROM
                     OAUTH_SCOPE OS,
-                    API_SCOPE AS2
+                    OAUTH_APPLICATION OA
                 WHERE
-                    OS.SCOPE_ID = AS2.ID
+                    OS.OAUTH_APPLICATION_ID = OA.ID
                     AND OS.IS_CHECKED = FALSE
-                    AND AS2.CREATE_BY = ?
+                    AND OA.USER_ID = ?
             `;
             let [oauthAppIds] = <[{ OAUTH_APPLICATION_ID: string }[], FieldPacket[]]> await db.query(sql, [ user_id ]);
             if (oauthAppIds.length === 0) {
@@ -157,13 +157,15 @@ class AuthorizationApp implements IAuthorizationApp {
                     AS2.DESCRIPTION SCOPE_DESCRIPTION,
                     AS2.APIS SCOPE_APIS
                 FROM
+                    OAUTH_APPLICATION OA,
                     OAUTH_SCOPE OS,
                     API_SCOPE AS2
                 WHERE
-                    OS.SCOPE_ID = AS2.ID
+                    OA.ID = OS.OAUTH_APPLICATION_ID
+                    AND OS.SCOPE_ID = AS2.ID
                     AND OS.IS_CHECKED = FALSE
-                    AND OS.OAUTH_APPLICATION_ID = ?
-                    AND AS2.CREATE_BY = ?
+                    AND OA.ID = ?
+                    AND OA.USER_ID = ?
             `;
             let [result] = <[IDetailRes[], FieldPacket[]]> await db.query(sql, [ oa_id, user_id ]);
 
@@ -258,13 +260,15 @@ class AuthorizationApp implements IAuthorizationApp {
                 SELECT
                     AS2.\`SYSTEM\` , AS2.NAME
                 FROM
+                    OAUTH_APPLICATION OA,
                     OAUTH_SCOPE OS,
                     API_SCOPE AS2
                 WHERE
+                    OA.ID = OS.OAUTH_APPLICATION_ID
                     OS.SCOPE_ID = AS2.ID
-                    AND OS.OAUTH_APPLICATION_ID = '293f96ac-ead9-411b-88dd-9bbd007d3fb7'
+                    AND OA.ID = ?
                     AND OS.IS_CHECKED = FALSE
-                    AND AS2.CREATE_BY = '89dad38e-0a29-42a9-a2dd-615732cf1b10'
+                    AND OA.USER_ID = ?
             `;
             let [apiScopes] = <[{ SYSTEM: string, NAME: string }[], FieldPacket[]]> await db.query(sql, [oa_id, user_id]);
 
@@ -272,13 +276,13 @@ class AuthorizationApp implements IAuthorizationApp {
                 DELETE
                     OS
                 FROM
-                    OAUTH_SCOPE OS,
-                    API_SCOPE AS2
+                    OAUTH_APPLICATION OA,
+                    OAUTH_SCOPE OS
                 WHERE
-                    OS.SCOPE_ID = AS2.ID
-                    AND OS.OAUTH_APPLICATION_ID = ?
+                    OA.ID = OS.OAUTH_APPLICATION_ID
+                    AND OA.ID = ?
                     AND OS.IS_CHECKED = FALSE
-                    AND AS2.CREATE_BY = ?
+                    AND OA.USER_ID = ?
             `;
             await db.query(sql, [oa_id, user_id]);
             await this._checkAppChecked(db, oa_id, options);
@@ -322,27 +326,29 @@ class AuthorizationApp implements IAuthorizationApp {
                 SELECT
                     AS2.\`SYSTEM\` , AS2.NAME
                 FROM
+                    OAUTH_APPLICATION OA,
                     OAUTH_SCOPE OS,
                     API_SCOPE AS2
                 WHERE
-                    OS.SCOPE_ID = AS2.ID
-                    AND OS.OAUTH_APPLICATION_ID = '293f96ac-ead9-411b-88dd-9bbd007d3fb7'
+                    OA.ID = OS.OAUTH_APPLICATION_ID
+                    AND OS.SCOPE_ID = AS2.ID
+                    AND OA.ID = ?
                     AND OS.IS_CHECKED = FALSE
-                    AND AS2.CREATE_BY = '89dad38e-0a29-42a9-a2dd-615732cf1b10'
+                    AND OA.USER_ID = ?
             `;
             let [apiScopes] = <[{ SYSTEM: string, NAME: string }[], FieldPacket[]]> await db.query(sql, [oa_id, user_id]);
 
             sql = `
                 UPDATE
-                    OAUTH_SCOPE OS,
-                    API_SCOPE AS2
+                    OAUTH_APPLICATION OA,
+                    OAUTH_SCOPE OS
                 SET
                     OS.IS_CHECKED = TRUE
                 WHERE
-                    OS.SCOPE_ID = AS2.ID
-                    AND OS.OAUTH_APPLICATION_ID = ?
+                    OA.ID = OS.OAUTH_APPLICATION_ID
+                    AND OA.ID = ?
                     AND OS.IS_CHECKED = FALSE
-                    AND AS2.CREATE_BY = ?
+                    AND OA.USER_ID = ?
             `;
             await db.query(sql, [oa_id, user_id]);
             await this._checkAppChecked(db, oa_id, options);

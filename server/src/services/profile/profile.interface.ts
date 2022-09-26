@@ -9,6 +9,7 @@ export interface IGetProfileRes {
     EMP_NO: string;
     EMAIL: string;
     PHONE: string;
+    BLACK: 'T' | 'F';
 }
 
 export interface IUserAppsRes {

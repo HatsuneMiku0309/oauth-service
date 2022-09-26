@@ -401,7 +401,8 @@ class OauthApplication implements IOauthApplication {
                 user: {
                     user_id: row.USER_ID,
                     client_id: row.CLIENT_ID,
-                    client_secret: row.CLIENT_SECRET
+                    client_secret: row.CLIENT_SECRET,
+                    ...row
                 },
                 tokenType: 'apiKey'
             });

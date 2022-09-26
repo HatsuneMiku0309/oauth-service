@@ -1,5 +1,6 @@
 import { Connection } from "mysql2/promise";
 import { IConfig, IMysqlDatabase, TAnyObj } from "../../utils.interface";
+import { IBasicPassportRes } from "../jwt/passport.interface";
 import { IJWTCotext } from "../utils.interface";
 
 export type TMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -22,29 +23,6 @@ export interface IListRes {
     totalPage: number;
 }
 
-
-export interface ICreateBody {
-    name: string;
-    description?: string;
-    system: string;
-    apis: IAPIs[];
-    is_required?: boolean;
-    require_check?: boolean; // default: false
-}
-
-export interface IUpdateBody {
-    description?: string;
-    system: string;
-    apis: IAPIs[];
-    is_required?: boolean;
-    require_check?: boolean; // default: false
-}
-
-export interface IUpdatesBody extends IUpdateBody {
-    id: string;
-    name: string;
-}
-
 export interface IRegistBody {
     name: string;
     description?: string;
@@ -57,18 +35,8 @@ export interface IScope {
     options: TAnyObj & { config: IConfig };
     list(database: IMysqlDatabase, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
     dbList(db: Connection, query: IListQuery, options: TAnyObj & IJWTCotext): Promise<IListRes>;
-    create(database: IMysqlDatabase, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    dbCreate(db: Connection, body: ICreateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    creates(database: IMysqlDatabase, body: ICreateBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
-    dbCreates(db: Connection, body: ICreateBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
-    update(database: IMysqlDatabase, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    dbUpdate(db: Connection, id: string, body: IUpdateBody, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    updates(database: IMysqlDatabase, body: IUpdatesBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
-    dbUpdates(db: Connection, body: IUpdatesBody[], options: TAnyObj & IJWTCotext): Promise<{ ID: string }[]>;
-    remove(database: IMysqlDatabase, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    dbRemove(db: Connection, id: string, options: TAnyObj & IJWTCotext): Promise<{ ID: string }>;
-    regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
-    dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IApiScopeDao[]>;
+    regist(database: IMysqlDatabase, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]>;
+    dbRegist(db: Connection, system: string, body: IRegistBody[], options: TAnyObj & { user: IBasicPassportRes }): Promise<IApiScopeDao[]>;
 }
 
 // ---------- DAO -----------

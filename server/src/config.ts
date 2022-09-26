@@ -61,7 +61,8 @@ class Config implements IConfig {
                     '^\/api\/reset-password',
                     '^\/api\/oauth\/access-token$',
                     '^\/api\/oauth\/refresh-token$',
-                    '^\/api\/oauth\/verify-token$'
+                    '^\/api\/oauth\/verify-token$',
+                    '^\/api\/api-scope\/register'
                 ],
                 VIEWER_WHITE_LIST: [
                     '^\/api\/oauth\/grant-code-token$',

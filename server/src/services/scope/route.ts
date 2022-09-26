@@ -6,6 +6,7 @@ import { IRouter, TContext } from '../utils.interface';
 import { IConfig, IMysqlDatabase, TAnyObj } from '../../utils.interface';
 import { Scope } from './scope';
 import { BaseRouter } from '../utils';
+import { Passport } from '../jwt/passport';
 
 class ScopeRouter extends BaseRouter implements IRouter {
     readonly api: string = '/api-scope';
@@ -36,91 +37,12 @@ class ScopeRouter extends BaseRouter implements IRouter {
             }
         });
 
-        api = super._getRootApi().join('/');
-        this.router.post(api, async (ctx: TContext) => {
-            // const { body } = ctx.request;
-            try {
-                ctx.status = 500;
-                ctx.throw('Not yet allowed to use');
-                // let result = await scope.create(this.database, body, ctx.state);
-
-                // ctx.body = {
-                //     data: result
-                // };
-            } catch (err) {
-                throw err;
-            }
-        });
-
-        api = super._getRootApi('creates').join('/');
-        this.router.post(api, async (ctx: TContext) => {
-            // const { body } = ctx.request;
-            try {
-                ctx.status = 500;
-                ctx.throw('Not yet allowed to use');
-                // let result = await scope.creates(this.database, body, ctx.state);
-
-                // ctx.body = {
-                //     data: result
-                // };
-            } catch (err) {
-                throw err;
-            }
-        });
-
-        api = super._getRootApi(':id').join('/');
-        this.router.put(api, async (ctx: TContext) => {
-            // const { params: { id }, request: { body } } = ctx;
-            try {
-                ctx.status = 500;
-                ctx.throw('Not yet allowed to use');
-                // let result = await scope.update(this.database, id, body, ctx.state);
-
-                // ctx.body = {
-                //     data: result
-                // };
-            } catch (err) {
-                throw err;
-            }
-        });
-
-        api = super._getRootApi(['updates']).join('/');
-        this.router.put(api, async (ctx: TContext) => {
-            // const { request: { body } } = ctx;
-            try {
-                ctx.status = 500;
-                ctx.throw('Not yet allowed to use');
-                // let result = await scope.updates(this.database, body, ctx.state);
-
-                // ctx.body = {
-                //     data: result
-                // };
-            } catch (err) {
-                throw err;
-            }
-        });
-
-        api = super._getRootApi(':id').join('/');
-        this.router.delete(api, async (ctx: TContext) => {
-            // const { id } = ctx.params;
-            try {
-                ctx.status = 500;
-                ctx.throw('Not yet allowed to use');
-                // let result = await scope.remove(this.database, id, ctx.state);
-
-                // ctx.body = {
-                //     data: result
-                // };
-            } catch (err) {
-                throw err;
-            }
-        });
-
         api = super._getRootApi(['register', ':system']).join('/');
         this.router.post(api, async (ctx: TContext) => {
             const { params: { system }, request: { body } } = ctx;
             try {
-                let result = await scope.regist(this.database, system, body, ctx.state);
+                let basicObj = await Passport.basicPassport(this.database, ctx);
+                let result = await scope.regist(this.database, system, body, { user: basicObj });
 
                 ctx.body = {
                     data: result

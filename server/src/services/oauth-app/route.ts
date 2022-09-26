@@ -155,13 +155,15 @@ class OauthApplicationRouter extends BaseRouter implements IRouter {
 
         api = super._getRootApi([':oa_id', 'oauth_app_scope']).join('/');
         this.router.post(api, async (ctx: TContext) => {
-            const { params: { oa_id }, request: { body } } = ctx;
+            // const { params: { oa_id }, request: { body } } = ctx;
             try {
-                let result = await oauthApplicationScope.registScope(this.database, oa_id, body, ctx.state);
+                ctx.status = 500;
+                ctx.throw('Not yet allowed to use');
+                // let result = await oauthApplicationScope.registScope(this.database, oa_id, body, ctx.state);
 
-                ctx.body = {
-                    data: result
-                };
+                // ctx.body = {
+                //     data: result
+                // };
             } catch (err: any) {
                 throw err;
             }
