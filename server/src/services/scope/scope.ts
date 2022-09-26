@@ -47,8 +47,8 @@ class Scope implements IScope {
         const { user: { user_id } } = options;
         const { q, count = 10, offset = 0 } = query;
         try {
-            let [oauthApps] = <[{ CLINET_ID: string }[], FieldPacket[]]> await db.query('SELECT CLIENT_ID FROM OAUTH_APPLICATION WHERE USER_ID = ?', [ user_id ]);
-            let clientIds = oauthApps.map((oauthApp) => oauthApp.CLINET_ID);
+            let [oauthApps] = <[{ CLIENT_ID: string }[], FieldPacket[]]> await db.query('SELECT CLIENT_ID FROM OAUTH_APPLICATION WHERE USER_ID = ?', [ user_id ]);
+            let clientIds = oauthApps.map((oauthApp) => oauthApp.CLIENT_ID);
             let sql = 'SELECT * FROM API_SCOPE';
 
             let whereSql = ['IS_PUBLIC = ? AND CREATE_BY IN (?)', 'IS_PUBLIC = ?'];
