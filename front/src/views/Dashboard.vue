@@ -63,8 +63,8 @@ export default defineComponent({
     const appUsedRate = ref<InstanceType<typeof PieChart>>();
     let datasets: any[] = [];
     let pieDataSets: any[] = [];
-    const dateType = ref('day');
-    const pieDataType = ref('day');
+    const dateType = ref('min');
+    const pieDataType = ref('min');
     const MAX_COUNT = 100;
     const dateCount = ref(10);
     const countDatas = [];
@@ -111,7 +111,11 @@ export default defineComponent({
       try {
         if (!!Number(dateCount.value)) {
           datasets = [];
-          dateType.value === 'day' && (dateCount.value = 10);
+          (dateType.value === 'day' && dateCount.value > 7) && (dateCount.value = 7);
+          (dateType.value === '12hour' && dateCount.value > 14) && (dateCount.value = 14);
+          (dateType.value === '6hour' && dateCount.value > 28) && (dateCount.value = 28);
+          (dateType.value === 'hour' && dateCount.value > 100) && (dateCount.value = 100);
+          (dateType.value === 'min' && dateCount.value > 100) && (dateCount.value = 100);
           let result = await get('/dashboard/used-rate', {
             date_type: dateType.value,
             count: dateCount.value
