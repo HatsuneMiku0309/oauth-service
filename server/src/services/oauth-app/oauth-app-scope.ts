@@ -117,6 +117,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
         const { user: { user_id } } = options;
         try {
             await db.query('DELETE FROM OAUTH_SCOPE WHERE OAUTH_APPLICATION_ID = ?', [oa_id]);
+            if (body.length === 0) {
+                return ;
+            }
+
             let params = body.map((data) => {
                 const { scope_id, is_disabled = false, is_checked = true } = data;
                 let uid = uuid();
@@ -151,6 +155,10 @@ class OauthApplicationScope implements IOauthApplicationScope {
 
     private async _getRequiredApiScope(db: Connection, body: IRegistBody[], oauthApplicaion: IOauthApplicationDao, options: TAnyObj = { }) {
         try {
+            if (body.length === 0) {
+                return body;
+            }
+
             let [oldAuthApplicationScopes] = <[IOauthApplicationScopeDao[], FieldPacket[]]> await db.query(`
                 SELECT * FROM OAUTH_SCOPE WHERE OAUTH_APPLICATION_ID = ?
             `, [oauthApplicaion.ID]);
@@ -268,10 +276,6 @@ class OauthApplicationScope implements IOauthApplicationScope {
     async dbRegistScope(db: Connection, oa_id: string, body: IRegistBody[], options: TAnyObj & IJWTCotext): Promise<IOauthApplicationScopeAndApiScopeRes[]> {
         const COLUMNS = ['ID', 'OAUTH_APPLICATION_ID', 'SCOPE_ID', 'IS_DISABLED', 'IS_CHECKED', 'CREATE_BY'];
         try {
-            if (body.length === 0) {
-                return [];
-            }
-
             let oauthApplicaion = await this._checkOauthApplication(db, oa_id);
             let _body = await this._getRequiredApiScope(db, body, oauthApplicaion);
 
